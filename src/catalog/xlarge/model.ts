@@ -1455,38 +1455,134 @@ export function moveItem<T>(items: readonly T[], from: number, to: number): T[] 
   return out;
 }
 
-/**
- * The words an `Arrange` item shows: a plain item as it came, an object item's
- * `field` key (numbers and amounts as the text they came as).
- */
-export function arrangeText(item: unknown, field: unknown): string {
-  if (isRecord(item)) {
-    return typeof field === "string" && field.length > 0 ? scalarText(item[field]) : "";
-  }
-  return typeof item === "string" || typeof item === "number" ? scalarText(item) : "";
+/** One row an `Arrange` draws for an item (`arrangeRows`). */
+export interface ArrangeRow {
+  /** The item's place in the list (0-based). */
+  readonly index: number;
+  /** `key`, else `kind` (`kind-<n>` for a removable item), unique in the list. */
+  readonly key: string;
+  /** The translated `label` (the key when the item has no label). */
+  readonly text: string;
+  /** Whether the item shows (`shown`; an item without it shows). */
+  readonly shown: boolean;
+  /** A kept item always shows: no shown toggle. */
+  readonly kept: boolean;
+  readonly removable: boolean;
+  /** The item's `text`, when it has one (a text box is drawn). */
+  readonly note: string | undefined;
+}
+
+function nonEmpty(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 /**
- * The item an `Arrange` adds for the text a person typed: `{ [key]: text }`
- * when items carry a key (`addItem`, else `field`), the text itself otherwise.
- * Blank text adds nothing (`undefined`).
+ * The words an `Arrange` item shows: its `label` code translated, else its
+ * key (`key`, else `kind`). An item that is not an object shows as it came.
  */
-export function newArrangeItem(text: string, key: unknown): unknown {
-  const trimmed = text.trim();
-  if (trimmed.length === 0) {
+export function arrangeText(item: unknown, translate: Translate): string {
+  if (!isRecord(item)) {
+    return typeof item === "string" || typeof item === "number" ? scalarText(item) : "";
+  }
+  const label = nonEmpty(item["label"]);
+  if (label !== undefined) {
+    return translate(label);
+  }
+  return nonEmpty(item["key"]) ?? nonEmpty(item["kind"]) ?? "";
+}
+
+/**
+ * The rows of an `Arrange`'s `items` (xlarge's lab-report layout blocks:
+ * `{ key?, kind, label, shown, kept?, removable?, text?, fields? }`). A
+ * missing `key` is `kind`, or `kind-<n>` when the item is removable (the
+ * first `n` from 1 not taken by another item). `fields` is not read.
+ */
+export function arrangeRows(items: readonly unknown[], translate: Translate): ArrangeRow[] {
+  const taken = new Set<string>();
+  for (const item of items) {
+    const key = isRecord(item) ? nonEmpty(item["key"]) : undefined;
+    if (key !== undefined) {
+      taken.add(key);
+    }
+  }
+  return items.map((item, index) => {
+    const record = isRecord(item) ? item : {};
+    let key = nonEmpty(record["key"]);
+    if (key === undefined) {
+      const kind = nonEmpty(record["kind"]) ?? (isRecord(item) ? "item" : arrangeText(item, translate));
+      if (record["removable"] === true) {
+        let n = 1;
+        while (taken.has(`${kind}-${n}`)) {
+          n += 1;
+        }
+        key = `${kind}-${n}`;
+      } else {
+        key = kind;
+      }
+      taken.add(key);
+    }
+    return {
+      index,
+      key,
+      text: arrangeText(item, translate),
+      shown: record["shown"] !== false,
+      kept: record["kept"] === true,
+      removable: record["removable"] === true,
+      note: typeof record["text"] === "string" ? record["text"] : undefined,
+    };
+  });
+}
+
+/** `items` with the object item at `index` given `patch`; other items as they came. */
+export function patchArrangeItem(
+  items: readonly unknown[],
+  index: number,
+  patch: Readonly<Record<string, unknown>>,
+): unknown[] {
+  return items.map((item, at) => (at === index && isRecord(item) ? { ...item, ...patch } : item));
+}
+
+/**
+ * The item an `Arrange`'s add button adds: `{ kind, label, shown: true,
+ * removable: true, text: "" }` with `kind` from `add` and `label` from
+ * `addItem ?? addLabel`. Without `add` nothing is added (`undefined`).
+ */
+export function newArrangeItem(kind: unknown, label: unknown): Record<string, unknown> | undefined {
+  const named = nonEmpty(kind);
+  if (named === undefined) {
     return undefined;
   }
-  return typeof key === "string" && key.length > 0 ? { [key]: trimmed } : trimmed;
+  return { kind: named, label: nonEmpty(label) ?? named, shown: true, removable: true, text: "" };
 }
 
-/** The context an `Arrange` sends with `save`: the items in their new order and `version`. */
+/**
+ * The context an `Arrange` sends with `save`: the items in their new order
+ * under `field` (xlarge's lab-report layout sends `blocks`; `items` when
+ * `field` is missing) and `version` when it is set.
+ */
 export function arrangeContext(
+  field: unknown,
   items: readonly unknown[],
   version: unknown,
 ): Record<string, unknown> {
+  const key = nonEmpty(field) ?? "items";
   return version === undefined || version === null
-    ? { items: [...items] }
-    : { items: [...items], version };
+    ? { [key]: [...items] }
+    : { [key]: [...items], version };
+}
+
+/**
+ * What an `Arrange` announces after a move or an add: `template` (the
+ * host's `movedText`) with `{name}`, `{at}` (1-based) and `{count}` filled.
+ */
+export function arrangeMoved(template: string, name: string, at: number, count: number): string {
+  return template
+    .split("{name}")
+    .join(name)
+    .split("{at}")
+    .join(String(at))
+    .split("{count}")
+    .join(String(count));
 }
 
 /**

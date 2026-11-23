@@ -14,6 +14,8 @@
  *   `a2ui.openUrl` (the `openUrl` renderer option);
  * - `againstBeforeLabel`: optional, the words after a `Metric`'s change.
  *
+ * What a renderer announces (`announce`) is posted as `a2ui.announce`.
+ *
  * Reports outbound actions and errors via `host.post("a2ui.*", ...)`, and
  * answers `a2ui.readData` with the surface data at a path.
  */
@@ -61,6 +63,7 @@ function XlargeHarnessApp(): JSX.Element {
     openUrl: params["openLinks"] === true ? (url) => safePost("a2ui.openUrl", { url }) : undefined,
     againstBeforeLabel:
       typeof params["againstBeforeLabel"] === "string" ? params["againstBeforeLabel"] : undefined,
+    announce: (message) => safePost("a2ui.announce", { message }),
   });
 
   const store = new A2uiStore({

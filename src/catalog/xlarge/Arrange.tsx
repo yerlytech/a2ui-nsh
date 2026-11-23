@@ -1,25 +1,31 @@
 /**
  * xlarge catalog `Arrange` (`tech.yerly.xlarge/v1`) on Native Shell.
  *
- * Puts the `items` the data model holds in a new order. Each item shows its
- * `field` (a plain item shows as it came) with a move-up and a move-down
- * button: plain buttons, so the keyboard reaches and presses them on every
- * target (Tab, then Enter or Space), the terminal (`--target tui`) included.
- * With `add` (the code naming the new item's text box) or `addLabel` (the
- * add button's code), a person can add an item: `{ [addItem ?? field]: text }`,
- * or the text itself when items carry no key.
+ * Puts the `items` the data model holds in a new order, as xlarge's
+ * lab-report layout does (`items = "/layout/blocks"`, `field = "blocks"`).
+ * Items are `{ key?, kind, label, shown, kept?, removable?, text?, fields? }`
+ * (`arrangeRows`; `fields` is not read). Each row shows its translated
+ * `label` with a move-up and a move-down button, a shown toggle (not for a
+ * `kept` item), a text box when the item has `text`, and a remove button
+ * when it is `removable`. All are plain controls, so the keyboard reaches and
+ * presses them on every target (Tab, then Enter or Space), the terminal
+ * (`--target tui`) included. After a move or an add the new place is
+ * announced (`announce()`, the host's `movedText`).
  *
- * Save sends `save` with `{ items, version }`: every item in its new order
- * (added ones included, as they came otherwise) and the `version` the data
- * model holds, so the server can refuse a stale order. Reset drops the local
- * order and shows the data model's again; with `reset` it also sends that
- * action with `{ version }` so the server restores its own order. With
- * `confirm` a send asks first (`AskPanel`, `askStep`). New items from the
- * data model replace the local order.
+ * With `add` (the new item's `kind`) an add button adds
+ * `{ kind, label: addItem ?? addLabel, shown: true, removable: true, text: "" }`.
+ *
+ * Save sends `save` with `{ [field]: items, version }`: every item in its new
+ * order under `field` and the `version` its binding holds, so the server can
+ * refuse a stale layout. Reset drops the local changes; with `reset` it also
+ * sends that action with `{ version }`. A send that went out then follows
+ * `after` (`screenAction`), as `Button` does. With `confirm` a send asks
+ * first (`AskPanel`, `askStep`). New items from the data model replace the
+ * local changes.
  */
 
 import { Text, View, computed, effect, signal, type JSX } from "nsh";
-import { Button, Input } from "nsh/base";
+import { Button, Checkbox, Input } from "nsh/base";
 import {
   unwrapBinding,
   unwrapOptionalString,
@@ -30,10 +36,13 @@ import { AskPanel, BUTTON_CLASS, BUTTON_TEXT_CLASS, sendXlargeAction } from "./a
 import type { ResolvedXlargeOptions } from "./context";
 import {
   arrangeContext,
-  arrangeText,
+  arrangeMoved,
+  arrangeRows,
   askStep,
   moveItem,
   newArrangeItem,
+  patchArrangeItem,
+  screenAction,
 } from "./model";
 
 const MOVE_BUTTON =
@@ -52,6 +61,7 @@ export function createXlargeArrange(
     const addLabelProp = props.bridge.prop("addLabel");
     const saveProp = props.bridge.prop("save");
     const resetProp = props.bridge.prop("reset");
+    const afterProp = props.bridge.prop("after");
     const confirmProp = props.bridge.prop("confirm");
     const versionProp = props.bridge.prop("version");
 
@@ -59,45 +69,56 @@ export function createXlargeArrange(
       const value = unwrapBinding(itemsProp());
       return Array.isArray(value) ? value : [];
     });
-    // The order a person made, until it is reset or the data model sends new items.
+    // The list a person made, until it is reset or the data model sends new items.
     const local = signal<readonly unknown[] | undefined>(undefined);
     effect(() => {
       source();
       local.set(undefined);
     });
     const items = computed(() => local() ?? source());
-    const rows = computed(() =>
-      items().map((item, index) => ({ index, text: arrangeText(item, fieldProp()) })),
-    );
+    const rows = computed(() => arrangeRows(items(), options.translate));
 
-    const translated = (value: unknown): string | undefined => {
-      const code = unwrapOptionalString(value);
-      return code !== undefined ? options.translate(code) : undefined;
-    };
-    const addBox = computed(() => translated(addProp()));
-    const addLabel = computed(() => translated(addLabelProp()) ?? options.addLabel);
-    const canAdd = computed(
-      () => unwrapOptionalString(addProp()) !== undefined || unwrapOptionalString(addLabelProp()) !== undefined,
-    );
-    const typed = signal("");
+    const addKind = computed(() => unwrapOptionalString(addProp()));
+    const addLabel = computed(() => {
+      const code = unwrapOptionalString(addLabelProp());
+      return code !== undefined ? options.translate(code) : options.addLabel;
+    });
     const saveLabel = computed(() => options.translate("action.save"));
     const save = computed(() => unwrapOptionalString(saveProp()));
     const reset = computed(() => unwrapOptionalString(resetProp()));
     const asking = signal<Pending | undefined>(undefined);
     const sending = signal(false);
 
+    const tell = (index: number): void => {
+      const list = rows();
+      const row = list[index];
+      if (row !== undefined) {
+        options.announce(arrangeMoved(options.movedText, row.text, index + 1, list.length));
+      }
+    };
+
     const move = (from: number, to: number): void => {
       local.set(moveItem(items(), from, to));
+      tell(to);
+    };
+
+    const patch = (index: number, change: Readonly<Record<string, unknown>>): void => {
+      local.set(patchArrangeItem(items(), index, change));
+    };
+
+    const remove = (index: number): void => {
+      local.set(items().filter((_, at) => at !== index));
     };
 
     const add = (): void => {
-      const field = unwrapOptionalString(addItemProp()) ?? unwrapOptionalString(fieldProp());
-      const item = newArrangeItem(typed(), field);
+      const label =
+        unwrapOptionalString(addItemProp()) ?? unwrapOptionalString(addLabelProp());
+      const item = newArrangeItem(addKind(), label);
       if (item === undefined) {
         return;
       }
       local.set([...items(), item]);
-      typed.set("");
+      tell(items().length - 1);
     };
 
     const version = (): unknown => unwrapBinding(versionProp());
@@ -115,16 +136,26 @@ export function createXlargeArrange(
       }
       const context =
         which === "save"
-          ? arrangeContext(items(), version())
+          ? arrangeContext(fieldProp(), items(), version())
           : version() === undefined || version() === null
             ? {}
             : { version: version() };
       sending.set(true);
-      void sendXlargeAction(props, name, context).finally(() => sending.set(false));
+      void (async () => {
+        try {
+          const sent = await sendXlargeAction(props, name, context);
+          const after = screenAction(unwrapOptionalString(afterProp()));
+          if (sent && after !== undefined) {
+            await sendXlargeAction(props, after, {});
+          }
+        } finally {
+          sending.set(false);
+        }
+      })();
     };
 
     const step = (which: "press" | "yes" | "cancel", target: Pending): void => {
-      // Reset without an action only restores the order here: nothing to ask.
+      // Reset without an action only restores the list here: nothing to ask.
       const sends = target === "save" || reset() !== undefined;
       const next = askStep(which, confirmProp() === true && sends);
       asking.set(next.asking ? target : undefined);
@@ -140,42 +171,71 @@ export function createXlargeArrange(
             {(row) => (
               <View
                 testID={`${props.testId}:item:${row().index}`}
-                class="min-h-[44px] flex-row items-center gap-2 rounded-(--radius) border border-border bg-card px-3 py-1"
+                class="min-h-[44px] gap-2 rounded-(--radius) border border-border bg-card px-3 py-1"
               >
-                <Text class="flex-1 text-sm text-foreground">{row().text}</Text>
-                <Button
-                  testID={`${props.testId}:item:${row().index}:up`}
-                  accessibilityLabel={`${options.moveUpLabel}: ${row().text}`}
-                  disabled={row().index === 0 || sending()}
-                  class={MOVE_BUTTON}
-                  onPress={() => move(row().index, row().index - 1)}
-                >
-                  <Text class="text-sm text-secondary-foreground">↑</Text>
-                </Button>
-                <Button
-                  testID={`${props.testId}:item:${row().index}:down`}
-                  accessibilityLabel={`${options.moveDownLabel}: ${row().text}`}
-                  disabled={row().index === rows().length - 1 || sending()}
-                  class={MOVE_BUTTON}
-                  onPress={() => move(row().index, row().index + 1)}
-                >
-                  <Text class="text-sm text-secondary-foreground">↓</Text>
-                </Button>
+                <View class="flex-row flex-wrap items-center gap-2">
+                  <Text class={row().shown ? "flex-1 text-sm text-foreground" : "flex-1 text-sm text-muted-foreground"}>
+                    {row().text}
+                  </Text>
+                  <Button
+                    testID={`${props.testId}:item:${row().index}:up`}
+                    accessibilityLabel={`${options.moveUpLabel}: ${row().text}`}
+                    disabled={row().index === 0 || sending()}
+                    class={MOVE_BUTTON}
+                    onPress={() => move(row().index, row().index - 1)}
+                  >
+                    <Text class="text-sm text-secondary-foreground">↑</Text>
+                  </Button>
+                  <Button
+                    testID={`${props.testId}:item:${row().index}:down`}
+                    accessibilityLabel={`${options.moveDownLabel}: ${row().text}`}
+                    disabled={row().index === rows().length - 1 || sending()}
+                    class={MOVE_BUTTON}
+                    onPress={() => move(row().index, row().index + 1)}
+                  >
+                    <Text class="text-sm text-secondary-foreground">↓</Text>
+                  </Button>
+                  <If when={!row().kept}>
+                    <Checkbox
+                      testID={`${props.testId}:item:${row().index}:shown`}
+                      checked={row().shown}
+                      accessibilityLabel={`${options.shownLabel}: ${row().text}`}
+                      disabled={sending()}
+                      class="min-h-[36px] flex-row items-center gap-2 focus-visible:outline-2"
+                      indicatorClass="h-5 w-5 items-center justify-center rounded border border-input bg-background checked:border-primary checked:bg-primary"
+                      onChange={(event) => patch(row().index, { shown: event.checked })}
+                    >
+                      <Text class="text-sm text-foreground">{options.shownLabel}</Text>
+                    </Checkbox>
+                  </If>
+                  <If when={row().removable}>
+                    <Button
+                      testID={`${props.testId}:item:${row().index}:remove`}
+                      accessibilityLabel={`${options.removeLabel}: ${row().text}`}
+                      disabled={sending()}
+                      class={MOVE_BUTTON}
+                      onPress={() => remove(row().index)}
+                    >
+                      <Text class="text-sm text-destructive">×</Text>
+                    </Button>
+                  </If>
+                </View>
+                <If when={row().note !== undefined}>
+                  <Input
+                    testID={`${props.testId}:item:${row().index}:text`}
+                    value={row().note ?? ""}
+                    accessibilityLabel={row().text}
+                    class="min-h-[44px] rounded-(--radius) border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus-visible:outline-2"
+                    onChange={(event) => patch(row().index, { text: event.value })}
+                  />
+                </If>
               </View>
             )}
           </Each>
         </View>
 
-        <If when={canAdd()}>
-          <View class="flex-row flex-wrap items-center gap-2">
-            <Input
-              testID={`${props.testId}:new`}
-              value={typed()}
-              placeholder={addBox()}
-              accessibilityLabel={addBox() ?? addLabel()}
-              class="min-h-[44px] flex-1 rounded-(--radius) border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus-visible:outline-2"
-              onChange={(event) => typed.set(event.value)}
-            />
+        <If when={addKind() !== undefined}>
+          <View class="flex-row flex-wrap gap-2">
             <Button
               testID={`${props.testId}:add`}
               accessibilityLabel={addLabel()}

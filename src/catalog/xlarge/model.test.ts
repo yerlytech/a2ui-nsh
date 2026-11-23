@@ -3,11 +3,14 @@ import {
   actionContext,
   bindingPath,
   arrangeContext,
+  arrangeMoved,
+  arrangeRows,
   arrangeText,
   askStep,
   buttonVariant,
   moveItem,
   newArrangeItem,
+  patchArrangeItem,
   stepsList,
   wizardStep,
   calendarMonth,
@@ -720,26 +723,80 @@ describe("Arrange helpers", () => {
     expect(items).toEqual(["a", "b"]);
   });
 
-  test("arrangeText shows an object's field and a plain item as it came", () => {
-    expect(arrangeText({ title: "Lead", n: 1 }, "title")).toBe("Lead");
-    expect(arrangeText({ amount: "25000.50" }, "amount")).toBe("25000.50");
-    expect(arrangeText({ title: "Lead" }, undefined)).toBe("");
-    expect(arrangeText("Won", "title")).toBe("Won");
-    expect(arrangeText(7, undefined)).toBe("7");
-    expect(arrangeText(null, "title")).toBe("");
+  const WORDS: Record<string, string> = { "lab.block.header": "Header", "lab.block.note": "Note" };
+  const say = (code: string): string => WORDS[code] ?? code;
+
+  test("arrangeText shows the translated label, else the key or kind", () => {
+    expect(arrangeText({ kind: "header", label: "lab.block.header" }, say)).toBe("Header");
+    expect(arrangeText({ kind: "x", label: "lab.missing" }, say)).toBe("lab.missing");
+    expect(arrangeText({ key: "note-2", kind: "note" }, say)).toBe("note-2");
+    expect(arrangeText({ kind: "note" }, say)).toBe("note");
+    expect(arrangeText({}, say)).toBe("");
+    expect(arrangeText("Won", say)).toBe("Won");
+    expect(arrangeText(null, say)).toBe("");
   });
 
-  test("newArrangeItem keys the trimmed text, or keeps it plain; blank adds nothing", () => {
-    expect(newArrangeItem("  Lost ", "title")).toEqual({ title: "Lost" });
-    expect(newArrangeItem("Lost", undefined)).toBe("Lost");
-    expect(newArrangeItem("Lost", "")).toBe("Lost");
-    expect(newArrangeItem("   ", "title")).toBe(undefined);
+  test("arrangeRows keys each item: key, else kind, else kind-<n> when removable", () => {
+    const rows = arrangeRows(
+      [
+        { kind: "header", label: "lab.block.header", shown: true, kept: true },
+        { key: "note-1", kind: "note", label: "lab.block.note", shown: false, removable: true, text: "a" },
+        { kind: "note", label: "lab.block.note", shown: true, removable: true, text: "" },
+        { kind: "note", label: "lab.block.note", removable: true, fields: ["x"] },
+        { kind: "results", label: "lab.block.results" },
+      ],
+      say,
+    );
+    expect(rows.map((row) => row.key)).toEqual(["header", "note-1", "note-2", "note-3", "results"]);
+    expect(rows.map((row) => row.text)).toEqual(["Header", "Note", "Note", "Note", "lab.block.results"]);
+    expect(rows.map((row) => row.shown)).toEqual([true, false, true, true, true]);
+    expect(rows.map((row) => row.kept)).toEqual([true, false, false, false, false]);
+    expect(rows.map((row) => row.removable)).toEqual([false, true, true, true, false]);
+    expect(rows.map((row) => row.note)).toEqual([undefined, "a", "", undefined, undefined]);
+    expect(rows.map((row) => row.index)).toEqual([0, 1, 2, 3, 4]);
   });
 
-  test("arrangeContext sends the items in order and version as it came", () => {
-    expect(arrangeContext(["b", "a"], "7")).toEqual({ items: ["b", "a"], version: "7" });
-    expect(arrangeContext([{ id: 1 }], 3)).toEqual({ items: [{ id: 1 }], version: 3 });
-    expect(arrangeContext([], undefined)).toEqual({ items: [] });
-    expect(arrangeContext(["a"], null)).toEqual({ items: ["a"] });
+  test("patchArrangeItem changes one object item and leaves the list as it came", () => {
+    const items = [{ kind: "a", shown: true }, { kind: "b", shown: true }];
+    expect(patchArrangeItem(items, 1, { shown: false })).toEqual([
+      { kind: "a", shown: true },
+      { kind: "b", shown: false },
+    ]);
+    expect(items[1]).toEqual({ kind: "b", shown: true });
+    expect(patchArrangeItem(["plain"], 0, { shown: false })).toEqual(["plain"]);
+  });
+
+  test("newArrangeItem is a removable, shown item of kind add with a label code", () => {
+    expect(newArrangeItem("note", "lab.block.note")).toEqual({
+      kind: "note",
+      label: "lab.block.note",
+      shown: true,
+      removable: true,
+      text: "",
+    });
+    expect(newArrangeItem("note", undefined)).toEqual({
+      kind: "note",
+      label: "note",
+      shown: true,
+      removable: true,
+      text: "",
+    });
+    expect(newArrangeItem(undefined, "lab.block.note")).toBe(undefined);
+    expect(newArrangeItem("", "lab.block.note")).toBe(undefined);
+  });
+
+  test("arrangeContext sends the items under field, with version when set", () => {
+    expect(arrangeContext("blocks", [{ kind: "b" }, { kind: "a" }], 7)).toEqual({
+      blocks: [{ kind: "b" }, { kind: "a" }],
+      version: 7,
+    });
+    expect(arrangeContext("blocks", [], undefined)).toEqual({ blocks: [] });
+    expect(arrangeContext(undefined, ["a"], null)).toEqual({ items: ["a"] });
+    expect(arrangeContext("", ["a"], "v")).toEqual({ items: ["a"], version: "v" });
+  });
+
+  test("arrangeMoved fills name, place and count", () => {
+    expect(arrangeMoved("{name} moved to {at} of {count}", "Note", 2, 5)).toBe("Note moved to 2 of 5");
+    expect(arrangeMoved("{at}/{count}: {name} {name}", "X", 1, 1)).toBe("1/1: X X");
   });
 });

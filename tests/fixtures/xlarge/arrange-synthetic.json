@@ -13,14 +13,16 @@
           {
             "id": "root",
             "component": "Arrange",
-            "items": { "@path": "/stages" },
-            "field": "title",
-            "add": "crm.field.stage",
-            "addLabel": "crm.action.add_stage",
-            "save": "crm.order_stages",
-            "reset": "crm.reset_stages",
+            "items": { "@path": "/layout/blocks" },
+            "field": "blocks",
+            "add": "note",
+            "addItem": "lab.block.note",
+            "addLabel": "lab.action.add_note",
+            "save": "lab.layout.save",
+            "reset": "lab.layout.reset",
+            "after": "lab.reports",
             "confirm": true,
-            "version": { "@path": "/stages_version" }
+            "version": { "@path": "/layout/version" }
           }
         ]
       }
@@ -31,12 +33,15 @@
         "surfaceId": "synthetic.arrange",
         "path": "/",
         "value": {
-          "stages": [
-            { "id": "s1", "title": "Lead" },
-            { "id": "s2", "title": "Offer" },
-            { "id": "s3", "title": "Won" }
-          ],
-          "stages_version": "7"
+          "layout": {
+            "blocks": [
+              { "kind": "header", "label": "lab.block.header", "shown": true, "kept": true },
+              { "kind": "patient", "label": "lab.block.patient", "shown": true },
+              { "kind": "results", "label": "lab.block.results", "shown": true, "fields": ["value", "unit", "range"] },
+              { "key": "note-1", "kind": "note", "label": "lab.block.note", "shown": false, "removable": true, "text": "Fasting" }
+            ],
+            "version": 7
+          }
         }
       }
     }

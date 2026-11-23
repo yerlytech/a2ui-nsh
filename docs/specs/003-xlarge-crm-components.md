@@ -185,20 +185,31 @@ A fourth commit of round 2 draws three flow components:
 - **`Steps`**: a progress list of named steps read from the data model at
   `/<answer>` (a list, or `{ steps, current }`); each step's translated name
   is marked done, current or to do (`stepsList` in `model.ts`). Sends nothing.
-- **`Arrange`**: the `items` binding, each showing its `field`, with a
-  move-up and a move-down button per item, so Tab and Enter reorder them on
-  every target, the terminal included (`tests/targets/xlarge.target.test.tsx`
-  runs on `--target tui` and `--target web`). With `add`/`addLabel` a person
-  adds an item (`{ [addItem ?? field]: text }`). Save sends `save` with
-  `{ items, version }`; reset restores the data model's order and, with
-  `reset`, also sends that action with `{ version }`. `confirm` asks before
-  a send; new items from the data model replace the local order.
+- **`Arrange`**: the `items` binding, read as xlarge's lab-report layout
+  blocks (`items = "/layout/blocks"`, `field = "blocks"`): `{ key?, kind,
+  label, shown, kept?, removable?, text?, fields? }`, a missing `key` being
+  `kind` (`kind-<n>` when removable). Each row shows its translated `label`
+  with a move-up and a move-down button, a shown toggle (not for `kept`), a
+  remove button when `removable`, and a text box when it has `text`, so Tab,
+  Enter and Space work it on every target, the terminal included
+  (`tests/targets/xlarge.target.test.tsx` runs on `--target tui` and
+  `--target web`). After a move or an add the new place is announced
+  (`announce()`, the host's `movedText`). `add` is the new item's `kind`,
+  labelled `addItem ?? addLabel`: `{ kind, label, shown: true, removable:
+  true, text: "" }`. `field` is the key the list is sent under: save sends
+  `save` with `{ [field]: items, version }`; reset restores the data
+  model's list and, with `reset`, also sends that action with `{ version }`;
+  both then follow `after` as `Button` does. `confirm` asks before a send;
+  new items from the data model replace the local list. `fields` inside an
+  item is not read (sent back as it came).
 
 New host words: `nextLabel`, `addLabel`, `resetLabel`, `moveUpLabel`,
-`moveDownLabel`, `stepStateLabels`. The xlarge catalog definition names
-these properties without describing them, so `after` (Wizard), the shape of
-`answer`, and `add`/`addItem`/`reset` (Arrange) are read as written above;
-a real xlarge capture should confirm them. Synthetic fixtures again, walked
+`moveDownLabel`, `shownLabel`, `removeLabel`, `movedText`,
+`stepStateLabels`, and the `announce` seam. The xlarge catalog definition names
+these properties without describing them, so `after` (Wizard) and the shape
+of `answer` are read as written above; a real xlarge capture should confirm
+them. `Arrange` follows xlarge's web renderer and its lab-report layout
+surface (`lab_reports/surfaces/layout.toml`). Synthetic fixtures again, walked
 by `src/catalog/xlarge/flows_walk.test.tsx`.
 A further commit of round 2 draws three richer components:
 

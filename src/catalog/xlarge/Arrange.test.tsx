@@ -1,6 +1,7 @@
 import { describe, expect, open, test } from "nsh/test";
 import {
   HARNESS,
+  announced,
   harnessOptions,
   reportedErrors,
   sentActions,
@@ -8,15 +9,31 @@ import {
 } from "./test_support";
 
 const WORDS = {
-  "ar.new": "New column",
-  "ar.add": "Add column",
+  "lab.block.header": "Header",
+  "lab.block.results": "Results",
+  "lab.block.note": "Note",
+  "lab.action.add_note": "Add note",
 };
 
-const COLUMNS = [
-  { key: "a", label: "Alpha" },
-  { key: "b", label: "Beta" },
-  { key: "c", label: "Gamma" },
+// xlarge's lab-report layout blocks (`items = "/layout/blocks"`).
+const BLOCKS = [
+  { kind: "header", label: "lab.block.header", shown: true, kept: true },
+  { kind: "results", label: "lab.block.results", shown: true, fields: ["value", "unit"] },
+  { key: "note-1", kind: "note", label: "lab.block.note", shown: true, removable: true, text: "Fasting" },
 ];
+
+const ARRANGE = {
+  id: "root",
+  component: "Arrange",
+  items: { "@path": "/layout/blocks" },
+  field: "blocks",
+  version: { "@path": "/layout/version" },
+  add: "note",
+  addLabel: "lab.action.add_note",
+  save: "lab.layout.save",
+  reset: "lab.layout.reset",
+  after: "lab.reports",
+};
 
 /** True when each of `words` shows in `texts`, in that order. */
 function inOrder(texts: readonly string[], words: readonly string[]): boolean {
@@ -25,113 +42,109 @@ function inOrder(texts: readonly string[], words: readonly string[]): boolean {
 }
 
 describe("xlarge catalog Arrange", () => {
-  test("moves items up and down, adds one, and saves the new order with version", async () => {
+  test("shows labels, toggles, a remove button and a text box as each item says", async () => {
     const app = await open(
       HARNESS,
-      harnessOptions(
-        surfaceMessages(
-          "s_ar",
-          [
-            {
-              id: "root",
-              component: "Arrange",
-              items: { "@path": "/cols" },
-              field: "label",
-              add: "ar.new",
-              addLabel: "ar.add",
-              addItem: "label",
-              save: "cols.order",
-              version: { "@path": "/v" },
-            },
-          ],
-          { cols: COLUMNS, v: 3 },
-        ),
-        WORDS,
-      ),
+      harnessOptions(surfaceMessages("s_ar", [ARRANGE], { layout: { blocks: BLOCKS, version: 4 } }), WORDS),
     );
     expect(reportedErrors(app)).toEqual([]);
-    expect(inOrder(app.texts(), ["Alpha", "Beta", "Gamma"])).toBe(true);
-    expect(app.shows("label:Move up: Alpha")).toBe(true);
-    expect(app.shows("label:Add column")).toBe(true);
+    expect(inOrder(app.texts(), ["Header", "Results", "Note"])).toBe(true);
+    expect(app.shows("label:Move up: Header")).toBe(true);
+    // A kept item has no shown toggle; only a removable one has a remove button.
+    expect(app.shows("id:s_ar:root:item:0:shown")).toBe(false);
+    expect(app.shows("id:s_ar:root:item:1:shown")).toBe(true);
+    expect(app.shows("label:Shown: Results")).toBe(true);
+    expect(app.shows("id:s_ar:root:item:1:remove")).toBe(false);
+    expect(app.shows("label:Remove: Note")).toBe(true);
+    // Only an item with text has a text box.
+    expect(app.shows("id:s_ar:root:item:1:text")).toBe(false);
+    expect(app.value("id:s_ar:root:item:2:text")).toBe("Fasting");
+    expect(app.shows("label:Add note")).toBe(true);
 
-    // The first item cannot go up nor the last down; nothing to reset yet.
     expect(app.enabled("id:s_ar:root:item:0:up")).toBe(false);
     expect(app.enabled("id:s_ar:root:item:2:down")).toBe(false);
-    expect(app.enabled("id:s_ar:root:reset")).toBe(false);
+  });
 
-    await app.press("id:s_ar:root:item:2:up");
-    expect(inOrder(app.texts(), ["Alpha", "Gamma", "Beta"])).toBe(true);
-    await app.press("id:s_ar:root:item:0:down");
-    expect(inOrder(app.texts(), ["Gamma", "Alpha", "Beta"])).toBe(true);
+  test("moves, toggles, edits, adds and removes, then saves under field with version and follows after", async () => {
+    const app = await open(
+      HARNESS,
+      harnessOptions(surfaceMessages("s_ar_save", [ARRANGE], { layout: { blocks: BLOCKS, version: 4 } }), WORDS),
+    );
+    await app.press("id:s_ar_save:root:item:2:up");
+    expect(inOrder(app.texts(), ["Header", "Note", "Results"])).toBe(true);
+    await app.press("id:s_ar_save:root:item:2:shown");
+    await app.type("id:s_ar_save:root:item:1:text", " 12h");
+    await app.press("id:s_ar_save:root:add");
+    await app.press("id:s_ar_save:root:add");
+    await app.press("id:s_ar_save:root:item:4:remove");
+    // Without addItem the new item's label code is addLabel's.
+    expect(announced(app)).toEqual([
+      "Note moved to 2 of 3",
+      "Add note moved to 4 of 4",
+      "Add note moved to 5 of 5",
+    ]);
 
-    // A blank name adds nothing.
-    await app.press("id:s_ar:root:add");
-    await app.type("id:s_ar:root:new", "  Delta ");
-    await app.press("id:s_ar:root:add");
-    expect(app.value("id:s_ar:root:new")).toBe("");
-    expect(inOrder(app.texts(), ["Gamma", "Alpha", "Beta", "Delta"])).toBe(true);
-
-    await app.press("id:s_ar:root:save");
+    await app.press("id:s_ar_save:root:save");
     expect(sentActions(app)).toEqual([
       {
-        name: "cols.order",
+        name: "lab.layout.save",
         sourceComponentId: "root",
         context: {
-          items: [COLUMNS[2], COLUMNS[0], COLUMNS[1], { label: "Delta" }],
-          version: 3,
+          blocks: [
+            BLOCKS[0],
+            { ...BLOCKS[2], text: "Fasting 12h" },
+            { ...BLOCKS[1], shown: false },
+            { kind: "note", label: "lab.action.add_note", shown: true, removable: true, text: "" },
+          ],
+          version: 4,
         },
       },
+      { name: "screen:lab.reports", sourceComponentId: "root", context: {} },
     ]);
     expect(reportedErrors(app)).toEqual([]);
   });
 
-  test("reset restores the data model's order and, with reset, asks the server to", async () => {
+  test("addItem names the new item's label; reset asks, restores and sends version", async () => {
     const app = await open(
       HARNESS,
       harnessOptions(
         surfaceMessages(
           "s_ar_reset",
-          [
-            {
-              id: "root",
-              component: "Arrange",
-              items: { "@path": "/names" },
-              save: "names.order",
-              reset: "names.reset",
-              confirm: true,
-              version: { "@path": "/v" },
-            },
-          ],
-          { names: ["one", "two"], v: "v9" },
+          [{ ...ARRANGE, addItem: "lab.block.note", confirm: true, after: undefined }],
+          { layout: { blocks: BLOCKS, version: "v9" } },
         ),
+        WORDS,
       ),
     );
+    await app.press("id:s_ar_reset:root:add");
+    expect(app.texts().filter((t) => t === "Note")).toHaveLength(2);
     await app.press("id:s_ar_reset:root:item:0:down");
-    expect(inOrder(app.texts(), ["two", "one"])).toBe(true);
+    expect(inOrder(app.texts(), ["Results", "Header"])).toBe(true);
 
-    // confirm: the reset asks; cancel keeps the new order and sends nothing.
+    // confirm: cancel keeps the changes and sends nothing.
     await app.press("id:s_ar_reset:root:reset");
     expect(app.shows("id:s_ar_reset:root:ask")).toBe(true);
     await app.press("id:s_ar_reset:root:ask:cancel");
-    expect(inOrder(app.texts(), ["two", "one"])).toBe(true);
+    expect(inOrder(app.texts(), ["Results", "Header"])).toBe(true);
     expect(sentActions(app)).toEqual([]);
 
     await app.press("id:s_ar_reset:root:reset");
     await app.press("id:s_ar_reset:root:ask:yes");
-    expect(inOrder(app.texts(), ["one", "two"])).toBe(true);
+    expect(inOrder(app.texts(), ["Header", "Results", "Note"])).toBe(true);
+    expect(app.texts().filter((t) => t === "Note")).toHaveLength(1);
     expect(sentActions(app)).toEqual([
-      { name: "names.reset", sourceComponentId: "root", context: { version: "v9" } },
+      { name: "lab.layout.reset", sourceComponentId: "root", context: { version: "v9" } },
     ]);
   });
 
-  test("new items from the data model replace the local order; without add there is no text box", async () => {
+  test("new items from the data model replace the local list; without add there is no add button", async () => {
     const app = await open(
       HARNESS,
       harnessOptions(
         surfaceMessages(
           "s_ar_live",
-          [{ id: "root", component: "Arrange", items: { "@path": "/rows" }, field: "t", save: "rows.order" }],
-          { rows: [{ t: "x" }, { t: "y" }] },
+          [{ id: "root", component: "Arrange", items: { "@path": "/rows" }, field: "blocks", save: "rows.order" }],
+          { rows: [{ kind: "x" }, { kind: "y" }] },
         ),
       ),
     );
@@ -139,13 +152,13 @@ describe("xlarge catalog Arrange", () => {
     expect(inOrder(app.texts(), ["y", "x"])).toBe(true);
     await app.host.send("a2ui.message", {
       version: "1.0",
-      updateDataModel: { surfaceId: "s_ar_live", path: "/rows", value: [{ t: "p" }, { t: "q" }] },
+      updateDataModel: { surfaceId: "s_ar_live", path: "/rows", value: [{ kind: "p" }, { kind: "q" }] },
     });
     expect(inOrder(app.texts(), ["p", "q"])).toBe(true);
-    expect(app.shows("id:s_ar_live:root:new")).toBe(false);
+    expect(app.shows("id:s_ar_live:root:add")).toBe(false);
     await app.press("id:s_ar_live:root:save");
     expect(sentActions(app)).toEqual([
-      { name: "rows.order", sourceComponentId: "root", context: { items: [{ t: "p" }, { t: "q" }] } },
+      { name: "rows.order", sourceComponentId: "root", context: { blocks: [{ kind: "p" }, { kind: "q" }] } },
     ]);
   });
 });

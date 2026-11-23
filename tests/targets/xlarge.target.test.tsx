@@ -1,9 +1,11 @@
 /**
- * Real-target check of xlarge's `Arrange` (spec 003, round 2): its items are
- * reordered with the keyboard alone (Tab reaches a move button, Enter presses
- * it), then the new order is saved. Uses zero `host.handlers`, so it runs
- * headless, on `--target tui`, and on `--target web`; the sent action shows
- * in the target app's status strip.
+ * Real-target check of xlarge's `Arrange` (spec 003, round 2) with the
+ * lab-report layout shape (`items = "/layout/blocks"`, `field = "blocks"`):
+ * its items are reordered and shown or hidden with the keyboard alone (Tab
+ * reaches a control, Enter presses it, Space toggles), then the layout is
+ * saved under `blocks`. Uses zero `host.handlers`, so it runs headless, on
+ * `--target tui`, and on `--target web`; the sent action shows in the target
+ * app's status strip.
  */
 
 import { describe, expect, open, test } from "nsh/test";
@@ -23,10 +25,10 @@ function arrangeMessages(): unknown[] {
           {
             id: "root",
             component: "Arrange",
-            items: { "@path": "/stages" },
-            field: "title",
-            save: "crm.order_stages",
-            version: { "@path": "/stages_version" },
+            items: { "@path": "/layout/blocks" },
+            field: "blocks",
+            save: "lab.layout.save",
+            version: { "@path": "/layout/version" },
           },
         ],
       },
@@ -37,12 +39,14 @@ function arrangeMessages(): unknown[] {
         surfaceId: SURFACE,
         path: "/",
         value: {
-          stages: [
-            { id: "s1", title: "Lead" },
-            { id: "s2", title: "Offer" },
-            { id: "s3", title: "Won" },
-          ],
-          stages_version: "7",
+          layout: {
+            blocks: [
+              { kind: "header", label: "Header", shown: true, kept: true },
+              { kind: "patient", label: "Patient", shown: true },
+              { kind: "results", label: "Results", shown: true },
+            ],
+            version: 7,
+          },
         },
       },
     },
@@ -56,30 +60,41 @@ function inOrder(texts: readonly string[], words: readonly string[]): boolean {
 }
 
 describe("xlarge Arrange on a real target", () => {
-  test("Tab and Enter reorder the items; save sends the new order with version", async () => {
+  test("Tab, Enter and Space reorder and hide items; save sends them under field with version", async () => {
     const app = await open(APP_ENTRY, {
       host: { params: { catalog: deals.catalog, messages: arrangeMessages() } },
     });
-    await app.waitFor("text:Lead");
-    expect(inOrder(app.texts(), ["Lead", "Offer", "Won"])).toBe(true);
+    await app.waitFor("text:Header");
+    expect(inOrder(app.texts(), ["Header", "Patient", "Results"])).toBe(true);
 
-    // The first item's up button is disabled, so Tab lands on its down button.
+    // The kept first item has no toggle and its up button is disabled, so
+    // Tab lands on its down button.
     await app.keyboard.press("tab");
     await app.keyboard.press("enter");
-    await app.waitUntil(() => inOrder(app.texts(), ["Offer", "Lead", "Won"]));
+    await app.waitUntil(() => inOrder(app.texts(), ["Patient", "Header", "Results"]));
 
-    // Two more Tabs: the second item's up, then its down button.
+    // The first row is now Patient: Tab reaches its shown toggle; Space hides it.
+    await app.keyboard.press("tab");
+    await app.keyboard.press("space");
+
+    // Then the second row's up, then its down button.
     await app.keyboard.press("tab");
     await app.keyboard.press("tab");
     await app.keyboard.press("enter");
-    await app.waitUntil(() => inOrder(app.texts(), ["Offer", "Won", "Lead"]));
+    await app.waitUntil(() => inOrder(app.texts(), ["Patient", "Results", "Header"]));
 
     await app.press("id:target_arrange:root:save");
-    await app.waitFor("text:actions=1 last=crm.order_stages");
+    await app.waitFor("text:actions=1 last=lab.layout.save");
     const sent = app.texts().find((t) => t.startsWith("{")) ?? "";
-    expect(sent).toBe(
-      '{"items":[{"id":"s2","title":"Offer"},{"id":"s3","title":"Won"},{"id":"s1","title":"Lead"}],"version":"7"}',
-    );
+    // Parsed: a target may order an object's keys its own way.
+    expect(JSON.parse(sent)).toEqual({
+      blocks: [
+        { kind: "patient", label: "Patient", shown: false },
+        { kind: "results", label: "Results", shown: true },
+        { kind: "header", label: "Header", shown: true, kept: true },
+      ],
+      version: 7,
+    });
     expect(app.shows("text:errors=0")).toBe(true);
   });
 });

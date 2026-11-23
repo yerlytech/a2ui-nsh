@@ -8,6 +8,7 @@
  */
 
 import { context, platform, signal, type Signal } from "nsh";
+import { announce } from "../../renderer/accessibility";
 import { SHOW_CODES, type StepState, type Translate } from "./model";
 
 /** The draft a `Form` holds for the fields drawn inside it. */
@@ -88,6 +89,20 @@ export interface XlargeRendererOptions {
   readonly moveUpLabel?: string;
   /** An `Arrange` item's move-down button. Default: `"Move down"`. */
   readonly moveDownLabel?: string;
+  /** An `Arrange` item's shown toggle. Default: `"Shown"`. */
+  readonly shownLabel?: string;
+  /** A removable `Arrange` item's remove button. Default: `"Remove"`. */
+  readonly removeLabel?: string;
+  /**
+   * What an `Arrange` announces after a move or an add, with `{name}`,
+   * `{at}` and `{count}` filled. Default: `"{name} moved to {at} of {count}"`.
+   */
+  readonly movedText?: string;
+  /**
+   * Says a message to assistive technology. Default: `announce()` from
+   * `src/renderer/accessibility.ts` (`nsh`'s).
+   */
+  readonly announce?: (message: string) => void;
   /** How a `Steps` list names a done, the current and a to-do step. */
   readonly stepStateLabels?: Readonly<Record<StepState, string>>;
   /** The words over a `Chart`'s total (`sum`). Default: `"Total"`. */
@@ -156,6 +171,10 @@ export interface ResolvedXlargeOptions {
   readonly resetLabel: string;
   readonly moveUpLabel: string;
   readonly moveDownLabel: string;
+  readonly shownLabel: string;
+  readonly removeLabel: string;
+  readonly movedText: string;
+  readonly announce: (message: string) => void;
   readonly stepStateLabels: Readonly<Record<StepState, string>>;
   readonly totalLabel: string;
   readonly terminal: boolean;
@@ -193,6 +212,10 @@ export function resolveXlargeOptions(
     resetLabel: options.resetLabel ?? "Reset",
     moveUpLabel: options.moveUpLabel ?? "Move up",
     moveDownLabel: options.moveDownLabel ?? "Move down",
+    shownLabel: options.shownLabel ?? "Shown",
+    removeLabel: options.removeLabel ?? "Remove",
+    movedText: options.movedText ?? "{name} moved to {at} of {count}",
+    announce: options.announce ?? announce,
     stepStateLabels: options.stepStateLabels ?? {
       done: "Done",
       current: "Current",

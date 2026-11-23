@@ -20,6 +20,9 @@ import {
   type LiveRegion,
 } from "nsh";
 
+/** `nsh`'s `announce()`: says a message to assistive technology on every target. */
+export { announce };
+
 /** A2UI v1.0 `@accessibility.live` values (`common_types.json#/$defs/AccessibilityAttributes`). */
 export type LiveRegionMode = "off" | "polite" | "assertive";
 

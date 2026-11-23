@@ -35,6 +35,7 @@ export function harnessOptions(
         "a2ui.error": null,
         "a2ui.exception": null,
         "a2ui.openUrl": null,
+        "a2ui.announce": null,
       },
     },
   };
@@ -55,6 +56,16 @@ export function sentActions(app: {
     .filter((post) => post.name === "a2ui.action")
     .map((post) => (post.data as { action: SentAction }).action)
     .map(({ name, sourceComponentId, context }) => ({ name, sourceComponentId, context }));
+}
+
+/** What the renderers announced, oldest first. */
+export function announced(app: {
+  host: { posts(): { name: string; data?: unknown }[] };
+}): string[] {
+  return app.host
+    .posts()
+    .filter((post) => post.name === "a2ui.announce")
+    .map((post) => (post.data as { message: string }).message);
 }
 
 /** Errors and exceptions the harness reported. */

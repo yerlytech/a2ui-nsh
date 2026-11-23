@@ -34,8 +34,11 @@ const WORDS: Record<string, string> = {
   "onboard.step.company": "Company details",
   "onboard.step.bank": "Bank account",
   "onboard.step.invite": "Invite the team",
-  "crm.field.stage": "New stage",
-  "crm.action.add_stage": "Add stage",
+  "lab.block.header": "Header",
+  "lab.block.patient": "Patient",
+  "lab.block.results": "Results",
+  "lab.block.note": "Note",
+  "lab.action.add_note": "Add note",
   "action.save": "Save",
 };
 
@@ -67,11 +70,11 @@ describe("xlarge Wizard, Steps and Arrange fixtures", () => {
     const app = await open(HARNESS, {
       host: {
         params: { catalog: XLARGE_CATALOG, messages: ALL_MESSAGES, translations: WORDS, strictMode: true },
-        handlers: { "a2ui.action": null, "a2ui.error": null, "a2ui.exception": null },
+        handlers: { "a2ui.action": null, "a2ui.error": null, "a2ui.exception": null, "a2ui.announce": null },
       },
     });
     expect(reportedErrors(app)).toEqual([]);
-    for (const words of ["1 / 2", "Company", "Name *", "City", "Next", "Company details", "Bank account", "Invite the team", "Lead", "Offer", "Won", "Add stage", "Save", "Reset"]) {
+    for (const words of ["1 / 2", "Company", "Name *", "City", "Next", "Company details", "Bank account", "Invite the team", "Header", "Patient", "Results", "Note", "Add note", "Save", "Reset"]) {
       expect(app.texts()).toContain(words);
     }
 
@@ -105,19 +108,21 @@ describe("xlarge Wizard, Steps and Arrange fixtures", () => {
     expect(app.texts()).toContain("1 / 2");
     expect(app.value("id:synthetic.wizard:name")).toBe("");
 
-    // Arrange: move Lead down, add a stage, save (asks), then reset (asks).
+    // Arrange: move Header down, show the note, add a note, save (asks), then reset (asks).
+    expect(app.shows("id:synthetic.arrange:root:item:0:shown")).toBe(false);
+    expect(app.value("id:synthetic.arrange:root:item:3:text")).toBe("Fasting");
     await app.press("id:synthetic.arrange:root:item:0:down");
-    const moved = positions(app.texts(), ["Offer", "Lead", "Won"]);
+    const moved = positions(app.texts(), ["Patient", "Header", "Results"]);
     expect(moved[0]! < moved[1]! && moved[1]! < moved[2]!).toBe(true);
-    await app.type("id:synthetic.arrange:root:new", "Lost");
+    await app.press("id:synthetic.arrange:root:item:3:shown");
     await app.press("id:synthetic.arrange:root:add");
-    expect(app.texts()).toContain("Lost");
+    expect(app.texts().filter((t) => t === "Note")).toHaveLength(2);
     await app.press("id:synthetic.arrange:root:save");
     await app.press("id:synthetic.arrange:root:ask:yes");
     await app.press("id:synthetic.arrange:root:reset");
     await app.press("id:synthetic.arrange:root:ask:yes");
-    expect(app.texts()).not.toContain("Lost");
-    const restored = positions(app.texts(), ["Lead", "Offer", "Won"]);
+    expect(app.texts().filter((t) => t === "Note")).toHaveLength(1);
+    const restored = positions(app.texts(), ["Header", "Patient", "Results"]);
     expect(restored[0]! < restored[1]! && restored[1]! < restored[2]!).toBe(true);
 
     expect(sentActions(app)).toEqual([
@@ -128,19 +133,22 @@ describe("xlarge Wizard, Steps and Arrange fixtures", () => {
       },
       { name: "screen:crm.deals", sourceComponentId: "root", context: {} },
       {
-        name: "crm.order_stages",
+        name: "lab.layout.save",
         sourceComponentId: "root",
         context: {
-          items: [
-            { id: "s2", title: "Offer" },
-            { id: "s1", title: "Lead" },
-            { id: "s3", title: "Won" },
-            { title: "Lost" },
+          blocks: [
+            { kind: "patient", label: "lab.block.patient", shown: true },
+            { kind: "header", label: "lab.block.header", shown: true, kept: true },
+            { kind: "results", label: "lab.block.results", shown: true, fields: ["value", "unit", "range"] },
+            { key: "note-1", kind: "note", label: "lab.block.note", shown: true, removable: true, text: "Fasting" },
+            { kind: "note", label: "lab.block.note", shown: true, removable: true, text: "" },
           ],
-          version: "7",
+          version: 7,
         },
       },
-      { name: "crm.reset_stages", sourceComponentId: "root", context: { version: "7" } },
+      { name: "screen:lab.reports", sourceComponentId: "root", context: {} },
+      { name: "lab.layout.reset", sourceComponentId: "root", context: { version: 7 } },
+      { name: "screen:lab.reports", sourceComponentId: "root", context: {} },
     ]);
     expect(reportedErrors(app)).toEqual([]);
   });
