@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renderers for xlarge's own A2UI 1.0 catalog (`tech.yerly.xlarge/v1`):
   `Card`, `Field`, `Form`, and `Table`, enough to draw its `crm.deals` screen,
   with a `translate` seam for its i18n codes (spec 003).
+- xlarge's `Text`, `Toast`, `Refusal`, `Image`, and `QrCode` (spec 003,
+  round 2), with renderer options `toastMs`, `backLabel`, `dismissLabel`, and
+  a pure QR encoder (`encodeQr`, no new dependency).
 - `NodeResolver.dispatchNodeAction` to send an action payload on behalf of a
   node (spec 003).
 - `docs/catalog-parity.md`: components drawn per catalog.

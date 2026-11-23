@@ -41,18 +41,26 @@ from `src/catalog/xlarge/` (spec 003).
 
 All 14 Basic Catalog functions are implemented as well (`docs/conformance.md`).
 
-## xlarge catalog v1: 4 of 22
+## xlarge catalog v1: 9 of 22
 
-Before spec 003: 0 of 22. The four drawn now are the ones xlarge's
-`crm.deals` screen uses.
+Before spec 003: 0 of 22. Spec 003 drew the four xlarge's `crm.deals`
+screen uses; its round 2 (night spec 028) added `Text`, `Toast`, `Refusal`,
+`Image`, and `QrCode`.
 
-| Component | Drawn | Renderer | Used by `crm.deals` |
-|---|---|---|---|
-| Card | yes | `src/catalog/xlarge/Card.tsx` | yes (root) |
-| Field | yes | `src/catalog/xlarge/Field.tsx` | yes (10) |
-| Form | yes | `src/catalog/xlarge/Form.tsx` | yes (2) |
-| Table | yes | `src/catalog/xlarge/Table.tsx` | yes (1) |
-| Text, Button, Toast, Detail, Metric, Wizard, Confirm, Refusal, Columns, Image, QrCode, ChequeLeaf, Steps, Chart, Arrange, Preview, Conversation, Calendar | no | — | no |
+| Component | Drawn | Renderer | Tests | Fixture |
+|---|---|---|---|---|
+| Card | yes | `src/catalog/xlarge/Card.tsx` | `Card.test.tsx`, `crm_deals.test.tsx` | `crm-deals.json` (real, root) |
+| Field | yes | `src/catalog/xlarge/Field.tsx` | `Field.test.tsx`, `crm_deals.test.tsx` | `crm-deals.json` (real, 10) |
+| Form | yes | `src/catalog/xlarge/Form.tsx` | `Form.test.tsx`, `crm_deals.test.tsx` | `crm-deals.json` (real, 2) |
+| Table | yes | `src/catalog/xlarge/Table.tsx` | `Table.test.tsx`, `crm_deals.test.tsx` | `crm-deals.json` (real, 1) |
+| Text | yes | `src/catalog/xlarge/Text.tsx` | `Text.test.tsx`, `text_walk.test.tsx` | `text-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Toast | yes | `src/catalog/xlarge/Toast.tsx` | `Toast.test.tsx`, `text_walk.test.tsx` | `toast-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Refusal | yes | `src/catalog/xlarge/Refusal.tsx` | `Refusal.test.tsx`, `text_walk.test.tsx` | `refusal-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Image | yes | `src/catalog/xlarge/Image.tsx` | `Image.test.tsx`, `text_walk.test.tsx` | `image-synthetic.json` (synthetic: no real xlarge screen yet) |
+| QrCode | yes | `src/catalog/xlarge/QrCode.tsx` | `QrCode.test.tsx`, `model.test.ts` (encoder), `text_walk.test.tsx` | `qrcode-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Button, Detail, Metric, Wizard, Confirm, Columns, ChequeLeaf, Steps, Chart, Arrange, Preview, Conversation, Calendar | no | — | — | — |
+
+Fixtures live in `tests/fixtures/xlarge/`.
 
 ### Properties drawn
 
@@ -66,6 +74,11 @@ ignored when drawn.
 | Field | `field`, `input`, `label`, `example`, `checks` (`required`), `default`, `options`, `optionPrefix`, `from`, `value`, `show` | `accept`, `article`, `autofill`, `draft`, `labelParams`, `links`, `optionsAt`, `pageTitle`, `retention`, `scan`, `searchInput`, `suggest`, `when` |
 | Form | `children`, `title`, `submit`, `submitLabel`, `context`, `dialog`, `filters`, `row` | `after`, `answer`, `confirm`, `icon`, `import`, `matrix`, `matrixField`, `once`, `pair`, `variant*`, `version`, `pageTitle`, `when`, `unless` |
 | Table | `rows`, `columns` (`field`, `label`, `format`, `enumPrefix`, `grow`), `title`, `rowAction`, `rowOpens`, `search`, `searchAction`, `searchInput` | `board`, `boardFirst`, `build`, `card`, `cards`, `group*`, `listAction`, `listInput` (paging), `move`, `moveField`, `searchText`, `pageTitle`, `when`, `unless` |
+| Text | `text` (shown as it is, wins), `code` (i18n code), `params` (fills `{name}` placeholders as typed text), `tone` (`muted`, `strong`, `accent`, `danger` and their synonyms; unknown tones draw plain) | `pageTitle`, `when`, `unless` |
+| Toast | `code`, `params`: shown once, passes after `toastMs` (host option, default 5000 ms; `0` keeps it), on swipe, or on its close button; the same message does not return while the component stays | `pageTitle` |
+| Refusal | `code`, `hint` (codes), `back` (its button sends the event `screen:<back>` with an empty context), `backLabel` (code; default the host's `backLabel`, `"Back"`) | `pageTitle` |
+| Image | `src` (data binding; unsafe schemes refused as in the Basic `Image`), `label` (code, the accessible name) | `pageTitle` |
+| QrCode | `src` (data binding, wins), `link` (data binding, encoded by the pure encoder in `model.ts`: byte mode, level M, versions 1–40), `label` (code: accessible name and caption; without it the link names the code) | `pageTitle`, `when` |
 
 ### Field inputs
 

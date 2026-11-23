@@ -61,6 +61,15 @@ export interface XlargeRendererOptions {
   readonly searchPlaceholder?: string;
   /** The label of a dialog form's cancel button. Default: `"Cancel"`. */
   readonly cancelLabel?: string;
+  /** The label of a `Refusal` without `backLabel`. Default: `"Back"`. */
+  readonly backLabel?: string;
+  /** The name of a toast's close button. Default: `"Dismiss"`. */
+  readonly dismissLabel?: string;
+  /**
+   * How long a `Toast` shows before it passes, in milliseconds; `0` keeps it
+   * until it is dismissed. Default: `5000`.
+   */
+  readonly toastMs?: number;
 }
 
 /** `XlargeRendererOptions` with every default filled in. */
@@ -70,6 +79,9 @@ export interface ResolvedXlargeOptions {
   readonly emptyMessage: string;
   readonly searchPlaceholder: string;
   readonly cancelLabel: string;
+  readonly backLabel: string;
+  readonly dismissLabel: string;
+  readonly toastMs: number;
 }
 
 /** Fills in the defaults of `XlargeRendererOptions`. */
@@ -82,5 +94,11 @@ export function resolveXlargeOptions(
     emptyMessage: options.emptyMessage ?? "No rows",
     searchPlaceholder: options.searchPlaceholder ?? "Search",
     cancelLabel: options.cancelLabel ?? "Cancel",
+    backLabel: options.backLabel ?? "Back",
+    dismissLabel: options.dismissLabel ?? "Dismiss",
+    toastMs:
+      options.toastMs !== undefined && Number.isFinite(options.toastMs) && options.toastMs >= 0
+        ? options.toastMs
+        : 5000,
   };
 }

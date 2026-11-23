@@ -68,3 +68,29 @@ server sent it, so the renderers are measured against what xlarge emits.
 - [x] `just lint`, `just test`, and `just conformance` pass.
 - [x] `docs/catalog-parity.md` lists coverage before and after.
 - [ ] Maintainer approval.
+
+## Round 2 (night spec 028)
+
+Owner-approved 2026-11-23 (night spec 028, task 4). Same Design as above,
+five more components of `tech.yerly.xlarge/v1`, drawn in this commit:
+
+- **`Text`**: `text` (data, shown as it is) or the translation of `code`
+  with `{name}` placeholders filled from `params` as typed text; `tone`
+  picks colour and weight, unknown tones draw plain.
+- **`Toast`**: the translated `code` + `params`, shown once. It passes after
+  the host's `toastMs` (default 5000 ms, `0` keeps it), on swipe, or on its
+  close button; the same message does not return.
+- **`Refusal`**: the translated `code` and `hint`; with `back`, a button
+  (`backLabel` code, or the host's word) sends `{ event: { name:
+  "screen:<back>", context: {} } }`, the action xlarge opens screens with.
+- **`Image`**: the picture at `src` (data binding, unsafe schemes refused),
+  named by the translated `label`; a missing or failed picture leaves a
+  named placeholder.
+- **`QrCode`**: `src` wins; otherwise `link` is encoded by a pure QR encoder
+  in `model.ts` (Native Shell 0.6.1 has no QR primitive; no dependency added)
+  and drawn on a `Canvas`, dark on light with a four-module quiet zone.
+
+`when`/`unless` stay not read. No real xlarge capture of these components
+was available, so each has a synthetic fixture
+(`tests/fixtures/xlarge/<component>-synthetic.json`, `source` says so),
+walked by `src/catalog/xlarge/text_walk.test.tsx`.

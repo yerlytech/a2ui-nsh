@@ -1,0 +1,25 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.refusal", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.refusal",
+        "components": [
+          {
+            "id": "root",
+            "component": "Refusal",
+            "code": "crm.refused.closed_deal",
+            "hint": "crm.refused.reopen_first",
+            "back": "crm.deals",
+            "backLabel": "crm.action.back_to_deals"
+          }
+        ]
+      }
+    }
+  ]
+}

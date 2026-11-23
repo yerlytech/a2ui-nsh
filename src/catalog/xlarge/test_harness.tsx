@@ -5,7 +5,8 @@
  * - `catalog`: xlarge's A2UI 1.0 catalog definition (`tech.yerly.xlarge/v1`);
  * - `messages`: the A2UI messages to process at startup;
  * - `translations`: optional i18n code → words map (missing codes show as-is);
- * - `strictMode`: optional, validates every message strictly.
+ * - `strictMode`: optional, validates every message strictly;
+ * - `toastMs`: optional, how long a `Toast` shows (the renderer option).
  *
  * Reports outbound actions and errors via `host.post("a2ui.*", ...)`, and
  * answers `a2ui.readData` with the surface data at a path.
@@ -45,6 +46,7 @@ function XlargeHarnessApp(): JSX.Element {
   const registry = createBasicCatalogRegistry();
   registerXlargeCatalogComponents(registry, {
     translate: (code) => translations[code] ?? code,
+    toastMs: typeof params["toastMs"] === "number" ? params["toastMs"] : undefined,
   });
 
   const store = new A2uiStore({

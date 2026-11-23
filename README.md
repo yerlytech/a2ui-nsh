@@ -24,8 +24,9 @@ The protocol core also implements the 14 standard Basic Catalog functions and `@
 ## xlarge catalog components
 
 xlarge, an ERP, sends its screens against its own A2UI 1.0 catalog
-(`tech.yerly.xlarge/v1`). `src/catalog/xlarge/` draws the four components its
-`crm.deals` screen uses: `Card`, `Field`, `Form`, and `Table`. Register them
+(`tech.yerly.xlarge/v1`). `src/catalog/xlarge/` draws nine of its 22
+components: the four its `crm.deals` screen uses (`Card`, `Field`, `Form`,
+`Table`) and `Text`, `Toast`, `Refusal`, `Image`, and `QrCode`. Register them
 with `registerXlargeCatalogComponents(registry, { translate })` and register
 xlarge's catalog definition on the store. Coverage per catalog is in
 [`docs/catalog-parity.md`](docs/catalog-parity.md).

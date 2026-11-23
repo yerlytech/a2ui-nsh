@@ -1,17 +1,87 @@
 import { describe, expect, test } from "nsh/test";
 import {
+  encodeQr,
   eventPayload,
   fieldControl,
   fieldOptions,
+  fillParams,
   formatAmount,
   formatCell,
   heldValues,
+  messageText,
   missingRequired,
   recordRowsPath,
+  reedSolomonRemainder,
+  screenAction,
   tableColumns,
+  textTone,
+  type QrMatrix,
 } from "./model";
 
 const upper = (code: string): string => code.toUpperCase();
+
+/** The 15 format bits of the copy around the top-left finder. */
+function formatBitsTopLeft(qr: QrMatrix): number {
+  const cells: [number, number][] = [];
+  for (let i = 0; i <= 5; i++) cells.push([8, i]);
+  cells.push([8, 7], [8, 8], [7, 8]);
+  for (let i = 9; i < 15; i++) cells.push([14 - i, 8]);
+  return cells.reduce((bits, [x, y], i) => bits | ((qr.rows[y]![x]! ? 1 : 0) << i), 0);
+}
+
+/** The 15 format bits of the split copy (top-right row, bottom-left column). */
+function formatBitsSplit(qr: QrMatrix): number {
+  let bits = 0;
+  for (let i = 0; i < 8; i++) bits |= (qr.rows[8]![qr.size - 1 - i]! ? 1 : 0) << i;
+  for (let i = 8; i < 15; i++) bits |= (qr.rows[qr.size - 15 + i]![8]! ? 1 : 0) << i;
+  return bits;
+}
+
+/** Reads a version-1 code back: unmask by its format bits, then walk the zigzag. */
+function readVersion1(qr: QrMatrix): number[] {
+  const size = qr.size;
+  const mask = ((formatBitsTopLeft(qr) ^ 0x5412) >>> 10) & 0b111;
+  const isFunction = (x: number, y: number): boolean =>
+    (x < 9 && y < 9) || (x >= size - 8 && y < 9) || (x < 9 && y >= size - 8) || x === 6 || y === 6;
+  const masks = [
+    (x: number, y: number) => (x + y) % 2 === 0,
+    (_x: number, y: number) => y % 2 === 0,
+    (x: number) => x % 3 === 0,
+    (x: number, y: number) => (x + y) % 3 === 0,
+    (x: number, y: number) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0,
+    (x: number, y: number) => ((x * y) % 2) + ((x * y) % 3) === 0,
+    (x: number, y: number) => (((x * y) % 2) + ((x * y) % 3)) % 2 === 0,
+    (x: number, y: number) => (((x + y) % 2) + ((x * y) % 3)) % 2 === 0,
+  ];
+  const bits: number[] = [];
+  for (let right = size - 1; right >= 1; right -= 2) {
+    if (right === 6) right = 5;
+    for (let vert = 0; vert < size; vert++) {
+      for (let j = 0; j < 2; j++) {
+        const x = right - j;
+        const y = ((right + 1) & 2) === 0 ? size - 1 - vert : vert;
+        if (!isFunction(x, y)) {
+          bits.push((qr.rows[y]![x]! !== masks[mask]!(x, y)) ? 1 : 0);
+        }
+      }
+    }
+  }
+  const bytes: number[] = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(bits.slice(i, i + 8).reduce((b, bit) => (b << 1) | bit, 0));
+  }
+  return bytes;
+}
+
+function finderAt(qr: QrMatrix, left: number, top: number): boolean {
+  for (let dy = 0; dy < 7; dy++) {
+    for (let dx = 0; dx < 7; dx++) {
+      const ring = Math.max(Math.abs(dx - 3), Math.abs(dy - 3));
+      if (qr.rows[top + dy]![left + dx] !== (ring !== 2)) return false;
+    }
+  }
+  return true;
+}
 
 describe("xlarge catalog model", () => {
   test("maps every input kind to a control, unknown kinds to text", () => {
@@ -111,5 +181,94 @@ describe("xlarge catalog model", () => {
     expect(eventPayload("save", { a: 1, nested: { "@path": "/x" } })).toEqual({
       event: { name: "save", context: { a: 1, nested: { "@@path": "/x" } } },
     });
+  });
+
+  test("text tones map onto drawn tones, unknown tones to plain", () => {
+    expect(textTone("muted")).toBe("muted");
+    expect(textTone("hint")).toBe("muted");
+    expect(textTone("strong")).toBe("strong");
+    expect(textTone("success")).toBe("accent");
+    expect(textTone("danger")).toBe("danger");
+    expect(textTone("warning")).toBe("danger");
+    expect(textTone("sparkly")).toBe("plain");
+    expect(textTone(undefined)).toBe("plain");
+  });
+
+  test("params fill placeholders as typed text and leave unknown ones", () => {
+    expect(fillParams("{n} deals worth {total}", { n: 3, total: "25000.50" })).toBe("3 deals worth 25000.50");
+    expect(fillParams("Hello {who}", {})).toBe("Hello {who}");
+    expect(fillParams("Hello {who}", undefined)).toBe("Hello {who}");
+    expect(fillParams("{a}{a}", { a: null })).toBe("");
+    const words = (code: string) => (code === "crm.saved" ? "Saved {title}" : code);
+    expect(messageText("crm.saved", { title: "Forklift" }, words)).toBe("Saved Forklift");
+    expect(messageText("crm.other", "junk", words)).toBe("crm.other");
+  });
+
+  test("back names a screen action", () => {
+    expect(screenAction("crm.deals")).toBe("screen:crm.deals");
+    expect(screenAction("screen:crm.deal")).toBe("screen:crm.deal");
+    expect(screenAction("")).toBe(undefined);
+    expect(screenAction(undefined)).toBe(undefined);
+  });
+
+  test("Reed–Solomon matches the published HELLO WORLD 1-M codewords", () => {
+    const data = [32, 91, 11, 120, 209, 114, 220, 77, 67, 64, 236, 17, 236, 17, 236, 17];
+    expect(reedSolomonRemainder(data, 10)).toEqual([196, 35, 39, 119, 235, 215, 231, 226, 93, 23]);
+  });
+
+  test("a QR code picks the smallest version and draws its fixed patterns", () => {
+    const qr = encodeQr("https://xlarge.test/pay/42")!;
+    expect(qr.version).toBe(2);
+    expect(qr.size).toBe(25);
+    expect(qr.rows).toHaveLength(25);
+    expect(finderAt(qr, 0, 0)).toBe(true);
+    expect(finderAt(qr, qr.size - 7, 0)).toBe(true);
+    expect(finderAt(qr, 0, qr.size - 7)).toBe(true);
+    for (let i = 8; i < qr.size - 8; i++) {
+      expect(qr.rows[6]![i]).toBe(i % 2 === 0);
+      expect(qr.rows[i]![6]).toBe(i % 2 === 0);
+    }
+    // The dark module, and the alignment pattern centred at (18, 18).
+    expect(qr.rows[qr.size - 8]![8]).toBe(true);
+    expect(qr.rows[18]![18]).toBe(true);
+    expect(qr.rows[17]![18]).toBe(false);
+    expect(qr.rows[16]![18]).toBe(true);
+    // Both format copies agree and name error correction level M.
+    const format = formatBitsTopLeft(qr);
+    expect(formatBitsSplit(qr)).toBe(format);
+    expect(((format ^ 0x5412) >>> 13) & 0b11).toBe(0);
+  });
+
+  test("a version 1 code reads back as its bytes and error correction", () => {
+    const qr = encodeQr("Hi xlarge")!;
+    expect(qr.version).toBe(1);
+    const codewords = readVersion1(qr);
+    expect(codewords).toHaveLength(26);
+    const data = codewords.slice(0, 16);
+    expect(reedSolomonRemainder(data, 10)).toEqual(codewords.slice(16));
+    // Byte mode (0100), length 9, then the UTF-8 bytes.
+    const bits = data.map((b) => b.toString(2).padStart(8, "0")).join("");
+    expect(bits.slice(0, 4)).toBe("0100");
+    expect(parseInt(bits.slice(4, 12), 2)).toBe(9);
+    const text = Array.from({ length: 9 }, (_, i) =>
+      String.fromCharCode(parseInt(bits.slice(12 + i * 8, 20 + i * 8), 2)),
+    ).join("");
+    expect(text).toBe("Hi xlarge");
+  });
+
+  test("version 7 and up carry version information; too much text does not fit", () => {
+    const qr = encodeQr("x".repeat(110))!;
+    expect(qr.version).toBe(7);
+    expect(qr.size).toBe(45);
+    let bits = 0;
+    for (let i = 0; i < 18; i++) {
+      const a = qr.size - 11 + (i % 3);
+      const b = Math.floor(i / 3);
+      expect(qr.rows[a]![b]).toBe(qr.rows[b]![a]);
+      bits |= (qr.rows[b]![a]! ? 1 : 0) << i;
+    }
+    expect(bits).toBe(0x07c94);
+    expect(encodeQr("é".repeat(1165))!.version).toBe(40);
+    expect(encodeQr("x".repeat(2332))).toBe(undefined);
   });
 });

@@ -1,0 +1,24 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.toast", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.toast",
+        "components": [
+          { "id": "root", "component": "Card", "plain": true, "children": ["saved"] },
+          {
+            "id": "saved",
+            "component": "Toast",
+            "code": "crm.deal.saved",
+            "params": { "title": "Forklift fleet" }
+          }
+        ]
+      }
+    }
+  ]
+}

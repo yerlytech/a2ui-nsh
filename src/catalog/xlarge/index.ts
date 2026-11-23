@@ -3,7 +3,8 @@
  *
  * xlarge (an ERP) sends its screens against a custom catalog it publishes as
  * an A2UI 1.0 catalog definition. This module draws the four components its
- * `crm.deals` screen uses: `Card`, `Field`, `Form`, and `Table`. The catalog
+ * `crm.deals` screen uses (`Card`, `Field`, `Form`, `Table`) and `Text`,
+ * `Toast`, `Refusal`, `Image`, and `QrCode` (spec 003, round 2). The catalog
  * definition itself is xlarge's: register it on the store (`Catalog.fromJson`)
  * next to these renderers. None of this is part of the A2UI Basic Catalog.
  */
@@ -16,10 +17,20 @@ import { createXlargeCard } from "./Card";
 import { resolveXlargeOptions, type XlargeRendererOptions } from "./context";
 import { createXlargeField } from "./Field";
 import { createXlargeForm } from "./Form";
+import { createXlargeImage } from "./Image";
+import { createXlargeQrCode } from "./QrCode";
+import { createXlargeRefusal } from "./Refusal";
 import { createXlargeTable } from "./Table";
+import { createXlargeText } from "./Text";
+import { createXlargeToast } from "./Toast";
 import { XLARGE_CATALOG_V1_ID } from "./model";
 
 export { createXlargeCard } from "./Card";
+export { createXlargeImage } from "./Image";
+export { createXlargeQrCode } from "./QrCode";
+export { createXlargeRefusal } from "./Refusal";
+export { createXlargeText } from "./Text";
+export { createXlargeToast } from "./Toast";
 export {
   FormDraftContext,
   createFormDraft,
@@ -34,26 +45,44 @@ export { createXlargeTable } from "./Table";
 export {
   SHOW_CODES,
   XLARGE_CATALOG_V1_ID,
+  encodeQr,
   eventPayload,
   fieldControl,
   fieldOptions,
+  fillParams,
   formatAmount,
   formatCell,
   heldValues,
   isBlank,
+  messageText,
   missingRequired,
   recordRowsPath,
+  reedSolomonRemainder,
+  screenAction,
   tableColumns,
   tableRows,
+  textTone,
   type FieldControl,
   type FieldOption,
   type FieldSpec,
+  type QrMatrix,
   type TableColumn,
+  type TextTone,
   type Translate,
 } from "./model";
 
-/** The xlarge components this library draws (4 of the catalog's 22). */
-export const XLARGE_DRAWN_COMPONENTS = ["Card", "Field", "Form", "Table"] as const;
+/** The xlarge components this library draws (9 of the catalog's 22). */
+export const XLARGE_DRAWN_COMPONENTS = [
+  "Card",
+  "Field",
+  "Form",
+  "Table",
+  "Text",
+  "Toast",
+  "Refusal",
+  "Image",
+  "QrCode",
+] as const;
 
 /** Builds the xlarge renderers with `options` (translation, fixed words). */
 export function createXlargeRenderers(
@@ -65,6 +94,11 @@ export function createXlargeRenderers(
     Field: createXlargeField(resolved),
     Form: createXlargeForm(resolved),
     Table: createXlargeTable(resolved),
+    Text: createXlargeText(resolved),
+    Toast: createXlargeToast(resolved),
+    Refusal: createXlargeRefusal(resolved),
+    Image: createXlargeImage(resolved),
+    QrCode: createXlargeQrCode(resolved),
   };
 }
 

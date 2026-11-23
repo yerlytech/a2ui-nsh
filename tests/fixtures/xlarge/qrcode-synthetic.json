@@ -1,0 +1,37 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.qrcode", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.qrcode",
+        "components": [
+          { "id": "root", "component": "Card", "title": "crm.title.pay", "children": ["pay", "receipt"] },
+          { "id": "pay", "component": "QrCode", "link": { "@path": "/payLink" }, "label": "crm.pay.scan" },
+          {
+            "id": "receipt",
+            "component": "QrCode",
+            "src": { "@path": "/receiptQr" },
+            "link": { "@path": "/payLink" },
+            "label": "crm.pay.receipt"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "synthetic.qrcode",
+        "path": "/",
+        "value": {
+          "payLink": "https://xlarge.test/pay/d1",
+          "receiptQr": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+        }
+      }
+    }
+  ]
+}
