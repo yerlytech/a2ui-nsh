@@ -17,10 +17,11 @@
             "record": { "@path": "/deal" },
             "rows": [
               { "field": "title", "label": "crm.field.title" },
-              { "field": "amount", "label": "crm.field.amount", "format": "money" },
+              { "field": "amount", "label": "crm.field.amount", "format": "money", "edit": { "input": "money" } },
               { "field": "stage", "label": "crm.field.stage", "enumPrefix": "crm.stage." },
               { "field": "closes", "label": "crm.field.closes", "format": "date" },
-              { "field": "note", "label": "crm.field.note" }
+              { "field": "note", "label": "crm.field.note", "edit": { "input": "note" } },
+              { "field": "lost", "label": "crm.field.lost" }
             ],
             "skipEmpty": true,
             "update": "crm.deal.update"
@@ -36,11 +37,13 @@
         "value": {
           "deal": {
             "id": "deal-7",
+            "version": 3,
             "title": "Forklift fleet",
             "amount": "25000.5",
             "stage": "won",
             "closes": "2026-12-15T00:00:00Z",
-            "note": ""
+            "note": "",
+            "lost": ""
           }
         }
       }

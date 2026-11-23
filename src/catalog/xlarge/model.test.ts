@@ -11,7 +11,9 @@ import {
   moveItem,
   newArrangeItem,
   patchArrangeItem,
-  stepsList,
+  opensContext,
+  stepName,
+  stepsAnswer,
   wizardStep,
   calendarMonth,
   chartKind,
@@ -20,6 +22,8 @@ import {
   pieShares,
   sumDecimals,
   draftLines,
+  draftNames,
+  previewBody,
   literalContext,
   changeDirection,
   changePercent,
@@ -30,7 +34,8 @@ import {
   encodeQr,
   eventPayload,
   metricText,
-  recordContext,
+  detailEditContext,
+  sameValue,
   fieldControl,
   fieldOptions,
   fillParams,
@@ -270,34 +275,28 @@ describe("xlarge catalog model", () => {
     expect(askStep("cancel", true)).toEqual({ asking: false, send: false });
   });
 
-  test("draft lines: labelled values, formatted amounts as text, plain entries", () => {
-    const words: Record<string, string> = { "f.title": "Title", "f.amount": "Amount", "s.open": "Open" };
-    const translate = (code: string): string => words[code] ?? code;
-    expect(
-      draftLines(
-        [
-          { label: "f.title", value: "Forklift fleet" },
-          { label: "f.amount", value: "25000.5", format: "money" },
-          { field: "state", value: "open", enumPrefix: "s." },
-          { value: 3 },
-          "a plain line",
-          7,
-          null,
-          { partner: "acme", tags: ["a", "b"] },
-        ],
-        translate,
-      ),
-    ).toEqual([
-      { label: "Title", value: "Forklift fleet" },
-      { label: "Amount", value: "25,000.50" },
-      { label: "state", value: "Open" },
-      { value: "3" },
-      { value: "a plain line" },
-      { value: "7" },
-      { label: "partner", value: "acme" },
-      { label: "tags", value: "a, b" },
+  test("Preview: draft names, the body once every named field holds a value, lines as typed", () => {
+    const names = draftNames(["title", "amount", 3, "", null, { field: "x" }]);
+    expect(names).toEqual(["title", "amount"]);
+    expect(draftNames(undefined)).toEqual([]);
+
+    // Not every named field holds a value yet: nothing is asked.
+    expect(previewBody(names, "partner", { title: "Fleet" })).toBeUndefined();
+    expect(previewBody(names, "partner", { title: "Fleet", amount: "25000.5", partner: "p1", other: 1 })).toEqual({
+      draft: { title: "Fleet", amount: "25000.5" },
+      about: "p1",
+    });
+    // `about` goes along only as non-empty text.
+    expect(previewBody(names, "partner", { title: "", amount: "1", partner: "" })).toEqual({
+      draft: { title: "", amount: "1" },
+    });
+    expect(previewBody([], undefined, {})).toEqual({ draft: {} });
+
+    expect(draftLines(["amount", "tags", "missing"], { amount: "25000.50", tags: ["a", "b"] })).toEqual([
+      { field: "amount", value: "25000.50" },
+      { field: "tags", value: "a, b" },
+      { field: "missing", value: "" },
     ]);
-    expect(draftLines(undefined, translate)).toEqual([]);
   });
 
   test("text tones map onto drawn tones, unknown tones to plain", () => {
@@ -452,10 +451,34 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf helpers", () => {
     expect(detailEntries(rows, null, true, upper)).toEqual([]);
   });
 
-  test("recordContext carries the record's id only", () => {
-    expect(recordContext({ id: 7, title: "x" })).toEqual({ id: 7 });
-    expect(recordContext({ title: "x" })).toEqual({});
-    expect(recordContext(undefined)).toEqual({});
+  test("detailEntries: with update, an edit row is correctable and survives skipEmpty", () => {
+    const record = { id: "d1", note: "", dept: "Sales", dept_code: "S1" };
+    const rows = [
+      { field: "note", label: "n", edit: { input: "note" } },
+      { field: "dept", label: "d", edit: { input: "record", field: "dept_code" } },
+      { field: "title", label: "t" },
+    ];
+    expect(detailEntries(rows, record, true, upper, true)).toEqual([
+      { field: "note", label: "N", text: "", edit: { field: "note", input: "note" } },
+      { field: "dept", label: "D", text: "Sales", edit: { field: "dept_code", input: "record" } },
+    ]);
+    // Without update nothing is correctable, and the empty note is skipped.
+    expect(detailEntries(rows, record, true, upper, false)).toEqual([
+      { field: "dept", label: "D", text: "Sales" },
+    ]);
+  });
+
+  test("detailEditContext sends id, version and the one value; empty is null", () => {
+    expect(detailEditContext({ id: "d1", version: 4, note: "a" }, "note", "b")).toEqual({
+      id: "d1",
+      version: 4,
+      note: "b",
+    });
+    expect(detailEditContext({ id: "d1" }, "note", "")).toEqual({ id: "d1", note: null });
+    expect(detailEditContext(undefined, "note", "x")).toEqual({ note: "x" });
+    expect(sameValue("12", 12)).toBe(true);
+    expect(sameValue("", null)).toBe(true);
+    expect(sameValue("a", "b")).toBe(false);
   });
 
   test("metricText formats from the text, never through a float", () => {
@@ -668,46 +691,67 @@ describe("wizardStep", () => {
   });
 });
 
-describe("stepsList", () => {
-  test("names and labels are translated; label wins over name", () => {
-    expect(stepsList(["a.one", { name: "two", label: "a.two" }, { id: 3 }], upper)).toEqual([
-      { label: "A.ONE", state: "todo" },
-      { label: "A.TWO", state: "todo" },
-      { label: "3", state: "todo" },
-    ]);
+describe("Steps helpers", () => {
+  test("stepsAnswer reads the steps, last words and stop code from the answer", () => {
+    const answer = {
+      words: "Made the deal.",
+      stopped: "agents.stopped.budget",
+      steps: [
+        { action: "crm.create_deal", input: { title: "Fleet" }, outcome: "done", opens: { screen: "screen:crm.deal", about: "d1" } },
+        { action: "crm.delete_deal", input: { id: "d0" }, outcome: "refused", code: "auth.forbidden" },
+        { action: "crm.win_deal", input: { id: "d1" }, outcome: "waiting" },
+        { action: "crm.deals", outcome: "looked" },
+        { input: {} },
+        "crm.deals",
+      ],
+    };
+    expect(stepsAnswer(answer, undefined)).toEqual({
+      words: "Made the deal.",
+      stopped: "agents.stopped.budget",
+      steps: [
+        {
+          action: "crm.create_deal",
+          input: { title: "Fleet" },
+          outcome: "done",
+          opens: { screen: "screen:crm.deal", about: "d1" },
+        },
+        { action: "crm.delete_deal", input: { id: "d0" }, outcome: "refused", code: "auth.forbidden" },
+        { action: "crm.win_deal", input: { id: "d1" }, outcome: "waiting" },
+        { action: "crm.deals", input: {}, outcome: undefined },
+      ],
+    });
+    // `answer` names the key; an empty list still draws (as "no steps").
+    expect(stepsAnswer({ flow: [] }, "flow")).toEqual({ steps: [] });
   });
 
-  test("current, by index or by name, marks the steps around it", () => {
-    const byIndex = stepsList({ steps: ["a", "b", "c"], current: 1 }, upper);
-    expect(byIndex.map((step) => step.state)).toEqual(["done", "current", "todo"]);
-    const byName = stepsList({ steps: [{ name: "a" }, { name: "b" }], current: "b" }, upper);
-    expect(byName.map((step) => step.state)).toEqual(["done", "current"]);
-    const unknown = stepsList({ steps: ["a", "b"], current: "z" }, upper);
-    expect(unknown.map((step) => step.state)).toEqual(["todo", "todo"]);
+  test("stepsAnswer is undefined without an answer or without a list under the key", () => {
+    expect(stepsAnswer(null, "steps")).toBeUndefined();
+    expect(stepsAnswer(undefined, undefined)).toBeUndefined();
+    expect(stepsAnswer({ steps: "x" }, undefined)).toBeUndefined();
+    expect(stepsAnswer({ steps: [] }, "flow")).toBeUndefined();
+    expect(stepsAnswer([{ action: "a" }], undefined)).toBeUndefined();
   });
 
-  test("a step's own state wins over current", () => {
-    const steps = stepsList(
-      {
-        steps: [
-          { name: "a", status: "Completed" },
-          { name: "b", state: "active" },
-          { name: "c", done: true },
-          { name: "d", current: true },
-          { name: "e", state: "waiting" },
-        ],
-        current: 0,
-      },
-      upper,
-    );
-    expect(steps.map((step) => step.state)).toEqual(["done", "current", "done", "current", "todo"]);
+  test("stepName: the audit words of a write, else a look into the module's list", () => {
+    const words: Record<string, string> = {
+      "audit.action.crm.create_deal": "Created a deal",
+      "crm.nav.crm": "Deals",
+      "agents.step.looked_in": "Looked in {place}",
+      "agents.step.looked": "Looked",
+    };
+    const translate = (code: string): string => words[code] ?? code;
+    expect(stepName("crm.create_deal", translate)).toBe("Created a deal");
+    expect(stepName("crm.deals", translate)).toBe("Looked in Deals");
+    expect(stepName("bank.accounts", translate)).toBe("Looked");
+    expect(stepName("bank.accounts", (code) => code)).toBe("agents.step.looked");
   });
 
-  test("anything else, and steps without a name, show nothing", () => {
-    expect(stepsList(undefined, upper)).toEqual([]);
-    expect(stepsList("a", upper)).toEqual([]);
-    expect(stepsList({ current: 1 }, upper)).toEqual([]);
-    expect(stepsList(["", null, {}, { label: "" }], upper)).toEqual([]);
+  test("opensContext: an object as it is, an id as { id }, nothing as {}", () => {
+    expect(opensContext({ id: "d1", tab: "notes" })).toEqual({ id: "d1", tab: "notes" });
+    expect(opensContext("d1")).toEqual({ id: "d1" });
+    expect(opensContext(7)).toEqual({ id: 7 });
+    expect(opensContext(undefined)).toEqual({});
+    expect(opensContext(null)).toEqual({});
   });
 });
 

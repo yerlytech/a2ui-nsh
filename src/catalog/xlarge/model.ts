@@ -496,7 +496,7 @@ export interface AskStep {
 }
 
 /**
- * The one ask flow `Button`, `Confirm` and `Preview` share. A press with
+ * The one ask flow `Button` and `Confirm` share. A press with
  * `confirm` asks first and sends nothing; a press without it sends at once;
  * `yes` sends and closes the question; `cancel` closes it and sends nothing.
  */
@@ -511,55 +511,60 @@ export function askStep(step: "press" | "yes" | "cancel", confirm: boolean): Ask
   }
 }
 
-/** One line of a `Preview.draft`. */
-export interface DraftLine {
-  /** What the line is (translated), when the entry names it. */
-  readonly label?: string;
-  /** The value as text; amounts as typed, never through a float. */
-  readonly value: string;
+/** The draft field names a `Preview.draft` lists (non-empty strings only). */
+export function draftNames(draft: unknown): readonly string[] {
+  return Array.isArray(draft)
+    ? draft.filter((name): name is string => typeof name === "string" && name.length > 0)
+    : [];
+}
+
+/** What a `Preview` asks its host to draw: the named draft values and `about`. */
+export interface PreviewBody {
+  readonly draft: Readonly<Record<string, unknown>>;
+  readonly about?: string;
 }
 
 /**
- * The lines a `Preview` shows for its `draft`. A string or number entry is one
- * line as it came. An object entry with `value` is one line, labelled by its
- * `label` (a code) or `field`, its value formatted by `format`/`enumPrefix` as
- * a table cell is. Any other object shows each of its keys as one line.
+ * The body xlarge's `Preview` asks its export route with, or `undefined`
+ * while a named draft field holds nothing yet (xlarge asks only once every
+ * one is there). `about` names the draft field that holds the record the
+ * draft is about; it goes along when that value is non-empty text.
  */
-export function draftLines(draft: unknown, translate: Translate): readonly DraftLine[] {
-  if (!Array.isArray(draft)) {
-    return [];
+export function previewBody(
+  names: readonly string[],
+  aboutKey: unknown,
+  values: Readonly<Record<string, unknown>>,
+): PreviewBody | undefined {
+  if (names.some((name) => values[name] === undefined)) {
+    return undefined;
   }
-  const out: DraftLine[] = [];
-  for (const entry of draft) {
-    if (!isRecord(entry)) {
-      if (entry !== null && entry !== undefined) {
-        out.push({ value: scalarText(entry) });
-      }
-      continue;
-    }
-    if ("value" in entry) {
-      const label =
-        typeof entry["label"] === "string"
-          ? translate(entry["label"])
-          : typeof entry["field"] === "string"
-            ? entry["field"]
-            : undefined;
-      const value = formatCell(
-        entry["value"],
-        {
-          format: typeof entry["format"] === "string" ? entry["format"] : undefined,
-          enumPrefix: typeof entry["enumPrefix"] === "string" ? entry["enumPrefix"] : undefined,
-        },
-        translate,
-      );
-      out.push(label !== undefined ? { label, value } : { value });
-      continue;
-    }
-    for (const [key, value] of Object.entries(entry)) {
-      out.push({ label: key, value: Array.isArray(value) ? value.map(scalarText).join(", ") : scalarText(value) });
-    }
+  const draft: Record<string, unknown> = {};
+  for (const name of names) {
+    draft[name] = values[name];
   }
-  return out;
+  const about = typeof aboutKey === "string" ? values[aboutKey] : undefined;
+  return typeof about === "string" && about !== "" ? { draft, about } : { draft };
+}
+
+/** One named draft value a `Preview` lists when its host draws no preview. */
+export interface DraftLine {
+  readonly field: string;
+  /** The value as typed (amounts as text, never through a float); `""` when empty. */
+  readonly value: string;
+}
+
+/** The named draft values, in `names` order, as the text they were typed as. */
+export function draftLines(
+  names: readonly string[],
+  values: Readonly<Record<string, unknown>>,
+): readonly DraftLine[] {
+  return names.map((field) => {
+    const value = values[field];
+    return {
+      field,
+      value: Array.isArray(value) ? value.map(scalarText).join(", ") : scalarText(value),
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1031,54 +1036,101 @@ export interface DetailEntry {
   readonly label: string;
   /** The value as text (`formatCell`), `""` when it holds nothing. */
   readonly text: string;
+  /**
+   * When the row is corrected in place (its entry has `edit` and the
+   * `Detail` names `update`): what the action calls the value (`edit.field`,
+   * else the row's `field`), and the kind of box (`edit.input`).
+   */
+  readonly edit?: { readonly field: string; readonly input: string };
 }
 
 /**
  * The labelled values of a `Detail`: `rows` lists them as `Table.columns`
- * entries (`field`, `label` code, `format`, `enumPrefix`) or bare field names;
- * without `rows`, every plain value of `record` is shown under its key. With
- * `skipEmpty`, values that hold nothing are left out.
+ * entries (`field`, `label` code, `format`, `enumPrefix`, `edit`) or bare
+ * field names; without `rows`, every plain value of `record` is shown under
+ * its key. With `editable` (the `Detail` names `update`), an entry with an
+ * `edit` object is corrected in place. With `skipEmpty`, values that hold
+ * nothing are left out, except a correctable one: left out, there would be
+ * nowhere to fill it in.
  */
 export function detailEntries(
   rows: unknown,
   record: unknown,
   skipEmpty: boolean,
   translate: Translate,
+  editable = false,
 ): readonly DetailEntry[] {
   const data = isRecord(record) ? record : {};
-  const specs: TableColumn[] = [];
+  const specs: { column: TableColumn; edit?: DetailEntry["edit"] }[] = [];
   if (Array.isArray(rows)) {
     for (const raw of rows) {
       if (typeof raw === "string" && raw.length > 0) {
-        specs.push({ field: raw, label: raw, grow: false });
-      } else {
-        specs.push(...tableColumns([raw]));
+        specs.push({ column: { field: raw, label: raw, grow: false } });
+        continue;
       }
+      const column = tableColumns([raw])[0];
+      if (column === undefined) {
+        continue;
+      }
+      const edit = isRecord(raw) ? raw["edit"] : undefined;
+      specs.push(
+        editable && isRecord(edit)
+          ? {
+              column,
+              edit: {
+                field: typeof edit["field"] === "string" && edit["field"].length > 0 ? edit["field"] : column.field,
+                input: typeof edit["input"] === "string" ? edit["input"] : "text",
+              },
+            }
+          : { column },
+      );
     }
   } else {
     for (const [field, value] of Object.entries(data)) {
       if (value === null || typeof value !== "object") {
-        specs.push({ field, label: field, grow: false });
+        specs.push({ column: { field, label: field, grow: false } });
       }
     }
   }
   const out: DetailEntry[] = [];
-  for (const spec of specs) {
-    const text = formatCell(data[spec.field], spec, translate);
-    if (skipEmpty && text.trim() === "") {
+  for (const { column, edit } of specs) {
+    const text = formatCell(data[column.field], column, translate);
+    if (skipEmpty && edit === undefined && text.trim() === "") {
       continue;
     }
-    out.push({ field: spec.field, label: translate(spec.label), text });
+    const entry = { field: column.field, label: translate(column.label), text };
+    out.push(edit !== undefined ? { ...entry, edit } : entry);
   }
   return out;
 }
 
-/** The `id` of a `Detail` record, as the context of its `update` action. */
-export function recordContext(record: unknown): Record<string, unknown> {
-  if (isRecord(record) && record["id"] !== undefined && record["id"] !== null) {
-    return { id: record["id"] };
+/**
+ * The context a `Detail` row corrected in place sends through `update`, as
+ * xlarge's client does (spec 009): the record's `id`, its `version` when it
+ * has one, and the one value under the name the action calls it, an emptied
+ * box sent as `null` (it clears the value).
+ */
+export function detailEditContext(
+  record: unknown,
+  field: string,
+  typed: unknown,
+): Record<string, unknown> {
+  const data = isRecord(record) ? record : {};
+  // xlarge sends `id` and `version` as the record holds them; one it lacks
+  // drops out of the JSON body, so it is left out here too.
+  const out: Record<string, unknown> = {};
+  for (const key of ["id", "version"]) {
+    if (data[key] !== undefined) {
+      out[key] = data[key];
+    }
   }
-  return {};
+  out[field] = typed === "" || typed === undefined ? null : typed;
+  return out;
+}
+
+/** Whether a corrected value is the one the record already holds (nothing to send). */
+export function sameValue(one: unknown, other: unknown): boolean {
+  return scalarText(one) === scalarText(other);
 }
 
 /** A plain decimal as text: sign, whole digits, fraction digits (or `undefined`). */
@@ -1294,38 +1346,32 @@ export function wizardStep(
   return here < last ? { page: here + 1, submit: false } : { page: here, submit: true };
 }
 
-/** Where one step of a `Steps` list stands. */
-export type StepState = "done" | "current" | "todo";
+/** How one step of what an agent did ended (xlarge spec 033). */
+export type StepOutcome = "done" | "refused" | "waiting";
 
-/** One named step a `Steps` list shows. */
-export interface StepItem {
-  /** The translated step name. */
-  readonly label: string;
-  readonly state: StepState;
+/** One step of what an agent did, as xlarge's answer carries it. */
+export interface AgentStep {
+  /** The action the step ran (or waits to run). */
+  readonly action: string;
+  /** What it ran with; a waiting step sends this when taken. */
+  readonly input: Readonly<Record<string, unknown>>;
+  /** `undefined` for an outcome xlarge does not name. */
+  readonly outcome: StepOutcome | undefined;
+  /** Why a refused step was refused (a code). */
+  readonly code?: string;
+  /** The record a step made, and the screen that opens it. */
+  readonly opens?: { readonly screen: string; readonly about: unknown };
 }
 
-const STEP_DONE = new Set(["done", "complete", "completed", "finished", "ok", "passed"]);
-const STEP_CURRENT = new Set(["current", "active", "doing", "now", "open", "in_progress"]);
+/** What a `Steps` draws from the answer: last words, why it stopped, the steps. */
+export interface StepsAnswer {
+  readonly words?: string;
+  readonly stopped?: string;
+  readonly steps: readonly AgentStep[];
+}
 
-function explicitStepState(entry: Record<string, unknown>): StepState | undefined {
-  const said = entry["state"] ?? entry["status"];
-  if (typeof said === "string") {
-    const word = said.toLowerCase();
-    if (STEP_DONE.has(word)) {
-      return "done";
-    }
-    if (STEP_CURRENT.has(word)) {
-      return "current";
-    }
-    return "todo";
-  }
-  if (entry["done"] === true) {
-    return "done";
-  }
-  if (entry["current"] === true) {
-    return "current";
-  }
-  return undefined;
+function stepOutcome(value: unknown): StepOutcome | undefined {
+  return value === "done" || value === "refused" || value === "waiting" ? value : undefined;
 }
 
 /** How a `Chart` is drawn. */
@@ -1386,54 +1432,75 @@ function firstPresent(row: Record<string, unknown>, keys: readonly string[]): un
 }
 
 /**
- * The steps a `Steps` list shows for the answer data it reads. The answer is
- * either a list of steps or `{ steps, current }`. A step is a name (a code) or
- * `{ name, label?, state?|status?|done?|current? }`; `label` (a code) wins
- * over `name`. A step's own state wins; otherwise `current` (an index or a
- * step name) marks the steps before it done and the ones after it to do.
- * Steps without a name are left out.
+ * What a `Steps` draws from the answer the last action got back (xlarge's
+ * `answer()[answer ?? "steps"]`): `undefined` while there is no answer or it
+ * holds no list under `key`, so nothing is drawn. A step needs a string
+ * `action`; `input` is kept when it is an object; `opens` when it names a
+ * `screen`. `words` and `stopped` are kept when they are non-empty text.
  */
-export function stepsList(answer: unknown, translate: Translate): readonly StepItem[] {
-  let entries: readonly unknown[];
-  let current: unknown;
-  if (Array.isArray(answer)) {
-    entries = answer;
-  } else if (isRecord(answer) && Array.isArray(answer["steps"])) {
-    entries = answer["steps"];
-    current = answer["current"];
-  } else {
-    return [];
+export function stepsAnswer(answer: unknown, key: unknown): StepsAnswer | undefined {
+  if (!isRecord(answer)) {
+    return undefined;
   }
-
-  const named: { name: string; label: string; state: StepState | undefined }[] = [];
-  for (const entry of entries) {
-    if (typeof entry === "string" || typeof entry === "number") {
-      const name = scalarText(entry);
-      if (name.length > 0) {
-        named.push({ name, label: translate(name), state: undefined });
-      }
-    } else if (isRecord(entry)) {
-      const name = scalarText(entry["name"] ?? entry["id"]);
-      const label = entry["label"];
-      const code = typeof label === "string" && label.length > 0 ? label : name;
-      if (code.length > 0) {
-        named.push({ name, label: translate(code), state: explicitStepState(entry) });
-      }
+  const list = answer[typeof key === "string" && key.length > 0 ? key : "steps"];
+  if (!Array.isArray(list)) {
+    return undefined;
+  }
+  const steps: AgentStep[] = [];
+  for (const raw of list) {
+    if (!isRecord(raw) || typeof raw["action"] !== "string" || raw["action"].length === 0) {
+      continue;
     }
+    const opens = raw["opens"];
+    steps.push({
+      action: raw["action"],
+      input: isRecord(raw["input"]) ? raw["input"] : {},
+      outcome: stepOutcome(raw["outcome"]),
+      ...(typeof raw["code"] === "string" && raw["code"].length > 0 ? { code: raw["code"] } : {}),
+      ...(isRecord(opens) && typeof opens["screen"] === "string" && opens["screen"].length > 0
+        ? { opens: { screen: opens["screen"], about: opens["about"] } }
+        : {}),
+    });
   }
+  const words = answer["words"];
+  const stopped = answer["stopped"];
+  return {
+    ...(typeof words === "string" && words.length > 0 ? { words } : {}),
+    ...(typeof stopped === "string" && stopped.length > 0 ? { stopped } : {}),
+    steps,
+  };
+}
 
-  let at = -1;
-  if (typeof current === "number" && Number.isInteger(current)) {
-    at = current;
-  } else if (typeof current === "string" && current.length > 0) {
-    at = named.findIndex((step) => step.name === current);
+/**
+ * A step's name, as xlarge says it: the words of `audit.action.<action>` (a
+ * write); else, for a read, "looked in" the module's list when its menu names
+ * one (`<module>.nav.<module>` into `agents.step.looked_in`'s `{place}`), or
+ * `agents.step.looked`. A code without words comes back as the code.
+ */
+export function stepName(action: string, translate: Translate): string {
+  const code = `audit.action.${action}`;
+  const said = translate(code);
+  if (said !== code) {
+    return said;
   }
-  return named.map((step, index) => ({
-    label: step.label,
-    state:
-      step.state ??
-      (at < 0 ? "todo" : index < at ? "done" : index === at ? "current" : "todo"),
-  }));
+  const module = action.split(".")[0] ?? action;
+  const listCode = `${module}.nav.${module}`;
+  const list = translate(listCode);
+  return list === listCode
+    ? translate("agents.step.looked")
+    : fillParams(translate("agents.step.looked_in"), { place: list });
+}
+
+/**
+ * The context a step's `opens` link sends: `about` itself when it is an
+ * object, `{ id: about }` for an id (as a table row opens its record), else
+ * nothing. A2UI 1.0 carries an event's context as an object.
+ */
+export function opensContext(about: unknown): Record<string, unknown> {
+  if (isRecord(about)) {
+    return { ...about };
+  }
+  return about === undefined || about === null ? {} : { id: about };
 }
 
 /** `items` with the entry at `from` moved to `to`; out-of-range moves change nothing. */

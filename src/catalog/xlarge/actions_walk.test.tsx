@@ -3,7 +3,8 @@
 // are synthetic (`tests/fixtures/xlarge/*-synthetic.json`, `source` says so).
 // Each validates strictly against xlarge's catalog through `MessageProcessor`,
 // then all three draw together with no errors, and every action they send is
-// checked by name and context.
+// checked by name and context (Preview sends none: it asks the host's
+// `preview` option for its page).
 
 import { describe, expect, open, test } from "nsh/test";
 import button from "../../../tests/fixtures/xlarge/button-synthetic.json";
@@ -32,7 +33,6 @@ const WORDS: Record<string, string> = {
   "crm.preview.deal": "New deal",
   "crm.field.title": "Title",
   "crm.field.amount": "Amount",
-  "crm.action.keep": "Keep",
 };
 
 const ALL_MESSAGES: unknown[] = Object.values(FIXTURES).flatMap((fixture) => fixture.messages);
@@ -57,12 +57,19 @@ describe("xlarge Button, Confirm and Preview fixtures", () => {
   test("all three draw together with no errors and send exactly their actions", async () => {
     const app = await open(HARNESS, {
       host: {
-        params: { catalog: XLARGE_CATALOG, messages: ALL_MESSAGES, translations: WORDS, strictMode: true },
-        handlers: { "a2ui.action": null, "a2ui.error": null, "a2ui.exception": null },
+        params: {
+          catalog: XLARGE_CATALOG,
+          messages: ALL_MESSAGES,
+          translations: WORDS,
+          strictMode: true,
+          previewBase: "https://example.test/preview/",
+          previewPauseMs: 100,
+        },
+        handlers: { "a2ui.action": null, "a2ui.error": null, "a2ui.exception": null, "a2ui.preview": null },
       },
     });
     expect(reportedErrors(app)).toEqual([]);
-    for (const words of ["Deal", "Win Forklift fleet", "Drop", "crm.action.save", "Close this deal?", "Close it", "Cancel", "imports.ask.drop_job", "New deal", "Forklift fleet", "25,000.50", "Keep"]) {
+    for (const words of ["Deal", "Win Forklift fleet", "Drop", "crm.action.save", "Close this deal?", "Close it", "Cancel", "imports.ask.drop_job", "Title", "Amount"]) {
       expect(app.texts()).toContain(words);
     }
 
@@ -82,9 +89,16 @@ describe("xlarge Button, Confirm and Preview fixtures", () => {
     // Confirm: cancel is an action; it sends it and closes.
     await app.press("id:synthetic.confirm:drop_job:cancel");
     expect(app.shows("id:synthetic.confirm:drop_job")).toBe(false);
-    // Preview with confirm: accept asks, yes sends.
-    await app.press("id:synthetic.preview:root:accept");
-    await app.press("id:synthetic.preview:root:ask:yes");
+    // Preview: asks the host for the page once its named draft fields hold
+    // values, with the export name, and sends no event for it.
+    expect(app.shows("id:synthetic.preview:page:accept")).toBe(false);
+    await app.type("id:synthetic.preview:title", "Forklift fleet");
+    await app.type("id:synthetic.preview:amount", "25000.50");
+    await app.wait(200);
+    expect(app.host.posts().filter((post) => post.name === "a2ui.preview").map((post) => post.data)).toEqual([
+      { action: "export:crm.deal?shape=offer", body: { draft: { title: "Forklift fleet", amount: "25000.50" } } },
+    ]);
+    expect(app.shows("id:synthetic.preview:page:page")).toBe(true);
 
     expect(sentActions(app)).toEqual([
       { name: "crm.win_deal", sourceComponentId: "win", context: { id: "d1", amount: "25000.50" } },
@@ -94,7 +108,6 @@ describe("xlarge Button, Confirm and Preview fixtures", () => {
       { name: "crm.close_deal", sourceComponentId: "close", context: {} },
       { name: "screen:crm.deals", sourceComponentId: "close", context: {} },
       { name: "screen:imports.jobs", sourceComponentId: "drop_job", context: {} },
-      { name: "crm.keep_deal", sourceComponentId: "root", context: {} },
     ]);
     expect(reportedErrors(app)).toEqual([]);
   });

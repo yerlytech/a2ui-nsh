@@ -131,13 +131,22 @@ A second commit of round 2 draws three components that send actions:
 `after` and `back` follow one rule (`screenAction`): a value holding a `:`
 is an action name, sent as it came; a bare screen name is sent as
 `screen:<name>`; `back` means go back, and the client sends nothing extra.
-- **`Preview`**: the translated `about` and one line per `draft` entry
-  (amounts as typed text); its accept button (`label`) sends `action` with
-  `{}`, asking first with `confirm`.
+- **`Preview`**: a page drawn from what is typed and not yet kept (xlarge's
+  spec 038). `draft` lists draft field names, read from the enclosing
+  `Form`'s draft; `about` names the draft field holding the record the draft
+  is about; `action` is xlarge's export name (`export:<screen>?shape=...`),
+  which xlarge fetches from its export route and which is never an A2UI
+  event. Once every named field holds a value, and `previewPauseMs` (600 ms,
+  as xlarge) after the last change, the host's `preview(action, { draft,
+  about })` option is asked; the URL or data URI it answers is shown, the
+  last page staying until the next arrives, and a rejection says
+  `preview.failed`. Without that option the named draft values are listed as
+  typed. There is no accept button: xlarge's client has none. xlarge's draft
+  is the screen's; here a `Preview` reads the draft of the `Form` it sits in.
 
-The three share one ask (`ask.tsx`: `AskPanel`, `sendXlargeAction`; the pure
-step logic is `askStep` in `model.ts`). New host words: `confirmQuestion`,
-`confirmLabel`, `acceptLabel`. A literal context key the server escapes as
+The first two share one ask (`ask.tsx`: `AskPanel`, `sendXlargeAction`; the
+pure step logic is `askStep` in `model.ts`). New host words:
+`confirmQuestion`, `confirmLabel`. A literal context key the server escapes as
 `@@` is unescaped once (`literalContext`) and escaped again once when sent.
 Synthetic fixtures again, walked by `src/catalog/xlarge/actions_walk.test.tsx`.
 
@@ -148,9 +157,18 @@ A third commit of round 2 draws four display components:
   of `widths` (`2`, `"2fr"`, `"40%"`; missing entries share evenly), and
   stacked full-width while it is `compact`.
 - **`Detail`**: the `record`'s labelled values by `rows` (`Table.columns`
-  entries or field names; without `rows`, every plain value), `skipEmpty`
-  leaving out empty ones; with `update`, an edit button (the host's
-  `editLabel`) sends `{ event: { name: <update>, context: { id } } }`.
+  entries or field names, as a list or a data binding; without `rows`, every
+  plain value), an empty value read as `—`. Where the screen names `update`,
+  a row with `edit` is corrected in place, as xlarge's client does (its spec
+  009; no edit button): pressing the value opens a box holding the record's
+  value under `edit.field` (default the row's `field`); save sends
+  `{ event: { name: <update>, context: { id, version, [edit.field ?? field]:
+  value } } }` (`detailEditContext`: `id` and `version` as the record holds
+  them, an emptied box as `null`), an unchanged value sends nothing, and
+  cancel puts it back. `skipEmpty` leaves out empty rows but keeps a
+  correctable one, or there would be nowhere to fill it in. The box is a text
+  box (a decimal keypad for amounts, multi-line for `note`); xlarge's own
+  reuses its form field's picker and checks, which is not drawn here yet.
 - **`Metric`**: the translated `label`, `value` formatted by `format` from
   its text (never a float), and `change` as xlarge draws it whatever
   `format` is: ▲/▼ and a whole-number percent, rounded half away from zero
@@ -182,9 +200,21 @@ A fourth commit of round 2 draws three flow components:
   `confirm`. After a send the draft empties and page one shows; with
   `after`, it is followed with `{}` (`screenAction`: `screen:<after>` for a
   bare screen name).
-- **`Steps`**: a progress list of named steps read from the data model at
-  `/<answer>` (a list, or `{ steps, current }`); each step's translated name
-  is marked done, current or to do (`stepsList` in `model.ts`). Sends nothing.
+- **`Steps`**: what an agent did for a request (xlarge's spec 033), drawn
+  from the answer the action above it got back, as xlarge's
+  `answer()[answer ?? "steps"]`, not from the data model. An A2UI 1.0 event
+  carries no answer back, so there is no protocol field for it: the host,
+  which sends the event and reads the reply on its own transport, gives it
+  through the renderer's `answer()` option (a signal's reader, so a new
+  answer redraws). This needs no A2UI protocol decision; the seam sits
+  beside `fileUrl` and `openUrl`. It shows the answer's `words` and `stopped`
+  (a code), then each step `{ action, input, outcome, code?, opens? }`:
+  named by `audit.action.<action>`, else as a look into the module's list
+  (`stepName`); `done` and `refused` (its `code`) marked; `waiting` with a
+  take button that asks first, then sends `{ event: { name: action,
+  context: input } }` and marks the step taken; `opens` as a button sending
+  `{ event: { name: opens.screen, context: opens.about } }` (an id as
+  `{ id }`, since an event's context is an object).
 - **`Arrange`**: the `items` binding, read as xlarge's lab-report layout
   blocks (`items = "/layout/blocks"`, `field = "blocks"`): `{ key?, kind,
   label, shown, kept?, removable?, text?, fields? }`, a missing `key` being
@@ -204,11 +234,13 @@ A fourth commit of round 2 draws three flow components:
   item is not read (sent back as it came).
 
 New host words: `nextLabel`, `addLabel`, `resetLabel`, `moveUpLabel`,
-`moveDownLabel`, `shownLabel`, `removeLabel`, `movedText`,
-`stepStateLabels`, and the `announce` seam. The xlarge catalog definition names
-these properties without describing them, so `after` (Wizard) and the shape
-of `answer` are read as written above; a real xlarge capture should confirm
-them. `Arrange` follows xlarge's web renderer and its lab-report layout
+`moveDownLabel`, `shownLabel`, `removeLabel`, `movedText`, and the `announce`
+seam; `Steps` uses xlarge's own codes (`agents.outcome.*`,
+`agents.action.take`, `agents.action.open`). The shape of `answer` is
+xlarge's (`AgentStep` in its web renderer, read for this round). The xlarge
+catalog definition names the other properties without describing them, so
+`after` (Wizard) is read as written above; a real xlarge capture should
+confirm them. `Arrange` follows xlarge's web renderer and its lab-report layout
 surface (`lab_reports/surfaces/layout.toml`). Synthetic fixtures again, walked
 by `src/catalog/xlarge/flows_walk.test.tsx`.
 A further commit of round 2 draws three richer components:

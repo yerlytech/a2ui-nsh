@@ -18,6 +18,8 @@ import { HARNESS, XLARGE_CATALOG, reportedErrors, sentActions } from "./test_sup
 interface Fixture {
   readonly source: string;
   readonly messages: readonly unknown[];
+  /** What the action was answered with (the host's `answer` option), for `Steps`. */
+  readonly answer?: unknown;
 }
 
 const FIXTURES: Readonly<Record<string, Fixture>> = { wizard, steps, arrange };
@@ -39,6 +41,15 @@ const WORDS: Record<string, string> = {
   "lab.block.results": "Results",
   "lab.block.note": "Note",
   "lab.action.add_note": "Add note",
+  "audit.action.onboard.create_company": "Company details",
+  "audit.action.onboard.add_bank": "Bank account",
+  "audit.action.onboard.invite": "Invite the team",
+  "agents.outcome.done": "Done",
+  "agents.outcome.waiting": "Waiting for you",
+  "agents.outcome.taken": "Taken",
+  "bank.iban_invalid": "IBAN is not valid",
+  "crm.field.stage": "New stage",
+  "crm.action.add_stage": "Add stage",
   "action.save": "Save",
 };
 
@@ -69,7 +80,13 @@ describe("xlarge Wizard, Steps and Arrange fixtures", () => {
   test("all three draw together with no errors and send exactly their actions", async () => {
     const app = await open(HARNESS, {
       host: {
-        params: { catalog: XLARGE_CATALOG, messages: ALL_MESSAGES, translations: WORDS, strictMode: true },
+        params: {
+          catalog: XLARGE_CATALOG,
+          messages: ALL_MESSAGES,
+          translations: WORDS,
+          strictMode: true,
+          answer: steps.answer,
+        },
         handlers: { "a2ui.action": null, "a2ui.error": null, "a2ui.exception": null, "a2ui.announce": null },
       },
     });
@@ -78,10 +95,14 @@ describe("xlarge Wizard, Steps and Arrange fixtures", () => {
       expect(app.texts()).toContain(words);
     }
 
-    // Steps: the one before `current` is done, `current` is current, the rest to do.
-    expect(app.shows("label:Company details, Done")).toBe(true);
-    expect(app.shows("label:Bank account, Current")).toBe(true);
-    expect(app.shows("label:Invite the team, To do")).toBe(true);
+    // Steps, from the answer the host holds: words, each step and its outcome.
+    for (const words of ["I opened the account; inviting the team is yours.", "Done", "IBAN is not valid", "Waiting for you"]) {
+      expect(app.texts()).toContain(words);
+    }
+    await app.press("id:synthetic.steps:root:step:2:take");
+    await app.press("id:synthetic.steps:root:step:2:ask:yes");
+    expect(app.texts()).toContain("Taken");
+    await app.press("id:synthetic.steps:root:step:0:open");
 
     // Wizard: next refuses an empty required field on the page.
     await app.press("id:synthetic.wizard:root:next");
@@ -126,6 +147,8 @@ describe("xlarge Wizard, Steps and Arrange fixtures", () => {
     expect(restored[0]! < restored[1]! && restored[1]! < restored[2]!).toBe(true);
 
     expect(sentActions(app)).toEqual([
+      { name: "onboard.invite", sourceComponentId: "root", context: { emails: ["a@example.test"] } },
+      { name: "screen:onboard.company", sourceComponentId: "root", context: { id: "c1" } },
       {
         name: "crm.open_account",
         sourceComponentId: "root",

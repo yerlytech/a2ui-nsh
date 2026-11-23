@@ -1,5 +1,5 @@
 /**
- * The ask `Button` (with `confirm`), `Confirm`, and `Preview` (with `confirm`)
+ * The ask `Button` (with `confirm`), `Confirm`, and a `Steps` take button
  * share: a question with a yes and a cancel button. Only yes sends; the step
  * logic is `askStep` in `model.ts`. Also the one way these send an xlarge
  * action: an A2UI 1.0 `{ event: { name, context } }` through the node's

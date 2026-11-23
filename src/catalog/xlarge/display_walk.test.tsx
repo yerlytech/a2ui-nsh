@@ -59,7 +59,7 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf fixtures", () => {
     }
   });
 
-  test("all four draw together with no errors and send only the detail's edit", async () => {
+  test("all four draw together with no errors and send only the detail's correction", async () => {
     const app = await open(HARNESS, {
       host: {
         params: { catalog: XLARGE_CATALOG, messages: ALL_MESSAGES, translations: WORDS, strictMode: true },
@@ -76,11 +76,13 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf fixtures", () => {
     for (const words of ["Forklift fleet for the new depot", "Acme Logistics"]) {
       expect(app.texts()).toContain(words);
     }
-    // Detail: labelled, formatted, the empty note skipped.
-    for (const words of ["Title", "Forklift fleet", "25,000.50", "Won", "2026-12-15"]) {
+    // Detail: labelled, formatted; the empty plain row skipped, the empty
+    // editable note kept so it can be filled in.
+    for (const words of ["Title", "Forklift fleet", "25,000.50", "Won", "2026-12-15", "Note", "—"]) {
       expect(app.texts()).toContain(words);
     }
-    expect(app.shows("id:synthetic.detail:deal:row:note")).toBe(false);
+    expect(app.shows("id:synthetic.detail:deal:row:lost")).toBe(false);
+    expect(app.shows("id:synthetic.detail:deal:row:note")).toBe(true);
     // Metric: formatted from text, changes as whole percents with arrows.
     for (const words of ["Revenue", "1,250,000.50", "▲ 13%", "vs before", "This month", "Complaints", "1,204", "▲ 4%"]) {
       expect(app.texts()).toContain(words);
@@ -90,9 +92,13 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf fixtures", () => {
       expect(app.texts()).toContain(words);
     }
 
-    await app.press("id:synthetic.detail:deal:update");
+    // Detail: the amount corrected in place, saved through `update`.
+    await app.press("id:synthetic.detail:deal:value:amount");
+    await app.clear("id:synthetic.detail:deal:edit:amount");
+    await app.type("id:synthetic.detail:deal:edit:amount", "26000.75");
+    await app.press("id:synthetic.detail:deal:save:amount");
     expect(sentActions(app)).toEqual([
-      { name: "crm.deal.update", sourceComponentId: "deal", context: { id: "deal-7" } },
+      { name: "crm.deal.update", sourceComponentId: "deal", context: { id: "deal-7", version: 3, amount: "26000.75" } },
     ]);
 
     // Narrow, the columns stack and everything still draws.

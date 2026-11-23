@@ -12,7 +12,13 @@
  *   `fileBase + encodeURIComponent(id)` (the `fileUrl` renderer option);
  * - `openLinks`: optional, a `QrCode`'s "open in app" button posts
  *   `a2ui.openUrl` (the `openUrl` renderer option);
- * - `againstBeforeLabel`: optional, the words after a `Metric`'s change.
+ * - `againstBeforeLabel`: optional, the words after a `Metric`'s change;
+ * - `answer`: optional, the record the last action was answered with (the
+ *   `answer` renderer option); `a2ui.answer` replaces it while open;
+ * - `previewBase`: optional, a `Preview` posts `a2ui.preview` with its action
+ *   and body and draws `previewBase + encodeURIComponent(action)` (the
+ *   `preview` renderer option); with `previewFails` the ask is refused;
+ *   `previewPauseMs` is how long after the last change it asks.
  *
  * What a renderer announces (`announce`) is posted as `a2ui.announce`.
  *
@@ -20,7 +26,7 @@
  * answers `a2ui.readData` with the surface data at a path.
  */
 
-import { Scroll, host, mount, type JSX } from "nsh";
+import { Scroll, host, mount, signal, type JSX } from "nsh";
 import { Catalog, buildV10BasicCatalogDocument } from "../../core/catalog";
 import { FunctionRegistry } from "../../core/functions";
 import { A2uiStore } from "../../store/surface_store";
@@ -51,8 +57,27 @@ function XlargeHarnessApp(): JSX.Element {
     catalogs.push(Catalog.fromJson(params["catalog"]));
   }
 
+  const asRecord = (value: unknown): Record<string, unknown> | null =>
+    typeof value === "object" && value !== null && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
+  const answer = signal<Record<string, unknown> | null>(asRecord(params["answer"]));
+  host.on("a2ui.answer", (payload) => answer.set(asRecord(payload)));
+  const previewBase = params["previewBase"];
+
   const registry = createBasicCatalogRegistry();
   registerXlargeCatalogComponents(registry, {
+    answer: () => answer(),
+    preview:
+      typeof previewBase === "string"
+        ? (action, body) => {
+            safePost("a2ui.preview", { action, body });
+            return params["previewFails"] === true
+              ? Promise.reject(new Error("refused"))
+              : Promise.resolve(`${previewBase}${encodeURIComponent(action)}`);
+          }
+        : undefined,
+    previewPauseMs: typeof params["previewPauseMs"] === "number" ? params["previewPauseMs"] : undefined,
     translate: (code) => translations[code] ?? code,
     toastMs: typeof params["toastMs"] === "number" ? params["toastMs"] : undefined,
     terminal: typeof params["terminal"] === "boolean" ? params["terminal"] : undefined,

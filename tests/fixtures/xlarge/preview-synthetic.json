@@ -12,15 +12,19 @@
         "components": [
           {
             "id": "root",
+            "component": "Form",
+            "submit": "crm.keep_deal",
+            "children": ["title", "amount", "page"]
+          },
+          { "id": "title", "component": "Field", "field": "title", "label": "crm.field.title" },
+          { "id": "amount", "component": "Field", "field": "amount", "label": "crm.field.amount", "input": "money" },
+          {
+            "id": "page",
             "component": "Preview",
-            "about": "crm.preview.deal",
-            "action": "crm.keep_deal",
-            "label": "crm.action.keep",
-            "confirm": true,
-            "draft": [
-              { "label": "crm.field.title", "value": "Forklift fleet" },
-              { "label": "crm.field.amount", "value": "25000.50", "format": "money" }
-            ]
+            "draft": ["title", "amount"],
+            "about": "partner",
+            "action": "export:crm.deal?shape=offer",
+            "label": "crm.preview.deal"
           }
         ]
       }

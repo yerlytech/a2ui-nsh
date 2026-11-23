@@ -7,67 +7,102 @@ import {
   surfaceMessages,
 } from "./test_support";
 
-const DRAFT = [
-  { label: "crm.field.title", value: "Forklift fleet" },
-  { label: "crm.field.amount", value: "25000.5", format: "money" },
+const COMPONENTS = [
+  { id: "root", component: "Form", submit: "sales.invoice.save", children: ["partner", "amount", "page"] },
+  { id: "partner", component: "Field", field: "partner", label: "f.partner" },
+  { id: "amount", component: "Field", field: "amount", label: "f.amount", input: "money" },
+  {
+    id: "page",
+    component: "Preview",
+    draft: ["amount", "partner"],
+    about: "partner",
+    action: "export:sales.invoice?shape=invoice",
+    label: "sales.preview.invoice",
+  },
 ];
 
+const WORDS = {
+  "sales.preview.invoice": "Invoice preview",
+  "preview.drawing": "Drawing…",
+  "preview.failed": "The preview could not be drawn",
+  "preview.open": "Open",
+};
+
+interface Post {
+  readonly name: string;
+  readonly data?: unknown;
+}
+
+function previewAsks(app: { host: { posts(): Post[] } }): unknown[] {
+  return app.host
+    .posts()
+    .filter((post) => post.name === "a2ui.preview")
+    .map((post) => post.data);
+}
+
 describe("xlarge catalog Preview", () => {
-  test("shows the draft and sends its action on accept", async () => {
+  test("asks the host's preview with the named draft values once all are typed; sends no event", async () => {
     const app = await open(
       HARNESS,
-      harnessOptions(
-        surfaceMessages("s_preview", [
-          {
-            id: "root",
-            component: "Preview",
-            about: "crm.preview.deal",
-            action: "crm.keep_deal",
-            label: "crm.action.keep",
-            draft: DRAFT,
-          },
-        ]),
-        {
-          "crm.preview.deal": "New deal",
-          "crm.field.title": "Title",
-          "crm.field.amount": "Amount",
-          "crm.action.keep": "Keep",
-        },
-      ),
+      harnessOptions(surfaceMessages("s_preview", COMPONENTS), WORDS, {
+        previewBase: "https://example.test/preview/",
+        previewPauseMs: 100,
+        openLinks: true,
+      }),
     );
     expect(reportedErrors(app)).toEqual([]);
-    expect(app.texts()).toEqual(["New deal", "Title", "Forklift fleet", "Amount", "25,000.50", "Keep"]);
-    expect(app.shows("label:New deal")).toBe(true);
+    expect(app.shows("label:Invoice preview")).toBe(true);
+    // Nothing is typed: nothing is asked, the page is still to come.
+    expect(previewAsks(app)).toEqual([]);
+    expect(app.shows("id:s_preview:page:waiting")).toBe(true);
+    // No accept button: xlarge's client has none.
+    expect(app.shows("id:s_preview:page:accept")).toBe(false);
 
-    await app.press("id:s_preview:root:accept");
-    expect(sentActions(app)).toEqual([
-      { name: "crm.keep_deal", sourceComponentId: "root", context: {} },
+    await app.type("id:s_preview:amount", "25000.50");
+    await app.wait(200);
+    expect(previewAsks(app)).toEqual([]);
+    // Typed key by key, it asks once, a moment after the last change.
+    await app.type("id:s_preview:partner", "p1");
+    await app.wait(200);
+    expect(previewAsks(app)).toEqual([
+      {
+        action: "export:sales.invoice?shape=invoice",
+        body: { draft: { amount: "25000.50", partner: "p1" }, about: "p1" },
+      },
     ]);
+    expect(app.shows("id:s_preview:page:page")).toBe(true);
+    await app.press("id:s_preview:page:open");
+    expect(app.host.posts().filter((post) => post.name === "a2ui.openUrl")).toEqual([
+      {
+        name: "a2ui.openUrl",
+        data: { url: `https://example.test/preview/${encodeURIComponent("export:sales.invoice?shape=invoice")}` },
+      },
+    ]);
+    // The export name is never sent as an A2UI event.
+    expect(sentActions(app)).toEqual([]);
     expect(reportedErrors(app)).toEqual([]);
   });
 
-  test("with confirm it asks first; without label it reads the host's word", async () => {
-    const app = await open(
+  test("a refused preview says so; without the host option the named values are listed as typed", async () => {
+    const refused = await open(
       HARNESS,
-      harnessOptions(
-        surfaceMessages("s_preview_ask", [
-          { id: "root", component: "Preview", action: "crm.keep_deal", draft: ["one line"], confirm: true },
-        ]),
-      ),
+      harnessOptions(surfaceMessages("s_preview_no", COMPONENTS), WORDS, {
+        previewBase: "https://example.test/preview/",
+        previewPauseMs: 0,
+        previewFails: true,
+      }),
     );
-    expect(reportedErrors(app)).toEqual([]);
-    expect(app.texts()).toEqual(["one line", "Accept"]);
+    await refused.type("id:s_preview_no:amount", "1");
+    await refused.type("id:s_preview_no:partner", "p1");
+    await refused.wait(50);
+    expect(refused.texts()).toContain("The preview could not be drawn");
 
-    await app.press("id:s_preview_ask:root:accept");
-    expect(sentActions(app)).toEqual([]);
-    expect(app.shows("id:s_preview_ask:root:ask")).toBe(true);
-    await app.press("id:s_preview_ask:root:ask:cancel");
-    expect(sentActions(app)).toEqual([]);
-
-    await app.press("id:s_preview_ask:root:accept");
-    await app.press("id:s_preview_ask:root:ask:yes");
-    expect(sentActions(app)).toEqual([
-      { name: "crm.keep_deal", sourceComponentId: "root", context: {} },
-    ]);
+    const listed = await open(HARNESS, harnessOptions(surfaceMessages("s_preview_list", COMPONENTS), WORDS));
+    expect(reportedErrors(listed)).toEqual([]);
+    expect(listed.shows("id:s_preview_list:page:line:amount")).toBe(true);
+    await listed.type("id:s_preview_list:amount", "25000.50");
+    expect(listed.texts()).toContain("25000.50");
+    expect(listed.texts()).toContain("—");
+    expect(sentActions(listed)).toEqual([]);
   });
 });

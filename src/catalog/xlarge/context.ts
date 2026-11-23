@@ -9,7 +9,7 @@
 
 import { context, platform, signal, type Signal } from "nsh";
 import { announce } from "../../renderer/accessibility";
-import { SHOW_CODES, type StepState, type Translate } from "./model";
+import { SHOW_CODES, type PreviewBody, type Translate } from "./model";
 
 /** The draft a `Form` holds for the fields drawn inside it. */
 export interface FormDraft {
@@ -66,8 +66,6 @@ export interface XlargeRendererOptions {
   readonly backLabel?: string;
   /** The name of a toast's close button. Default: `"Dismiss"`. */
   readonly dismissLabel?: string;
-  /** The label of a `Detail`'s edit button (`update`). Default: `"Edit"`. */
-  readonly editLabel?: string;
   /**
    * How long a `Toast` shows before it passes, in milliseconds; `0` keeps it
    * until it is dismissed. Default: `5000`.
@@ -77,8 +75,6 @@ export interface XlargeRendererOptions {
   readonly confirmQuestion?: string;
   /** The yes button of a `Confirm` without `confirmLabel`. Default: `"Confirm"`. */
   readonly confirmLabel?: string;
-  /** The accept button of a `Preview` without `label`. Default: `"Accept"`. */
-  readonly acceptLabel?: string;
   /** A `Wizard`'s button to the next page. Default: `"Next"`. */
   readonly nextLabel?: string;
   /** An `Arrange`'s add button without `addLabel`. Default: `"Add"`. */
@@ -103,8 +99,27 @@ export interface XlargeRendererOptions {
    * `src/renderer/accessibility.ts` (`nsh`'s).
    */
   readonly announce?: (message: string) => void;
-  /** How a `Steps` list names a done, the current and a to-do step. */
-  readonly stepStateLabels?: Readonly<Record<StepState, string>>;
+  /**
+   * The record the last action this screen sent was answered with, while the
+   * screen is open (xlarge's `answer()`): what a `Steps` draws. An A2UI 1.0
+   * event carries no answer back, so the host that sends it and reads the
+   * reply holds it; pass a signal's reader so a new answer redraws. Default:
+   * none, so a `Steps` draws nothing.
+   */
+  readonly answer?: () => Readonly<Record<string, unknown>> | null | undefined;
+  /**
+   * Draws a `Preview`: asked with its `action` (xlarge's
+   * `export:<screen>?shape=...`, never sent as an event) and the named draft
+   * values (`{ draft, about }`), it answers the URL or data URI of the drawn
+   * page, or `undefined` for none. A rejection says `preview.failed`.
+   * Default: none, so a `Preview` lists the named draft values.
+   */
+  readonly preview?: (action: string, body: PreviewBody) => Promise<string | undefined>;
+  /**
+   * How long after the last change to a `Preview`'s draft it asks `preview`,
+   * in milliseconds. Default: `600`, as xlarge's client.
+   */
+  readonly previewPauseMs?: number;
   /** The words over a `Chart`'s total (`sum`). Default: `"Total"`. */
   readonly totalLabel?: string;
   /**
@@ -161,11 +176,9 @@ export interface ResolvedXlargeOptions {
   readonly cancelLabel: string;
   readonly backLabel: string;
   readonly dismissLabel: string;
-  readonly editLabel: string;
   readonly toastMs: number;
   readonly confirmQuestion: string;
   readonly confirmLabel: string;
-  readonly acceptLabel: string;
   readonly nextLabel: string;
   readonly addLabel: string;
   readonly resetLabel: string;
@@ -175,7 +188,9 @@ export interface ResolvedXlargeOptions {
   readonly removeLabel: string;
   readonly movedText: string;
   readonly announce: (message: string) => void;
-  readonly stepStateLabels: Readonly<Record<StepState, string>>;
+  readonly answer: (() => Readonly<Record<string, unknown>> | null | undefined) | undefined;
+  readonly preview: ((action: string, body: PreviewBody) => Promise<string | undefined>) | undefined;
+  readonly previewPauseMs: number;
   readonly totalLabel: string;
   readonly terminal: boolean;
   readonly weekdayLabels: readonly string[];
@@ -199,14 +214,12 @@ export function resolveXlargeOptions(
     cancelLabel: options.cancelLabel ?? "Cancel",
     backLabel: options.backLabel ?? "Back",
     dismissLabel: options.dismissLabel ?? "Dismiss",
-    editLabel: options.editLabel ?? "Edit",
     toastMs:
       options.toastMs !== undefined && Number.isFinite(options.toastMs) && options.toastMs >= 0
         ? options.toastMs
         : 5000,
     confirmQuestion: options.confirmQuestion ?? "Are you sure?",
     confirmLabel: options.confirmLabel ?? "Confirm",
-    acceptLabel: options.acceptLabel ?? "Accept",
     nextLabel: options.nextLabel ?? "Next",
     addLabel: options.addLabel ?? "Add",
     resetLabel: options.resetLabel ?? "Reset",
@@ -216,11 +229,14 @@ export function resolveXlargeOptions(
     removeLabel: options.removeLabel ?? "Remove",
     movedText: options.movedText ?? "{name} moved to {at} of {count}",
     announce: options.announce ?? announce,
-    stepStateLabels: options.stepStateLabels ?? {
-      done: "Done",
-      current: "Current",
-      todo: "To do",
-    },
+    answer: options.answer,
+    preview: options.preview,
+    previewPauseMs:
+      options.previewPauseMs !== undefined &&
+      Number.isFinite(options.previewPauseMs) &&
+      options.previewPauseMs >= 0
+        ? options.previewPauseMs
+        : 600,
     totalLabel: options.totalLabel ?? "Total",
     terminal: options.terminal ?? platform.idiom === "terminal",
     weekdayLabels: options.weekdayLabels?.length === 7 ? options.weekdayLabels : WEEKDAYS,

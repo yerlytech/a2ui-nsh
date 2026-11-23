@@ -36,6 +36,7 @@ export function harnessOptions(
         "a2ui.exception": null,
         "a2ui.openUrl": null,
         "a2ui.announce": null,
+        "a2ui.preview": null,
       },
     },
   };

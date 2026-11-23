@@ -1,5 +1,6 @@
 {
   "source": "synthetic, no real xlarge screen yet",
+  "note": "`answer` is what the agents.ask action was answered with (xlarge spec 033); it reaches the renderer through the host's `answer` option, not an A2UI message.",
   "messages": [
     {
       "version": "1.0",
@@ -10,20 +11,22 @@
       "updateComponents": {
         "surfaceId": "synthetic.steps",
         "components": [
-          { "id": "root", "component": "Steps", "answer": "onboard.steps" }
+          { "id": "root", "component": "Steps", "answer": "steps" }
         ]
       }
-    },
-    {
-      "version": "1.0",
-      "updateDataModel": {
-        "surfaceId": "synthetic.steps",
-        "path": "/onboard.steps",
-        "value": {
-          "steps": ["onboard.step.company", "onboard.step.bank", "onboard.step.invite"],
-          "current": "onboard.step.bank"
-        }
-      }
     }
-  ]
+  ],
+  "answer": {
+    "words": "I opened the account; inviting the team is yours.",
+    "steps": [
+      {
+        "action": "onboard.create_company",
+        "input": { "name": "Acme" },
+        "outcome": "done",
+        "opens": { "screen": "screen:onboard.company", "about": "c1" }
+      },
+      { "action": "onboard.add_bank", "input": { "iban": "TR00" }, "outcome": "refused", "code": "bank.iban_invalid" },
+      { "action": "onboard.invite", "input": { "emails": ["a@example.test"] }, "outcome": "waiting" }
+    ]
+  }
 }
