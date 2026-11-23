@@ -5,8 +5,8 @@
  * an A2UI 1.0 catalog definition. This module draws the four components its
  * `crm.deals` screen uses (`Card`, `Field`, `Form`, `Table`) and `Text`,
  * `Toast`, `Refusal`, `Image`, `QrCode`, `Button`, `Confirm`, `Preview`,
- * `Columns`, `Detail`, `Metric`, `ChequeLeaf`, `Wizard`, `Steps`, and `Arrange`
- * (spec 003, round 2). The catalog
+ * `Columns`, `Detail`, `Metric`, `ChequeLeaf`, `Wizard`, `Steps`, `Arrange`,
+ * `Chart`, `Calendar`, and `Conversation` (spec 003, round 2): all 22. The catalog
  * definition itself is xlarge's: register it on the store (`Catalog.fromJson`)
  * next to these renderers. None of this is part of the A2UI Basic Catalog.
  */
@@ -17,10 +17,13 @@ import {
 } from "../../renderer/registry";
 import { createXlargeArrange } from "./Arrange";
 import { createXlargeButton } from "./Button";
+import { createXlargeCalendar } from "./Calendar";
 import { createXlargeCard } from "./Card";
+import { createXlargeChart } from "./Chart";
 import { createXlargeChequeLeaf } from "./ChequeLeaf";
 import { createXlargeColumns } from "./Columns";
 import { createXlargeConfirm } from "./Confirm";
+import { createXlargeConversation } from "./Conversation";
 import { resolveXlargeOptions, type XlargeRendererOptions } from "./context";
 import { createXlargeDetail } from "./Detail";
 import { createXlargeField } from "./Field";
@@ -40,8 +43,11 @@ import { XLARGE_CATALOG_V1_ID } from "./model";
 export { AskPanel, sendXlargeAction, type AskPanelProps } from "./ask";
 export { createXlargeArrange } from "./Arrange";
 export { createXlargeButton } from "./Button";
+export { createXlargeCalendar } from "./Calendar";
 export { createXlargeCard } from "./Card";
+export { createXlargeChart } from "./Chart";
 export { createXlargeConfirm } from "./Confirm";
+export { createXlargeConversation } from "./Conversation";
 export { createXlargeImage } from "./Image";
 export { createXlargePreview } from "./Preview";
 export { createXlargeChequeLeaf } from "./ChequeLeaf";
@@ -72,6 +78,12 @@ export {
   arrangeText,
   askStep,
   buttonVariant,
+  calendarMonth,
+  chartKind,
+  chartPoints,
+  conversationRows,
+  pieShares,
+  sumDecimals,
   draftLines,
   changeDirection,
   changeText,
@@ -105,6 +117,12 @@ export {
   wizardStep,
   type AskStep,
   type ButtonVariant,
+  type CalendarDay,
+  type CalendarMonth,
+  type ChartFormat,
+  type ChartKind,
+  type ChartPoint,
+  type ConversationRow,
   type DraftLine,
   type ChangeDirection,
   type ChangeTone,
@@ -122,7 +140,7 @@ export {
   type WizardStep,
 } from "./model";
 
-/** The xlarge components this library draws (19 of the catalog's 22). */
+/** The xlarge components this library draws (all 22 of the catalog's components). */
 export const XLARGE_DRAWN_COMPONENTS = [
   "Card",
   "Field",
@@ -143,6 +161,9 @@ export const XLARGE_DRAWN_COMPONENTS = [
   "Wizard",
   "Steps",
   "Arrange",
+  "Chart",
+  "Calendar",
+  "Conversation",
 ] as const;
 
 /** Builds the xlarge renderers with `options` (translation, fixed words). */
@@ -170,6 +191,9 @@ export function createXlargeRenderers(
     Wizard: createXlargeWizard(resolved),
     Steps: createXlargeSteps(resolved),
     Arrange: createXlargeArrange(resolved),
+    Chart: createXlargeChart(resolved),
+    Calendar: createXlargeCalendar(resolved),
+    Conversation: createXlargeConversation(resolved),
   };
 }
 

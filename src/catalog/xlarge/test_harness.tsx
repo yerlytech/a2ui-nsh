@@ -6,7 +6,8 @@
  * - `messages`: the A2UI messages to process at startup;
  * - `translations`: optional i18n code → words map (missing codes show as-is);
  * - `strictMode`: optional, validates every message strictly;
- * - `toastMs`: optional, how long a `Toast` shows (the renderer option).
+ * - `toastMs`: optional, how long a `Toast` shows (the renderer option);
+ * - `terminal`: optional, draws as a terminal host would (the renderer option).
  *
  * Reports outbound actions and errors via `host.post("a2ui.*", ...)`, and
  * answers `a2ui.readData` with the surface data at a path.
@@ -47,6 +48,7 @@ function XlargeHarnessApp(): JSX.Element {
   registerXlargeCatalogComponents(registry, {
     translate: (code) => translations[code] ?? code,
     toastMs: typeof params["toastMs"] === "number" ? params["toastMs"] : undefined,
+    terminal: typeof params["terminal"] === "boolean" ? params["terminal"] : undefined,
   });
 
   const store = new A2uiStore({

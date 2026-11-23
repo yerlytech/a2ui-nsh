@@ -8,6 +8,12 @@ import {
   newArrangeItem,
   stepsList,
   wizardStep,
+  calendarMonth,
+  chartKind,
+  chartPoints,
+  conversationRows,
+  pieShares,
+  sumDecimals,
   draftLines,
   literalContext,
   changeDirection,
@@ -447,6 +453,86 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf helpers", () => {
     ]);
     expect(chequeLeafRows([{ state: "bounced" }], undefined, upper)[0]!.state).toBe("BOUNCED");
     expect(chequeLeafRows(undefined, "x.", upper)).toEqual([]);
+  });
+
+  test("chartKind reads bar, line and pie with their synonyms", () => {
+    expect(chartKind("line")).toBe("line");
+    expect(chartKind("area")).toBe("line");
+    expect(chartKind("pie")).toBe("pie");
+    expect(chartKind("donut")).toBe("pie");
+    expect(chartKind("bar")).toBe("bar");
+    expect(chartKind("radar")).toBe("bar");
+    expect(chartKind(undefined)).toBe("bar");
+  });
+
+  test("chartPoints formats labels and values from text and reads tones", () => {
+    const rows = [
+      { id: 1, label: "won", value: "125000.1" },
+      { name: "open", amount: 40000 },
+      { key: "lost", count: "n/a" },
+      "not a row",
+    ];
+    expect(
+      chartPoints(rows, { format: "money", labelPrefix: "crm.stage.", tones: { won: "good", open: "nope" } }, upper),
+    ).toEqual([
+      { key: "id:1", label: "CRM.STAGE.WON", raw: "125000.1", value: "125,000.10", size: 125000.1, tone: "accent" },
+      { key: "at:1:open", label: "CRM.STAGE.OPEN", raw: "40000", value: "40,000.00", size: 40000 },
+      { key: "at:2:lost", label: "CRM.STAGE.LOST", raw: "n/a", value: "n/a", size: 0 },
+    ]);
+    expect(chartPoints({ "2026-10-01T00:00:00Z": "3" }, { labelFormat: "date" }, upper)).toEqual([
+      { key: "at:0:2026-10-01T00:00:00Z", label: "2026-10-01", raw: "3", value: "3", size: 3 },
+    ]);
+    expect(chartPoints(undefined, {}, upper)).toEqual([]);
+  });
+
+  test("sumDecimals adds exactly, never through a float", () => {
+    expect(sumDecimals(["0.1", "0.2"])).toBe("0.3");
+    expect(sumDecimals(["125000.10", "40000.20", "9000"])).toBe("174000.30");
+    expect(sumDecimals(["-5.5", "2"])).toBe("-3.5");
+    expect(sumDecimals(["99999999999999999.99", "0.01"])).toBe("100000000000000000.00");
+    expect(sumDecimals(["n/a", "+4"])).toBe("4");
+    expect(sumDecimals([])).toBe("0");
+  });
+
+  test("pieShares gives positive points their share", () => {
+    expect(pieShares([{ size: 3 }, { size: 1 }, { size: -2 }])).toEqual([0.75, 0.25, 0]);
+    expect(pieShares([{ size: 0 }])).toEqual([0]);
+  });
+
+  test("calendarMonth lays out a month Monday first with its marks", () => {
+    const month = calendarMonth({ month: "2026-11", days: [{ date: "2026-11-24", count: 5 }, { date: "", count: 1 }] });
+    expect(month?.year).toBe(2026);
+    expect(month?.month).toBe(11);
+    // 1 November 2026 is a Sunday: six blanks lead, five weeks after.
+    expect(month?.weeks.length).toBe(6);
+    expect(month?.weeks[0]!.map((day) => day.day)).toEqual([0, 0, 0, 0, 0, 0, 1]);
+    expect(month?.weeks[5]!.map((day) => day.day)).toEqual([30, 0, 0, 0, 0, 0, 0]);
+    const marked = month?.weeks.flat().find((day) => day.date === "2026-11-24");
+    expect(marked).toEqual({ key: "2026-11-24", date: "2026-11-24", day: 24, mark: "5" });
+
+    // February 2027 starts on a Monday: four full weeks, no blanks.
+    const february = calendarMonth("2027-02-14");
+    expect(february?.weeks.length).toBe(4);
+    expect(february?.weeks[0]![0]!.date).toBe("2027-02-01");
+    expect(calendarMonth({ start: "2028-02", days: { "2028-02-29": "Stock count" } })?.weeks.flat().find((day) => day.day === 29)?.mark).toBe("Stock count");
+    expect(calendarMonth("2026-13")).toBe(undefined);
+    expect(calendarMonth(undefined)).toBe(undefined);
+  });
+
+  test("conversationRows reads messages, their side, and the other party", () => {
+    const rows = [
+      { id: "m1", text: "Hello", at: "2026-11-20T09:15:00Z" },
+      { id: "m2", body: "Hi", from: "Deniz", direction: "out" },
+      { message: "Ok", mine: true },
+      { text: "Bye", author: "Ece", date: "2026-11-21" },
+    ];
+    expect(conversationRows(rows, "Acme")).toEqual([
+      { key: "id:m1", id: "m1", author: "Acme", text: "Hello", at: "2026-11-20 09:15", mine: false },
+      { key: "id:m2", id: "m2", author: "Deniz", text: "Hi", at: "", mine: true },
+      { key: "at:2", id: undefined, author: "", text: "Ok", at: "", mine: true },
+      { key: "at:3", id: undefined, author: "Ece", text: "Bye", at: "2026-11-21", mine: false },
+    ]);
+    expect(conversationRows(undefined, "Acme")).toEqual([]);
   });
 });
 

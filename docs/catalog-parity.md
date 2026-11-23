@@ -41,12 +41,13 @@ from `src/catalog/xlarge/` (spec 003).
 
 All 14 Basic Catalog functions are implemented as well (`docs/conformance.md`).
 
-## xlarge catalog v1: 19 of 22
+## xlarge catalog v1: 22 of 22
 
 Before spec 003: 0 of 22. Spec 003 drew the four xlarge's `crm.deals`
 screen uses; its round 2 (night spec 028) added `Text`, `Toast`, `Refusal`,
 `Image`, `QrCode`, `Button`, `Confirm`, `Preview`, `Columns`, `Detail`,
-`Metric`, `ChequeLeaf`, `Wizard`, `Steps`, and `Arrange`.
+`Metric`, `ChequeLeaf`, `Wizard`, `Steps`, `Arrange`, `Chart`, `Calendar`, and
+`Conversation`.
 
 | Component | Drawn | Renderer | Tests | Fixture |
 |---|---|---|---|---|
@@ -69,7 +70,9 @@ screen uses; its round 2 (night spec 028) added `Text`, `Toast`, `Refusal`,
 | Wizard | yes | `src/catalog/xlarge/Wizard.tsx` (draft: `context.ts`, ask: `ask.tsx`) | `Wizard.test.tsx`, `model.test.ts`, `flows_walk.test.tsx` | `wizard-synthetic.json` (synthetic: no real xlarge screen yet) |
 | Steps | yes | `src/catalog/xlarge/Steps.tsx` | `Steps.test.tsx`, `model.test.ts`, `flows_walk.test.tsx` | `steps-synthetic.json` (synthetic: no real xlarge screen yet) |
 | Arrange | yes | `src/catalog/xlarge/Arrange.tsx` (ask: `ask.tsx`) | `Arrange.test.tsx`, `model.test.ts`, `flows_walk.test.tsx`, `tests/targets/xlarge.target.test.tsx` (keyboard, TUI and Web) | `arrange-synthetic.json` (synthetic: no real xlarge screen yet) |
-| Chart, Conversation, Calendar | no | — | — | — |
+| Chart | yes | `src/catalog/xlarge/Chart.tsx` | `Chart.test.tsx`, `model.test.ts`, `rich_walk.test.tsx` | `chart-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Calendar | yes | `src/catalog/xlarge/Calendar.tsx` | `Calendar.test.tsx`, `model.test.ts`, `rich_walk.test.tsx` | `calendar-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Conversation | yes | `src/catalog/xlarge/Conversation.tsx` | `Conversation.test.tsx`, `model.test.ts`, `rich_walk.test.tsx` | `conversation-synthetic.json` (synthetic: no real xlarge screen yet) |
 
 Fixtures live in `tests/fixtures/xlarge/`.
 
@@ -100,6 +103,9 @@ ignored when drawn.
 | Wizard | `children` (one page each, shown one at a time with `n / total`, back and next — the host's `backLabel`, `nextLabel`), one draft for all pages (`FormDraftContext`; next refuses a page with an empty required field), `submit` (sent from the last page with the whole draft: defaults filled, blanks left out, amounts as typed text), `submitLabel` (code; default `action.save`), `confirm` (asks first), `after` (after a send, opens that screen: the event `screen:<after>` with `{}`) | `pageTitle` |
 | Steps | `answer` (the data-model key `/<answer>`: a list of steps or `{ steps, current }`; a step is a name code or `{ name, label, state/status/done/current }`; marked done, current or to do, named by the host's `stepStateLabels`) | `pageTitle` |
 | Arrange | `items` (data binding), `field` (the key each item shows; plain items as they came), move up / move down buttons per item (keyboard: Tab, then Enter), `add` (code naming the new item's text box; turns adding on), `addLabel` (code of the add button; default the host's `addLabel`), `addItem` (the new item's key; default `field`, else the plain text), `save` (sends `{ items, version }`: every item in the new order), `version` (data binding, sent as it came), `reset` (the reset button restores the data model's order; with `reset` it also sends that action with `{ version }`), `confirm` (asks before a send) | `after`, `pageTitle` |
+| Chart | `data` (data binding: rows of `label`/`name`/`key`/`x` and `value`/`amount`/`count`/`total`/`y`, or an object of label → value), `kind` (`bar`, the default; `line`/`area`/`trend`; `pie`/`donut`/`doughnut`; drawn on a `Canvas`), `format` (as `Metric.format`, from the text), `label` (code: the heading and accessible name), `labelFormat` (a `Table` column format), `labelPrefix` (i18n prefix, as `enumPrefix`), `sum` (an exact total, added as decimal text, under the host's `totalLabel`, default `"Total"`), `tones` (label → `Text.tone` word: the bar's or slice's colour; others take `chart-1`…`chart-5`). A legend lists every point; in a terminal (the `terminal` option, default `platform.idiom === "terminal"`) the points show as a table instead of the drawing. The row keys are this renderer's reading; no real xlarge screen confirms them yet | `pageTitle` |
+| Calendar | `month` (data binding: `"YYYY-MM"` or a date in it, or `{ month \| start, days }` with `days` a list of `{ date, count \| label }` or an object of date → mark), `screen` (a day press sends `{ event: { name: "screen:<screen>", context: { date } } }`; without it the days are not buttons). Weeks start on Monday; the heading and weekday words are the host's `monthLabels` and `weekdayLabels` (English by default). The value's keys are this renderer's reading; no real xlarge screen confirms them yet | `pageTitle` |
+| Conversation | `rows` (data binding: messages oldest first, `text`/`body`/`message`, `from`/`author`/`by`, `at`/`date`/`sentAt`, this side's when `mine` or `out` is true or `direction` is `out`/`outgoing`, drawn at the end), `kind` (code: the channel, in the heading), `called` (data binding: who the thread is with, in the heading and the author of the other side's unnamed messages), `around` (data binding: the `id` of the message the thread opens around, marked and reported selected), `screen` (a message press sends `{ event: { name: "screen:<screen>", context: { id } } }`). The readings of `rows`, `kind`, `called`, and `around` are this renderer's; no real xlarge screen confirms them yet | `pageTitle` |
 
 ### Field inputs
 

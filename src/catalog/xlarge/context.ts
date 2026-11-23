@@ -7,7 +7,7 @@
  * written into the surface data model.
  */
 
-import { context, signal, type Signal } from "nsh";
+import { context, platform, signal, type Signal } from "nsh";
 import { SHOW_CODES, type StepState, type Translate } from "./model";
 
 /** The draft a `Form` holds for the fields drawn inside it. */
@@ -90,7 +90,34 @@ export interface XlargeRendererOptions {
   readonly moveDownLabel?: string;
   /** How a `Steps` list names a done, the current and a to-do step. */
   readonly stepStateLabels?: Readonly<Record<StepState, string>>;
+  /** The words over a `Chart`'s total (`sum`). Default: `"Total"`. */
+  readonly totalLabel?: string;
+  /**
+   * The host draws in a terminal: a `Chart` shows its table instead of a
+   * drawing. Default: `platform.idiom === "terminal"`.
+   */
+  readonly terminal?: boolean;
+  /** A `Calendar`'s weekday heads, Monday first (seven). Default: English. */
+  readonly weekdayLabels?: readonly string[];
+  /** A `Calendar`'s month names, January first (twelve). Default: English. */
+  readonly monthLabels?: readonly string[];
 }
+
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
 
 /** `XlargeRendererOptions` with every default filled in. */
 export interface ResolvedXlargeOptions {
@@ -112,6 +139,10 @@ export interface ResolvedXlargeOptions {
   readonly moveUpLabel: string;
   readonly moveDownLabel: string;
   readonly stepStateLabels: Readonly<Record<StepState, string>>;
+  readonly totalLabel: string;
+  readonly terminal: boolean;
+  readonly weekdayLabels: readonly string[];
+  readonly monthLabels: readonly string[];
 }
 
 /** Fills in the defaults of `XlargeRendererOptions`. */
@@ -144,5 +175,9 @@ export function resolveXlargeOptions(
       current: "Current",
       todo: "To do",
     },
+    totalLabel: options.totalLabel ?? "Total",
+    terminal: options.terminal ?? platform.idiom === "terminal",
+    weekdayLabels: options.weekdayLabels?.length === 7 ? options.weekdayLabels : WEEKDAYS,
+    monthLabels: options.monthLabels?.length === 12 ? options.monthLabels : MONTHS,
   };
 }

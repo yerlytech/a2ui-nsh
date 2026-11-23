@@ -160,3 +160,29 @@ these properties without describing them, so `after` (Wizard), the shape of
 `answer`, and `add`/`addItem`/`reset` (Arrange) are read as written above;
 a real xlarge capture should confirm them. Synthetic fixtures again, walked
 by `src/catalog/xlarge/flows_walk.test.tsx`.
+A further commit of round 2 draws three richer components:
+
+- **`Chart`**: the bound `data` (rows of label and value, or an object of
+  label → value) as `kind` says: bars (default), a line, or a pie. Native
+  Shell 0.6.1 has no chart primitive, so the shapes are drawn on its
+  `Canvas`; no chart library is added. Values are formatted by `format`
+  from their text; only the geometry reads them as numbers. `labelFormat`
+  and `labelPrefix` shape the labels, `tones` colours a label's bar or
+  slice, and `sum` adds the values exactly as decimal text (`sumDecimals`).
+  A legend lists every point; in a terminal (the host's `terminal` option,
+  default `platform.idiom === "terminal"`) the points show as a table
+  instead, which is also what screen readers read.
+- **`Calendar`**: the bound `month` as a Monday-first grid, days marked by
+  their count or label; a day press sends `{ event: { name:
+  "screen:<screen>", context: { date } } }`. The heading and weekday words
+  are the host's (`monthLabels`, `weekdayLabels`).
+- **`Conversation`**: the bound `rows` as a message thread, this side's
+  messages at the end; the heading is the translated `kind` and the bound
+  `called`; the message whose `id` is the bound `around` is marked; a
+  message press sends `{ event: { name: "screen:<screen>", context: { id }
+  } }`.
+
+New host options: `terminal`, `totalLabel`, `weekdayLabels`, `monthLabels`.
+The data keys these three read are this renderer's reading; no real xlarge
+capture was readable, so the fixtures are synthetic, walked by
+`src/catalog/xlarge/rich_walk.test.tsx`.
