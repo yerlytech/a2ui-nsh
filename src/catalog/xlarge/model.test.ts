@@ -1,5 +1,7 @@
 import { describe, expect, test } from "nsh/test";
 import {
+  actionContext,
+  bindingPath,
   arrangeContext,
   arrangeText,
   askStep,
@@ -207,14 +209,15 @@ describe("xlarge catalog model", () => {
     });
   });
 
-  test("button variants map onto drawn variants, unknown ones to primary", () => {
-    expect(buttonVariant("secondary")).toBe("secondary");
-    expect(buttonVariant("ghost")).toBe("secondary");
+  test("button variants: only primary is primary, unknown or missing ones plain", () => {
+    expect(buttonVariant("primary")).toBe("primary");
     expect(buttonVariant("danger")).toBe("danger");
     expect(buttonVariant("destructive")).toBe("danger");
-    expect(buttonVariant("primary")).toBe("primary");
-    expect(buttonVariant("sparkly")).toBe("primary");
-    expect(buttonVariant(undefined)).toBe("primary");
+    expect(buttonVariant("secondary")).toBe("secondary");
+    expect(buttonVariant("ghost")).toBe("secondary");
+    expect(buttonVariant("bad")).toBe("secondary");
+    expect(buttonVariant("sparkly")).toBe("secondary");
+    expect(buttonVariant(undefined)).toBe("secondary");
   });
 
   test("a literal context is copied as given; anything else is empty", () => {
@@ -292,11 +295,37 @@ describe("xlarge catalog model", () => {
     expect(messageText("crm.other", "junk", words)).toBe("crm.other");
   });
 
-  test("back names a screen action", () => {
+  test("back/after: an action name as it came, a bare screen prefixed, back sends nothing", () => {
     expect(screenAction("crm.deals")).toBe("screen:crm.deals");
     expect(screenAction("screen:crm.deal")).toBe("screen:crm.deal");
+    expect(screenAction("crm.deal:close")).toBe("crm.deal:close");
+    expect(screenAction("back")).toBe(undefined);
     expect(screenAction("")).toBe(undefined);
     expect(screenAction(undefined)).toBe(undefined);
+  });
+
+  test("binding paths: xlarge's path and A2UI's @path, one key only", () => {
+    expect(bindingPath({ path: "/deal/id" })).toBe("/deal/id");
+    expect(bindingPath({ "@path": "/deal/id" })).toBe("/deal/id");
+    expect(bindingPath({ path: "/a", other: 1 })).toBe(undefined);
+    expect(bindingPath({ path: 3 })).toBe(undefined);
+    expect(bindingPath("/deal/id")).toBe(undefined);
+    expect(bindingPath(undefined)).toBe(undefined);
+  });
+
+  test("action context reads bindings, keeps literals, and adds version", () => {
+    const data: Record<string, unknown> = { "/deal/id": "d7", "/deal/version": 4 };
+    const read = (path: string): unknown => data[path];
+    expect(
+      actionContext(
+        { id: { path: "/deal/id" }, amount: "25000.50", "@@note": "x", nested: { a: 1, b: 2 } },
+        read,
+        { "@path": "/deal/version" },
+      ),
+    ).toEqual({ id: "d7", amount: "25000.50", "@note": "x", nested: { a: 1, b: 2 }, version: 4 });
+    expect(actionContext(undefined, read, 9)).toEqual({ version: 9 });
+    expect(actionContext({ id: "d1" }, read, { path: "/missing" })).toEqual({ id: "d1" });
+    expect(actionContext(["a"], read)).toEqual({});
   });
 
   test("Reed–Solomon matches the published HELLO WORLD 1-M codewords", () => {

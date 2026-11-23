@@ -351,36 +351,82 @@ export function messageText(
 }
 
 /**
- * The action that opens the screen `back` names. xlarge opens screens with a
- * `screen:<name>` action (a `Table` row sends `screen:crm.deal`); a `back`
- * already written that way is sent as it came.
+ * The action a `back`, `after` or `screen` value sends. A value that already
+ * holds a `:` is an action name (`screen:crm.deal`, `crm.deal:close`) and is
+ * sent as it came; a bare screen name opens that screen with xlarge's
+ * `screen:<name>` action. `"back"` means go back: the client steps back on its
+ * own and sends nothing extra, so it gives `undefined`, as does a missing value.
  */
 export function screenAction(back: unknown): string | undefined {
-  if (typeof back !== "string" || back.length === 0) {
+  if (typeof back !== "string" || back.length === 0 || back === "back") {
     return undefined;
   }
-  return back.startsWith("screen:") ? back : `screen:${back}`;
+  return back.includes(":") ? back : `screen:${back}`;
 }
 
-/** How an xlarge `Button.variant` is drawn. Unknown variants draw primary. */
+/** How an xlarge `Button.variant` is drawn. */
 export type ButtonVariant = "primary" | "secondary" | "danger";
 
-/** Maps xlarge's `Button.variant` onto one of the drawn variants. */
+/**
+ * Maps xlarge's `Button.variant` onto one of the drawn variants, as xlarge's
+ * web client does: only `"primary"` draws primary, `"danger"` and
+ * `"destructive"` draw danger, and anything else (or none) draws the plain
+ * button. xlarge marks its primary buttons on purpose.
+ */
 export function buttonVariant(variant: unknown): ButtonVariant {
   switch (variant) {
-    case "secondary":
-    case "quiet":
-    case "ghost":
-    case "plain":
-    case "outline":
-      return "secondary";
+    case "primary":
+      return "primary";
     case "danger":
     case "destructive":
-    case "bad":
       return "danger";
     default:
-      return "primary";
+      return "secondary";
   }
+}
+
+/**
+ * The data-model path a context value binds to, or `undefined` for a literal.
+ * A binding is an object with one string key: xlarge's `{ "path": ... }` or
+ * A2UI 1.0's `{ "@path": ... }`.
+ */
+export function bindingPath(value: unknown): string | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  const keys = Object.keys(value);
+  if (keys.length !== 1) {
+    return undefined;
+  }
+  const path = value["path"] ?? value["@path"];
+  return typeof path === "string" ? path : undefined;
+}
+
+/**
+ * The context a `Button` sends: each value of `context` that is a data
+ * binding (`bindingPath`) is read with `read`; every other value stays the
+ * literal it came as (one `@@` escape undone, as `literalContext`). With a
+ * `version`, it is added as `version` (read the same way when it is a binding).
+ */
+export function actionContext(
+  context: unknown,
+  read: (path: string) => unknown,
+  version?: unknown,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (isRecord(context)) {
+    for (const [key, value] of Object.entries(context)) {
+      const path = bindingPath(value);
+      out[key.startsWith("@@") ? key.slice(1) : key] =
+        path !== undefined ? read(path) : unescapeLiteral(value);
+    }
+  }
+  const versionPath = bindingPath(version);
+  const resolvedVersion = versionPath !== undefined ? read(versionPath) : version;
+  if (resolvedVersion !== undefined && resolvedVersion !== null) {
+    out["version"] = resolvedVersion;
+  }
+  return out;
 }
 
 /**

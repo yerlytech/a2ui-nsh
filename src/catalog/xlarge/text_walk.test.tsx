@@ -29,6 +29,7 @@ const WORDS: Record<string, string> = {
   "crm.title.deal": "Deal",
   "crm.deal.summary": "{partner} owes {amount}",
   "crm.deal.overdue": "Overdue",
+  "crm.deal.won": "Won",
   "crm.deal.saved": "Saved {title}",
   "crm.refused.closed_deal": "This deal is closed",
   "crm.refused.reopen_first": "Reopen it first",
@@ -68,10 +69,11 @@ describe("xlarge Text, Toast, Refusal, Image and QrCode fixtures", () => {
     });
     expect(reportedErrors(app)).toEqual([]);
 
-    // Text: a filled code, a bound text, a danger tone.
-    for (const words of ["Deal", "acme owes 25000.50", "Call on Monday", "Overdue"]) {
+    // Text: a filled code, a bound text, a danger tone, and code winning over text.
+    for (const words of ["Deal", "acme owes 25000.50", "Call on Monday", "Overdue", "Won"]) {
       expect(app.texts()).toContain(words);
     }
+    expect(app.texts().filter((words) => words === "Call on Monday")).toEqual(["Call on Monday"]);
     // Toast: shown once.
     expect(app.texts()).toContain("Saved Forklift fleet");
     await app.press("id:synthetic.toast:saved:dismiss");

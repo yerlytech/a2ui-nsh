@@ -10,7 +10,7 @@
       "updateComponents": {
         "surfaceId": "synthetic.text",
         "components": [
-          { "id": "root", "component": "Card", "title": "crm.title.deal", "children": ["summary", "note", "overdue"] },
+          { "id": "root", "component": "Card", "title": "crm.title.deal", "children": ["summary", "note", "overdue", "won"] },
           {
             "id": "summary",
             "component": "Text",
@@ -19,7 +19,8 @@
             "tone": "strong"
           },
           { "id": "note", "component": "Text", "text": { "@path": "/note" }, "tone": "muted" },
-          { "id": "overdue", "component": "Text", "code": "crm.deal.overdue", "tone": "danger" }
+          { "id": "overdue", "component": "Text", "code": "crm.deal.overdue", "tone": "danger" },
+          { "id": "won", "component": "Text", "text": { "@path": "/note" }, "code": "crm.deal.won" }
         ]
       }
     },

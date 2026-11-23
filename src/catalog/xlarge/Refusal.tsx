@@ -3,8 +3,10 @@
  *
  * Explains why an action was refused: the translation of `code`, an optional
  * `hint` (a code), and, with `back`, a button that goes back. The button sends
- * the A2UI 1.0 event `screen:<back>` with an empty context, the action xlarge
- * opens screens with; it reads `backLabel` (a code) or the host's word.
+ * `back` with an empty context: as it came when it is an action name (holds a
+ * `:`), else the A2UI 1.0 event `screen:<back>`, the action xlarge opens
+ * screens with (`screenAction`); it reads `backLabel` (a code) or the host's
+ * word.
  */
 
 import { Text, View, computed, type JSX } from "nsh";

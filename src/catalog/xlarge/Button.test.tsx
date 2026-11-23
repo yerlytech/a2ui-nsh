@@ -100,6 +100,58 @@ describe("xlarge catalog Button", () => {
     expect(reportedErrors(app)).toEqual([]);
   });
 
+  test("reads bound context values and version from the data model, then follows after", async () => {
+    const app = await open(
+      HARNESS,
+      harnessOptions(
+        surfaceMessages(
+          "s_btn_bound",
+          [
+            {
+              id: "root",
+              component: "Button",
+              action: "crm.deal.save",
+              label: "crm.action.save",
+              variant: "primary",
+              context: { id: { path: "/deal/id" }, stage: { "@path": "/deal/stage" }, source: "web" },
+              version: { "@path": "/deal/version" },
+              after: "crm.deals",
+            },
+          ],
+          { deal: { id: "d7", stage: "won", version: 3 } },
+        ),
+      ),
+    );
+    expect(reportedErrors(app)).toEqual([]);
+    await app.press("id:s_btn_bound:root");
+    expect(sentActions(app)).toEqual([
+      {
+        name: "crm.deal.save",
+        sourceComponentId: "root",
+        context: { id: "d7", stage: "won", source: "web", version: 3 },
+      },
+      { name: "screen:crm.deals", sourceComponentId: "root", context: {} },
+    ]);
+    expect(reportedErrors(app)).toEqual([]);
+  });
+
+  test("only primary draws primary; a missing or unknown variant draws the plain button", async () => {
+    const app = await open(
+      HARNESS,
+      harnessOptions(
+        surfaceMessages("s_btn_variant", [
+          { id: "root", component: "Card", children: ["main", "bare", "odd"] },
+          { id: "main", component: "Button", action: "a.main", label: "Main", variant: "primary" },
+          { id: "bare", component: "Button", action: "a.bare", label: "Bare" },
+          { id: "odd", component: "Button", action: "a.odd", label: "Odd", variant: "sparkly" },
+        ]),
+      ),
+    );
+    expect(reportedErrors(app)).toEqual([]);
+    expect(app.spanStyle("text:Bare")).toEqual(app.spanStyle("text:Odd"));
+    expect(app.spanStyle("text:Main")).not.toEqual(app.spanStyle("text:Bare"));
+  });
+
   test("without action the button is disabled and sends nothing", async () => {
     const app = await open(
       HARNESS,

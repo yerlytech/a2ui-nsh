@@ -12,11 +12,24 @@
         "components": [
           {
             "id": "root",
+            "component": "Card",
+            "title": "crm.title.deal",
+            "children": ["close", "drop_job"]
+          },
+          {
+            "id": "close",
             "component": "Confirm",
             "question": "crm.ask.close_deal",
             "action": "crm.close_deal",
             "confirmLabel": "crm.action.close",
-            "cancel": "crm.action.keep_open"
+            "after": "crm.deals"
+          },
+          {
+            "id": "drop_job",
+            "component": "Confirm",
+            "question": "imports.ask.drop_job",
+            "action": "imports.drop_job",
+            "cancel": "screen:imports.jobs"
           }
         ]
       }

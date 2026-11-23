@@ -29,7 +29,6 @@ const WORDS: Record<string, string> = {
   "crm.action.drop": "Drop",
   "crm.ask.close_deal": "Close this deal?",
   "crm.action.close": "Close it",
-  "crm.action.keep_open": "Keep it open",
   "crm.preview.deal": "New deal",
   "crm.field.title": "Title",
   "crm.field.amount": "Amount",
@@ -63,7 +62,7 @@ describe("xlarge Button, Confirm and Preview fixtures", () => {
       },
     });
     expect(reportedErrors(app)).toEqual([]);
-    for (const words of ["Deal", "Win Forklift fleet", "Drop", "Close this deal?", "Close it", "Keep it open", "New deal", "Forklift fleet", "25,000.50", "Keep"]) {
+    for (const words of ["Deal", "Win Forklift fleet", "Drop", "crm.action.save", "Close this deal?", "Close it", "Cancel", "imports.ask.drop_job", "New deal", "Forklift fleet", "25,000.50", "Keep"]) {
       expect(app.texts()).toContain(words);
     }
 
@@ -75,9 +74,14 @@ describe("xlarge Button, Confirm and Preview fixtures", () => {
     await app.press("id:synthetic.button:drop:ask:cancel");
     await app.press("id:synthetic.button:drop");
     await app.press("id:synthetic.button:drop:ask:yes");
-    // Confirm: yes sends and closes the question.
-    await app.press("id:synthetic.confirm:root:yes");
-    expect(app.shows("id:synthetic.confirm:root")).toBe(false);
+    // Button with a bound context and version: reads the data model, then follows after.
+    await app.press("id:synthetic.button:save");
+    // Confirm: yes sends, follows after, and closes the question.
+    await app.press("id:synthetic.confirm:close:yes");
+    expect(app.shows("id:synthetic.confirm:close")).toBe(false);
+    // Confirm: cancel is an action; it sends it and closes.
+    await app.press("id:synthetic.confirm:drop_job:cancel");
+    expect(app.shows("id:synthetic.confirm:drop_job")).toBe(false);
     // Preview with confirm: accept asks, yes sends.
     await app.press("id:synthetic.preview:root:accept");
     await app.press("id:synthetic.preview:root:ask:yes");
@@ -85,7 +89,11 @@ describe("xlarge Button, Confirm and Preview fixtures", () => {
     expect(sentActions(app)).toEqual([
       { name: "crm.win_deal", sourceComponentId: "win", context: { id: "d1", amount: "25000.50" } },
       { name: "crm.drop_deal", sourceComponentId: "drop", context: { id: "d1" } },
-      { name: "crm.close_deal", sourceComponentId: "root", context: {} },
+      { name: "crm.deal.save", sourceComponentId: "save", context: { id: "d1", source: "web", version: 3 } },
+      { name: "screen:crm.deals", sourceComponentId: "save", context: {} },
+      { name: "crm.close_deal", sourceComponentId: "close", context: {} },
+      { name: "screen:crm.deals", sourceComponentId: "close", context: {} },
+      { name: "screen:imports.jobs", sourceComponentId: "drop_job", context: {} },
       { name: "crm.keep_deal", sourceComponentId: "root", context: {} },
     ]);
     expect(reportedErrors(app)).toEqual([]);

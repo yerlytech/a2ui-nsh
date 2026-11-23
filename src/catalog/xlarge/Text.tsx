@@ -1,8 +1,9 @@
 /**
  * xlarge catalog `Text` (`tech.yerly.xlarge/v1`) on Native Shell.
  *
- * Shows `text` (a dynamic string: data, shown as it is) or, without it, the
- * translation of `code` with its `{name}` placeholders filled from `params`.
+ * Shows the translation of `code` with its `{name}` placeholders filled from
+ * `params` or, without `code`, `text` (a dynamic string: data, shown as it is).
+ * `code` wins when both are set, as in xlarge's web client.
  * `tone` picks the colour and weight; an unknown tone draws plain.
  */
 
@@ -32,13 +33,13 @@ export function createXlargeText(
     const paramsProp = props.bridge.prop("params");
     const toneProp = props.bridge.prop("tone");
 
+    // `code` wins over `text`, as in xlarge's web client.
     const content = computed(() => {
-      const text = unwrapOptionalString(textProp());
-      if (text !== undefined) {
-        return text;
-      }
       const code = unwrapOptionalString(codeProp());
-      return code !== undefined ? messageText(code, paramsProp(), options.translate) : "";
+      if (code !== undefined) {
+        return messageText(code, paramsProp(), options.translate);
+      }
+      return unwrapOptionalString(textProp()) ?? "";
     });
     const tone = computed(() => textTone(toneProp()));
 

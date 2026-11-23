@@ -3,18 +3,23 @@
  *
  * Shows the translation of `label` with `{name}` placeholders filled from
  * `labelParams`, an optional `icon` (a Basic Catalog icon name; others are not
- * drawn), and draws by `variant`. Pressing sends the A2UI 1.0 event `action`
- * with the literal `context` (or `{}`). With `confirm` it asks first, the way
- * `Confirm` does (`AskPanel`, `askStep`): only yes sends.
+ * drawn), and draws by `variant` (only `"primary"` is primary; see
+ * `buttonVariant`). Pressing sends the A2UI 1.0 event `action` with `context`
+ * (or `{}`): data-binding values are read from the data model, others stay
+ * literal; with `version` (a binding) the read value is added as `version`
+ * (`actionContext`). Once sent, `after` is followed (`screenAction`). With
+ * `confirm` it asks first, the way `Confirm` does (`AskPanel`, `askStep`):
+ * only yes sends.
  *
  * The point-of-sale properties (`add`, `cash`, `till`, `qty`, `product`,
- * `queue`, `digest`, `away`, `after`, `version`) are not read yet: no captured
- * xlarge screen uses them.
+ * `queue`, `digest`, `away`) are not read yet: no captured xlarge screen uses
+ * them.
  */
 
 import { Canvas, Path2D, Text, View, computed, signal, token, type JSX } from "nsh";
 import { Button } from "nsh/base";
 import {
+  unwrapBinding,
   unwrapOptionalString,
   type A2uiComponentProps,
 } from "../../renderer/A2uiSurface";
@@ -28,7 +33,13 @@ import {
   sendXlargeAction,
 } from "./ask";
 import type { ResolvedXlargeOptions } from "./context";
-import { askStep, buttonVariant, literalContext, messageText } from "./model";
+import {
+  actionContext,
+  askStep,
+  buttonVariant,
+  messageText,
+  screenAction,
+} from "./model";
 
 const ICON_SIZE = 18;
 const ICON_VIEWBOX = 24;
@@ -44,6 +55,8 @@ export function createXlargeButton(
     const variantProp = props.bridge.prop("variant");
     const confirmProp = props.bridge.prop("confirm");
     const contextProp = props.bridge.prop("context");
+    const versionProp = props.bridge.prop("version");
+    const afterProp = props.bridge.prop("after");
 
     const action = computed(() => unwrapOptionalString(actionProp()));
     const label = computed(() => {
@@ -65,10 +78,25 @@ export function createXlargeButton(
       if (!next.send || name === undefined || sending()) {
         return;
       }
-      sending.set(true);
-      void sendXlargeAction(props, name, literalContext(contextProp())).finally(() =>
-        sending.set(false),
+      const read = (path: string): unknown =>
+        props.store.dataSignal(path, props.node.dataPath)();
+      const context = actionContext(
+        unwrapBinding(contextProp()),
+        read,
+        unwrapBinding(versionProp()),
       );
+      sending.set(true);
+      void (async () => {
+        try {
+          const sent = await sendXlargeAction(props, name, context);
+          const after = screenAction(unwrapOptionalString(afterProp()));
+          if (sent && after !== undefined) {
+            await sendXlargeAction(props, after, {});
+          }
+        } finally {
+          sending.set(false);
+        }
+      })();
     };
 
     return (

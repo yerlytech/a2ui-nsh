@@ -9,22 +9,24 @@ describe("xlarge catalog Text", () => {
         surfaceMessages(
           "s_text",
           [
-            { id: "root", component: "Card", children: ["coded", "bound"] },
+            { id: "root", component: "Card", children: ["coded", "bound", "both"] },
             {
               id: "coded",
               component: "Text",
               code: "crm.deal.summary",
               params: { partner: "acme", amount: "25000.50" },
             },
-            { id: "bound", component: "Text", text: { "@path": "/note" }, code: "ignored.code" },
+            { id: "bound", component: "Text", text: { "@path": "/note" } },
+            // `code` wins over `text`, as in xlarge's web client.
+            { id: "both", component: "Text", text: "ignored text", code: "crm.deal.won" },
           ],
           { note: "Call on Monday" },
         ),
-        { "crm.deal.summary": "{partner} owes {amount}" },
+        { "crm.deal.summary": "{partner} owes {amount}", "crm.deal.won": "Won" },
       ),
     );
     expect(reportedErrors(app)).toEqual([]);
-    expect(app.texts()).toEqual(["acme owes 25000.50", "Call on Monday"]);
+    expect(app.texts()).toEqual(["acme owes 25000.50", "Call on Monday", "Won"]);
 
     await app.host.send("a2ui.message", {
       version: "1.0",

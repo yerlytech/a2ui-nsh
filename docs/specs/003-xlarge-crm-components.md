@@ -75,15 +75,17 @@ server sent it, so the renderers are measured against what xlarge emits.
 Owner-approved 2026-11-23 (night spec 028, task 4). Same Design as above,
 five more components of `tech.yerly.xlarge/v1`, drawn in this commit:
 
-- **`Text`**: `text` (data, shown as it is) or the translation of `code`
-  with `{name}` placeholders filled from `params` as typed text; `tone`
+- **`Text`**: the translation of `code` with `{name}` placeholders filled
+  from `params` as typed text or, without `code`, `text` (data, shown as it
+  is); `code` wins when both are set, as in xlarge's web client. `tone`
   picks colour and weight, unknown tones draw plain.
 - **`Toast`**: the translated `code` + `params`, shown once. It passes after
   the host's `toastMs` (default 5000 ms, `0` keeps it), on swipe, or on its
   close button; the same message does not return.
 - **`Refusal`**: the translated `code` and `hint`; with `back`, a button
-  (`backLabel` code, or the host's word) sends `{ event: { name:
-  "screen:<back>", context: {} } }`, the action xlarge opens screens with.
+  (`backLabel` code, or the host's word) sends `back` with `{}`: as it came
+  when it holds a `:` (an action name), else `screen:<back>`, the action
+  xlarge opens screens with (`screenAction`).
 - **`Image`**: the picture at `src` (data binding, unsafe schemes refused),
   named by the translated `label`; a missing or failed picture leaves a
   named placeholder.
@@ -99,13 +101,23 @@ walked by `src/catalog/xlarge/text_walk.test.tsx`.
 A second commit of round 2 draws three components that send actions:
 
 - **`Button`**: the translated `label` filled from `labelParams`, an optional
-  Basic Catalog `icon`, drawn by `variant`. Pressing sends `{ event: { name:
-  action, context } }` with the literal `context` (or `{}`). With `confirm`
-  it asks first; only yes sends. The point-of-sale properties stay not read:
-  no captured screen uses them.
+  Basic Catalog `icon`, drawn by `variant` as xlarge's web client draws it:
+  only `primary` is primary, `danger`/`destructive` danger, anything else
+  plain. Pressing sends `{ event: { name: action, context } }`: context values
+  that are data bindings (`{ "path" }` or `{ "@path" }`) are read from the
+  data model, others stay literal, and a `version` binding adds `version`
+  (`actionContext`). Once sent it follows `after`. With `confirm` it asks
+  first; only yes sends. The point-of-sale properties stay not read: no
+  captured screen uses them.
 - **`Confirm`**: asks the translated `question` with a yes (`confirmLabel`)
-  and a cancel (`cancel`) button; only yes sends `action` with `{}`; either
-  answer closes it.
+  and a cancel (the host's `cancelLabel`) button. Yes sends `action` with the
+  literal `context` (or `{}`) and follows `after`. `cancel` is an action name
+  (`cancel = "screen:imports.jobs"`), sent with `{}` on cancel when set.
+  Either answer closes it.
+
+`after` and `back` follow one rule (`screenAction`): a value holding a `:`
+is an action name, sent as it came; a bare screen name is sent as
+`screen:<name>`; `back` means go back, and the client sends nothing extra.
 - **`Preview`**: the translated `about` and one line per `draft` entry
   (amounts as typed text); its accept button (`label`) sends `action` with
   `{}`, asking first with `confirm`.
@@ -144,7 +156,8 @@ A fourth commit of round 2 draws three flow components:
   button is `submitLabel` and sends `submit` with the whole draft (defaults
   filled, blanks left out, amounts as typed text), asking first with
   `confirm`. After a send the draft empties and page one shows; with
-  `after`, the event `screen:<after>` with `{}` opens that screen.
+  `after`, it is followed with `{}` (`screenAction`: `screen:<after>` for a
+  bare screen name).
 - **`Steps`**: a progress list of named steps read from the data model at
   `/<answer>` (a list, or `{ steps, current }`); each step's translated name
   is marked done, current or to do (`stepsList` in `model.ts`). Sends nothing.
