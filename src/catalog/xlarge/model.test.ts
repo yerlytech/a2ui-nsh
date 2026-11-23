@@ -1,7 +1,13 @@
 import { describe, expect, test } from "nsh/test";
 import {
+  arrangeContext,
+  arrangeText,
   askStep,
   buttonVariant,
+  moveItem,
+  newArrangeItem,
+  stepsList,
+  wizardStep,
   draftLines,
   literalContext,
   changeDirection,
@@ -441,5 +447,104 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf helpers", () => {
     ]);
     expect(chequeLeafRows([{ state: "bounced" }], undefined, upper)[0]!.state).toBe("BOUNCED");
     expect(chequeLeafRows(undefined, "x.", upper)).toEqual([]);
+  });
+});
+
+describe("wizardStep", () => {
+  test("next moves on from a complete page and stays on an incomplete one", () => {
+    expect(wizardStep("next", 0, 3, true)).toEqual({ page: 1, submit: false });
+    expect(wizardStep("next", 1, 3, false)).toEqual({ page: 1, submit: false });
+  });
+
+  test("next on the last page submits; back stops at the first page", () => {
+    expect(wizardStep("next", 2, 3, true)).toEqual({ page: 2, submit: true });
+    expect(wizardStep("next", 0, 1, true)).toEqual({ page: 0, submit: true });
+    expect(wizardStep("back", 2, 3, false)).toEqual({ page: 1, submit: false });
+    expect(wizardStep("back", 0, 3, true)).toEqual({ page: 0, submit: false });
+  });
+
+  test("a page out of range is clamped first", () => {
+    expect(wizardStep("next", 9, 3, true)).toEqual({ page: 2, submit: true });
+    expect(wizardStep("back", -4, 3, true)).toEqual({ page: 0, submit: false });
+    expect(wizardStep("next", 0, 0, true)).toEqual({ page: 0, submit: true });
+  });
+});
+
+describe("stepsList", () => {
+  test("names and labels are translated; label wins over name", () => {
+    expect(stepsList(["a.one", { name: "two", label: "a.two" }, { id: 3 }], upper)).toEqual([
+      { label: "A.ONE", state: "todo" },
+      { label: "A.TWO", state: "todo" },
+      { label: "3", state: "todo" },
+    ]);
+  });
+
+  test("current, by index or by name, marks the steps around it", () => {
+    const byIndex = stepsList({ steps: ["a", "b", "c"], current: 1 }, upper);
+    expect(byIndex.map((step) => step.state)).toEqual(["done", "current", "todo"]);
+    const byName = stepsList({ steps: [{ name: "a" }, { name: "b" }], current: "b" }, upper);
+    expect(byName.map((step) => step.state)).toEqual(["done", "current"]);
+    const unknown = stepsList({ steps: ["a", "b"], current: "z" }, upper);
+    expect(unknown.map((step) => step.state)).toEqual(["todo", "todo"]);
+  });
+
+  test("a step's own state wins over current", () => {
+    const steps = stepsList(
+      {
+        steps: [
+          { name: "a", status: "Completed" },
+          { name: "b", state: "active" },
+          { name: "c", done: true },
+          { name: "d", current: true },
+          { name: "e", state: "waiting" },
+        ],
+        current: 0,
+      },
+      upper,
+    );
+    expect(steps.map((step) => step.state)).toEqual(["done", "current", "done", "current", "todo"]);
+  });
+
+  test("anything else, and steps without a name, show nothing", () => {
+    expect(stepsList(undefined, upper)).toEqual([]);
+    expect(stepsList("a", upper)).toEqual([]);
+    expect(stepsList({ current: 1 }, upper)).toEqual([]);
+    expect(stepsList(["", null, {}, { label: "" }], upper)).toEqual([]);
+  });
+});
+
+describe("Arrange helpers", () => {
+  test("moveItem moves one entry and ignores moves out of range", () => {
+    expect(moveItem(["a", "b", "c"], 0, 2)).toEqual(["b", "c", "a"]);
+    expect(moveItem(["a", "b", "c"], 2, 1)).toEqual(["a", "c", "b"]);
+    expect(moveItem(["a", "b"], 0, -1)).toEqual(["a", "b"]);
+    expect(moveItem(["a", "b"], 1, 2)).toEqual(["a", "b"]);
+    expect(moveItem(["a", "b"], 0.5, 1)).toEqual(["a", "b"]);
+    const items = ["a", "b"];
+    expect(moveItem(items, 0, 1)).not.toBe(items);
+    expect(items).toEqual(["a", "b"]);
+  });
+
+  test("arrangeText shows an object's field and a plain item as it came", () => {
+    expect(arrangeText({ title: "Lead", n: 1 }, "title")).toBe("Lead");
+    expect(arrangeText({ amount: "25000.50" }, "amount")).toBe("25000.50");
+    expect(arrangeText({ title: "Lead" }, undefined)).toBe("");
+    expect(arrangeText("Won", "title")).toBe("Won");
+    expect(arrangeText(7, undefined)).toBe("7");
+    expect(arrangeText(null, "title")).toBe("");
+  });
+
+  test("newArrangeItem keys the trimmed text, or keeps it plain; blank adds nothing", () => {
+    expect(newArrangeItem("  Lost ", "title")).toEqual({ title: "Lost" });
+    expect(newArrangeItem("Lost", undefined)).toBe("Lost");
+    expect(newArrangeItem("Lost", "")).toBe("Lost");
+    expect(newArrangeItem("   ", "title")).toBe(undefined);
+  });
+
+  test("arrangeContext sends the items in order and version as it came", () => {
+    expect(arrangeContext(["b", "a"], "7")).toEqual({ items: ["b", "a"], version: "7" });
+    expect(arrangeContext([{ id: 1 }], 3)).toEqual({ items: [{ id: 1 }], version: 3 });
+    expect(arrangeContext([], undefined)).toEqual({ items: [] });
+    expect(arrangeContext(["a"], null)).toEqual({ items: ["a"] });
   });
 });

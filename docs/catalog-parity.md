@@ -41,12 +41,12 @@ from `src/catalog/xlarge/` (spec 003).
 
 All 14 Basic Catalog functions are implemented as well (`docs/conformance.md`).
 
-## xlarge catalog v1: 16 of 22
+## xlarge catalog v1: 19 of 22
 
 Before spec 003: 0 of 22. Spec 003 drew the four xlarge's `crm.deals`
 screen uses; its round 2 (night spec 028) added `Text`, `Toast`, `Refusal`,
 `Image`, `QrCode`, `Button`, `Confirm`, `Preview`, `Columns`, `Detail`,
-`Metric`, and `ChequeLeaf`.
+`Metric`, `ChequeLeaf`, `Wizard`, `Steps`, and `Arrange`.
 
 | Component | Drawn | Renderer | Tests | Fixture |
 |---|---|---|---|---|
@@ -66,8 +66,10 @@ screen uses; its round 2 (night spec 028) added `Text`, `Toast`, `Refusal`,
 | Detail | yes | `src/catalog/xlarge/Detail.tsx` | `Detail.test.tsx`, `model.test.ts`, `display_walk.test.tsx` | `detail-synthetic.json` (synthetic: no real xlarge screen yet) |
 | Metric | yes | `src/catalog/xlarge/Metric.tsx` | `Metric.test.tsx`, `model.test.ts`, `display_walk.test.tsx` | `metric-synthetic.json` (synthetic: no real xlarge screen yet) |
 | ChequeLeaf | yes | `src/catalog/xlarge/ChequeLeaf.tsx` | `ChequeLeaf.test.tsx`, `model.test.ts`, `display_walk.test.tsx` | `chequeleaf-synthetic.json` (synthetic: no real xlarge screen yet) |
-| Wizard, Steps, Chart, Arrange, Conversation, Calendar | no | — | — | — |
-| Button, Wizard, Confirm, Steps, Chart, Arrange, Preview, Conversation, Calendar | no | — | — | — |
+| Wizard | yes | `src/catalog/xlarge/Wizard.tsx` (draft: `context.ts`, ask: `ask.tsx`) | `Wizard.test.tsx`, `model.test.ts`, `flows_walk.test.tsx` | `wizard-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Steps | yes | `src/catalog/xlarge/Steps.tsx` | `Steps.test.tsx`, `model.test.ts`, `flows_walk.test.tsx` | `steps-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Arrange | yes | `src/catalog/xlarge/Arrange.tsx` (ask: `ask.tsx`) | `Arrange.test.tsx`, `model.test.ts`, `flows_walk.test.tsx`, `tests/targets/xlarge.target.test.tsx` (keyboard, TUI and Web) | `arrange-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Chart, Conversation, Calendar | no | — | — | — |
 
 Fixtures live in `tests/fixtures/xlarge/`.
 
@@ -95,6 +97,9 @@ ignored when drawn.
 | Detail | `record` (data binding), `rows` (`Table.columns`-style entries: `field`, `label` code, `format`, `enumPrefix`; or bare field names; without `rows`, every plain value under its key), `skipEmpty`, `update` (an edit button, the host's `editLabel`, default `"Edit"`, sends `{ event: { name: update, context: { id } } }` with the record's `id`) | `pageTitle`, `when`, `unless` |
 | Metric | `label`, `hint` (codes), `value` (data binding), `format` (`money`/`decimal`/`amount`, `percent`, `number`/`integer`/`count`; formatted from the text, never a float), `change` (data binding, signed and formatted as the value, with ▲/▼), `better` (`up`/`down` and synonyms: the better way in the primary colour, the other destructive, flat muted), `accent` (`Text.tone` words: the card's edge colour) | `icon`, `pageTitle` |
 | ChequeLeaf | `rows` (data binding: the leaf's states, oldest first; each row's `state` as `translate(statePrefix + state)`, `date` or `at` as a date, `amount` formatted from its text, `party` or `partner`, `note`; the last row, the state now, drawn stronger), `statePrefix`. The row keys are this renderer's reading; no real xlarge screen confirms them yet | `pageTitle` |
+| Wizard | `children` (one page each, shown one at a time with `n / total`, back and next — the host's `backLabel`, `nextLabel`), one draft for all pages (`FormDraftContext`; next refuses a page with an empty required field), `submit` (sent from the last page with the whole draft: defaults filled, blanks left out, amounts as typed text), `submitLabel` (code; default `action.save`), `confirm` (asks first), `after` (after a send, opens that screen: the event `screen:<after>` with `{}`) | `pageTitle` |
+| Steps | `answer` (the data-model key `/<answer>`: a list of steps or `{ steps, current }`; a step is a name code or `{ name, label, state/status/done/current }`; marked done, current or to do, named by the host's `stepStateLabels`) | `pageTitle` |
+| Arrange | `items` (data binding), `field` (the key each item shows; plain items as they came), move up / move down buttons per item (keyboard: Tab, then Enter), `add` (code naming the new item's text box; turns adding on), `addLabel` (code of the add button; default the host's `addLabel`), `addItem` (the new item's key; default `field`, else the plain text), `save` (sends `{ items, version }`: every item in the new order), `version` (data binding, sent as it came), `reset` (the reset button restores the data model's order; with `reset` it also sends that action with `{ version }`), `confirm` (asks before a send) | `after`, `pageTitle` |
 
 ### Field inputs
 

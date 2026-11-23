@@ -1133,3 +1133,171 @@ export function chequeLeafRows(
     };
   });
 }
+
+/** Where a `Wizard` goes on one press of its back or next button. */
+export interface WizardStep {
+  /** The page shown after the press (0-based). */
+  readonly page: number;
+  /** The whole draft is sent now (next on the last page, with it complete). */
+  readonly submit: boolean;
+}
+
+/**
+ * The page flow of a `Wizard` with `count` pages. `next` stays on a page whose
+ * required fields are not all held (`complete` false); on the last page it
+ * submits instead of moving. `back` never goes before the first page.
+ */
+export function wizardStep(
+  step: "next" | "back",
+  page: number,
+  count: number,
+  complete: boolean,
+): WizardStep {
+  const last = Math.max(0, count - 1);
+  const here = Math.min(Math.max(0, Math.trunc(page)), last);
+  if (step === "back") {
+    return { page: Math.max(0, here - 1), submit: false };
+  }
+  if (!complete) {
+    return { page: here, submit: false };
+  }
+  return here < last ? { page: here + 1, submit: false } : { page: here, submit: true };
+}
+
+/** Where one step of a `Steps` list stands. */
+export type StepState = "done" | "current" | "todo";
+
+/** One named step a `Steps` list shows. */
+export interface StepItem {
+  /** The translated step name. */
+  readonly label: string;
+  readonly state: StepState;
+}
+
+const STEP_DONE = new Set(["done", "complete", "completed", "finished", "ok", "passed"]);
+const STEP_CURRENT = new Set(["current", "active", "doing", "now", "open", "in_progress"]);
+
+function explicitStepState(entry: Record<string, unknown>): StepState | undefined {
+  const said = entry["state"] ?? entry["status"];
+  if (typeof said === "string") {
+    const word = said.toLowerCase();
+    if (STEP_DONE.has(word)) {
+      return "done";
+    }
+    if (STEP_CURRENT.has(word)) {
+      return "current";
+    }
+    return "todo";
+  }
+  if (entry["done"] === true) {
+    return "done";
+  }
+  if (entry["current"] === true) {
+    return "current";
+  }
+  return undefined;
+}
+
+/**
+ * The steps a `Steps` list shows for the answer data it reads. The answer is
+ * either a list of steps or `{ steps, current }`. A step is a name (a code) or
+ * `{ name, label?, state?|status?|done?|current? }`; `label` (a code) wins
+ * over `name`. A step's own state wins; otherwise `current` (an index or a
+ * step name) marks the steps before it done and the ones after it to do.
+ * Steps without a name are left out.
+ */
+export function stepsList(answer: unknown, translate: Translate): readonly StepItem[] {
+  let entries: readonly unknown[];
+  let current: unknown;
+  if (Array.isArray(answer)) {
+    entries = answer;
+  } else if (isRecord(answer) && Array.isArray(answer["steps"])) {
+    entries = answer["steps"];
+    current = answer["current"];
+  } else {
+    return [];
+  }
+
+  const named: { name: string; label: string; state: StepState | undefined }[] = [];
+  for (const entry of entries) {
+    if (typeof entry === "string" || typeof entry === "number") {
+      const name = scalarText(entry);
+      if (name.length > 0) {
+        named.push({ name, label: translate(name), state: undefined });
+      }
+    } else if (isRecord(entry)) {
+      const name = scalarText(entry["name"] ?? entry["id"]);
+      const label = entry["label"];
+      const code = typeof label === "string" && label.length > 0 ? label : name;
+      if (code.length > 0) {
+        named.push({ name, label: translate(code), state: explicitStepState(entry) });
+      }
+    }
+  }
+
+  let at = -1;
+  if (typeof current === "number" && Number.isInteger(current)) {
+    at = current;
+  } else if (typeof current === "string" && current.length > 0) {
+    at = named.findIndex((step) => step.name === current);
+  }
+  return named.map((step, index) => ({
+    label: step.label,
+    state:
+      step.state ??
+      (at < 0 ? "todo" : index < at ? "done" : index === at ? "current" : "todo"),
+  }));
+}
+
+/** `items` with the entry at `from` moved to `to`; out-of-range moves change nothing. */
+export function moveItem<T>(items: readonly T[], from: number, to: number): T[] {
+  const out = [...items];
+  if (
+    !Number.isInteger(from) ||
+    !Number.isInteger(to) ||
+    from < 0 ||
+    to < 0 ||
+    from >= out.length ||
+    to >= out.length ||
+    from === to
+  ) {
+    return out;
+  }
+  const [moved] = out.splice(from, 1);
+  out.splice(to, 0, moved as T);
+  return out;
+}
+
+/**
+ * The words an `Arrange` item shows: a plain item as it came, an object item's
+ * `field` key (numbers and amounts as the text they came as).
+ */
+export function arrangeText(item: unknown, field: unknown): string {
+  if (isRecord(item)) {
+    return typeof field === "string" && field.length > 0 ? scalarText(item[field]) : "";
+  }
+  return typeof item === "string" || typeof item === "number" ? scalarText(item) : "";
+}
+
+/**
+ * The item an `Arrange` adds for the text a person typed: `{ [key]: text }`
+ * when items carry a key (`addItem`, else `field`), the text itself otherwise.
+ * Blank text adds nothing (`undefined`).
+ */
+export function newArrangeItem(text: string, key: unknown): unknown {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  return typeof key === "string" && key.length > 0 ? { [key]: trimmed } : trimmed;
+}
+
+/** The context an `Arrange` sends with `save`: the items in their new order and `version`. */
+export function arrangeContext(
+  items: readonly unknown[],
+  version: unknown,
+): Record<string, unknown> {
+  return version === undefined || version === null
+    ? { items: [...items] }
+    : { items: [...items], version };
+}

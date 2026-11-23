@@ -8,7 +8,7 @@
  */
 
 import { context, signal, type Signal } from "nsh";
-import { SHOW_CODES, type Translate } from "./model";
+import { SHOW_CODES, type StepState, type Translate } from "./model";
 
 /** The draft a `Form` holds for the fields drawn inside it. */
 export interface FormDraft {
@@ -78,6 +78,18 @@ export interface XlargeRendererOptions {
   readonly confirmLabel?: string;
   /** The accept button of a `Preview` without `label`. Default: `"Accept"`. */
   readonly acceptLabel?: string;
+  /** A `Wizard`'s button to the next page. Default: `"Next"`. */
+  readonly nextLabel?: string;
+  /** An `Arrange`'s add button without `addLabel`. Default: `"Add"`. */
+  readonly addLabel?: string;
+  /** An `Arrange`'s button that restores the order. Default: `"Reset"`. */
+  readonly resetLabel?: string;
+  /** An `Arrange` item's move-up button. Default: `"Move up"`. */
+  readonly moveUpLabel?: string;
+  /** An `Arrange` item's move-down button. Default: `"Move down"`. */
+  readonly moveDownLabel?: string;
+  /** How a `Steps` list names a done, the current and a to-do step. */
+  readonly stepStateLabels?: Readonly<Record<StepState, string>>;
 }
 
 /** `XlargeRendererOptions` with every default filled in. */
@@ -94,6 +106,12 @@ export interface ResolvedXlargeOptions {
   readonly confirmQuestion: string;
   readonly confirmLabel: string;
   readonly acceptLabel: string;
+  readonly nextLabel: string;
+  readonly addLabel: string;
+  readonly resetLabel: string;
+  readonly moveUpLabel: string;
+  readonly moveDownLabel: string;
+  readonly stepStateLabels: Readonly<Record<StepState, string>>;
 }
 
 /** Fills in the defaults of `XlargeRendererOptions`. */
@@ -116,5 +134,15 @@ export function resolveXlargeOptions(
     confirmQuestion: options.confirmQuestion ?? "Are you sure?",
     confirmLabel: options.confirmLabel ?? "Confirm",
     acceptLabel: options.acceptLabel ?? "Accept",
+    nextLabel: options.nextLabel ?? "Next",
+    addLabel: options.addLabel ?? "Add",
+    resetLabel: options.resetLabel ?? "Reset",
+    moveUpLabel: options.moveUpLabel ?? "Move up",
+    moveDownLabel: options.moveDownLabel ?? "Move down",
+    stepStateLabels: options.stepStateLabels ?? {
+      done: "Done",
+      current: "Current",
+      todo: "To do",
+    },
   };
 }

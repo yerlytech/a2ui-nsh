@@ -1,0 +1,29 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.steps", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.steps",
+        "components": [
+          { "id": "root", "component": "Steps", "answer": "onboard.steps" }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "synthetic.steps",
+        "path": "/onboard.steps",
+        "value": {
+          "steps": ["onboard.step.company", "onboard.step.bank", "onboard.step.invite"],
+          "current": "onboard.step.bank"
+        }
+      }
+    }
+  ]
+}

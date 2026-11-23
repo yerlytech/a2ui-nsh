@@ -42,7 +42,7 @@ src/catalog/basic/ Basic Catalog v1 TSX components (all 18 of 18)
   │                       validation_feedback.tsx), Slider
   └── Media:              Video, AudioPlayer (paused-by-default / user-gesture playback, degraded fallbacks)
   │
-src/catalog/xlarge/ xlarge's own catalog (tech.yerly.xlarge/v1): Card, Field, Form, Table, Text, Toast, Refusal, Image, QrCode, Button, Confirm, Preview, Columns, Detail, Metric, ChequeLeaf (16 of 22, spec 003)
+src/catalog/xlarge/ xlarge's own catalog (tech.yerly.xlarge/v1): Card, Field, Form, Table, Text, Toast, Refusal, Image, QrCode, Button, Confirm, Preview, Columns, Detail, Metric, ChequeLeaf, Wizard, Steps, Arrange (19 of 22, spec 003)
   ├── model.ts            pure helpers: field controls, options, held values, cell formats, event payloads
   └── context.ts          renderer options (translate seam) and the Form draft context
 ```
@@ -73,7 +73,7 @@ All **18 of 18** Basic Catalog v1 components are shipped (Spec 001 + Spec 002 Sl
 
 One TSX codebase renders across `nsh`'s headless engine, macOS AppKit (`--target macos`), terminal ratatui (`--target tui`, `platform.idiom === "terminal"`), and Web/WASM (`--target web`, `platform.os === "web"`) without per-target widget rewrites:
 
-- **18-component real-target suite (`tests/targets/`):** `tests/targets/catalog.target.test.tsx` (with minimal `App.tsx`, `nsh.json`, and `tsconfig.json`) exercises all 18 Basic Catalog v1 components without `host.handlers`, so the exact same suite runs headless, on `--target tui`, and on `--target web`.
+- **18-component real-target suite (`tests/targets/`):** `tests/targets/catalog.target.test.tsx` (with minimal `App.tsx`, `nsh.json`, and `tsconfig.json`) exercises all 18 Basic Catalog v1 components without `host.handlers`, so the exact same suite runs headless, on `--target tui`, and on `--target web`. The same `App.tsx` also registers the xlarge renderers and takes xlarge's catalog definition from `host.params.catalog`; `tests/targets/xlarge.target.test.tsx` reorders an xlarge `Arrange` with the keyboard alone (Tab, Enter) on both targets.
 - **TUI target (`just test-tui`, `just run-tui`):** Requires `nsh component add tui` (and `jq` to render plain-text cell grids). `examples/erp-customers/tui.test.tsx` walks all 7 ERP flows plus Step 8 media showcase (`Slider`, `Video`, `AudioPlayer`) at wide (`120×40` cells = `960×640` pt → `desktop` side-by-side) and compact (`80×24` cells = `640×384` pt → `compact` stacked) terminal grids, asserting `nsh-tui-cells` JSON snapshots saved under `target/walk-tui/` (with `*.txt` renders). Because `nsh package` has no TUI target, prebuilt bundles run via `nsh-tui-host --bundle target/erp-release/bundle.js`.
 - **Web/WASM target (`just test-web`, `just run-web`, `just package-web`):** Requires `nsh component add web` (supported browsers: Safari 16.4+, Chrome/Edge 97+, Firefox 108+).
   - `examples/erp-customers/web.test.tsx` runs in headless Chrome/Edge/Chromium at desktop (`1280×800`) and phone/compact (`390×844`) viewports across all 7 ERP flows plus Step 8 media showcase, saving PNG screenshots under `target/walk-web/`.

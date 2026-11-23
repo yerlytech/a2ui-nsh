@@ -1,0 +1,32 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.wizard", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.wizard",
+        "components": [
+          {
+            "id": "root",
+            "component": "Wizard",
+            "children": ["company", "money"],
+            "submit": "crm.open_account",
+            "submitLabel": "crm.action.open_account",
+            "confirm": true,
+            "after": "crm.deals"
+          },
+          { "id": "company", "component": "Card", "title": "crm.title.company", "children": ["name", "city"] },
+          { "id": "name", "component": "Field", "field": "name", "input": "text", "label": "crm.field.name", "checks": ["required"] },
+          { "id": "city", "component": "Field", "field": "city", "input": "text", "label": "crm.field.city" },
+          { "id": "money", "component": "Card", "title": "crm.title.money", "children": ["limit", "currency"] },
+          { "id": "limit", "component": "Field", "field": "limit", "input": "money", "label": "crm.field.limit", "checks": ["required"] },
+          { "id": "currency", "component": "Field", "field": "currency", "input": "text", "label": "crm.field.currency", "default": "TRY" }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+// Walks the fixtures of xlarge's Wizard, Steps, and Arrange (spec 003,
+// round 2). No real xlarge screen of these is captured yet, so the fixtures
+// are synthetic (`tests/fixtures/xlarge/*-synthetic.json`, `source` says so).
+// Each validates strictly against xlarge's catalog through `MessageProcessor`,
+// then all three draw together with no errors, and every action they send is
+// checked by name and context.
+
+import { describe, expect, open, test } from "nsh/test";
+import arrange from "../../../tests/fixtures/xlarge/arrange-synthetic.json";
+import steps from "../../../tests/fixtures/xlarge/steps-synthetic.json";
+import wizard from "../../../tests/fixtures/xlarge/wizard-synthetic.json";
+import { createBasicCatalogRegistry } from "../basic";
+import { CatalogRegistry } from "../../core/catalog";
+import { MessageProcessor } from "../../core/processor";
+import { registerXlargeCatalogComponents } from "./index";
+import { HARNESS, XLARGE_CATALOG, reportedErrors, sentActions } from "./test_support";
+
+interface Fixture {
+  readonly source: string;
+  readonly messages: readonly unknown[];
+}
+
+const FIXTURES: Readonly<Record<string, Fixture>> = { wizard, steps, arrange };
+const SYNTHETIC = "synthetic, no real xlarge screen yet";
+
+const WORDS: Record<string, string> = {
+  "crm.action.open_account": "Open account",
+  "crm.title.company": "Company",
+  "crm.title.money": "Credit",
+  "crm.field.name": "Name",
+  "crm.field.city": "City",
+  "crm.field.limit": "Limit",
+  "crm.field.currency": "Currency",
+  "onboard.step.company": "Company details",
+  "onboard.step.bank": "Bank account",
+  "onboard.step.invite": "Invite the team",
+  "crm.field.stage": "New stage",
+  "crm.action.add_stage": "Add stage",
+  "action.save": "Save",
+};
+
+const ALL_MESSAGES: unknown[] = Object.values(FIXTURES).flatMap((fixture) => fixture.messages);
+
+/** Where each of `words` first shows in `texts`, in that order. */
+function positions(texts: readonly string[], words: readonly string[]): number[] {
+  return words.map((word) => texts.indexOf(word));
+}
+
+describe("xlarge Wizard, Steps and Arrange fixtures", () => {
+  test("each fixture is synthetic and validates strictly against xlarge's catalog", () => {
+    const drawn = registerXlargeCatalogComponents(createBasicCatalogRegistry());
+    for (const [name, fixture] of Object.entries(FIXTURES)) {
+      expect(fixture.source).toBe(SYNTHETIC);
+      const registry = CatalogRegistry.withBasicV1();
+      registry.registerInline(XLARGE_CATALOG);
+      const run = new MessageProcessor({ registry, strictMode: true });
+      run.processMessages(fixture.messages);
+      const surface = run.getSurface(`synthetic.${name}`);
+      expect(surface?.defaultCatalogId).toBe("tech.yerly.xlarge/v1");
+      for (const component of surface?.components.values() ?? []) {
+        expect(drawn.has(component.catalogId, component.type)).toBe(true);
+      }
+    }
+  });
+
+  test("all three draw together with no errors and send exactly their actions", async () => {
+    const app = await open(HARNESS, {
+      host: {
+        params: { catalog: XLARGE_CATALOG, messages: ALL_MESSAGES, translations: WORDS, strictMode: true },
+        handlers: { "a2ui.action": null, "a2ui.error": null, "a2ui.exception": null },
+      },
+    });
+    expect(reportedErrors(app)).toEqual([]);
+    for (const words of ["1 / 2", "Company", "Name *", "City", "Next", "Company details", "Bank account", "Invite the team", "Lead", "Offer", "Won", "Add stage", "Save", "Reset"]) {
+      expect(app.texts()).toContain(words);
+    }
+
+    // Steps: the one before `current` is done, `current` is current, the rest to do.
+    expect(app.shows("label:Company details, Done")).toBe(true);
+    expect(app.shows("label:Bank account, Current")).toBe(true);
+    expect(app.shows("label:Invite the team, To do")).toBe(true);
+
+    // Wizard: next refuses an empty required field on the page.
+    await app.press("id:synthetic.wizard:root:next");
+    expect(app.shows("id:synthetic.wizard:name:error")).toBe(true);
+    expect(app.texts()).toContain("1 / 2");
+    await app.type("id:synthetic.wizard:name", "Acme @ Ankara");
+    await app.press("id:synthetic.wizard:root:next");
+    expect(app.texts()).toContain("2 / 2");
+    expect(app.texts()).toContain("Limit *");
+    expect(app.texts()).toContain("Open account");
+    // Back keeps the draft.
+    await app.press("id:synthetic.wizard:root:back");
+    expect(app.value("id:synthetic.wizard:name")).toBe("Acme @ Ankara");
+    await app.press("id:synthetic.wizard:root:next");
+    await app.press("id:synthetic.wizard:root:next");
+    expect(app.shows("id:synthetic.wizard:limit:error")).toBe(true);
+    await app.type("id:synthetic.wizard:limit", "25000.50");
+    // confirm: cancel sends nothing, yes sends the whole draft then opens `after`.
+    await app.press("id:synthetic.wizard:root:next");
+    expect(app.shows("id:synthetic.wizard:root:ask")).toBe(true);
+    await app.press("id:synthetic.wizard:root:ask:cancel");
+    await app.press("id:synthetic.wizard:root:next");
+    await app.press("id:synthetic.wizard:root:ask:yes");
+    expect(app.texts()).toContain("1 / 2");
+    expect(app.value("id:synthetic.wizard:name")).toBe("");
+
+    // Arrange: move Lead down, add a stage, save (asks), then reset (asks).
+    await app.press("id:synthetic.arrange:root:item:0:down");
+    const moved = positions(app.texts(), ["Offer", "Lead", "Won"]);
+    expect(moved[0]! < moved[1]! && moved[1]! < moved[2]!).toBe(true);
+    await app.type("id:synthetic.arrange:root:new", "Lost");
+    await app.press("id:synthetic.arrange:root:add");
+    expect(app.texts()).toContain("Lost");
+    await app.press("id:synthetic.arrange:root:save");
+    await app.press("id:synthetic.arrange:root:ask:yes");
+    await app.press("id:synthetic.arrange:root:reset");
+    await app.press("id:synthetic.arrange:root:ask:yes");
+    expect(app.texts()).not.toContain("Lost");
+    const restored = positions(app.texts(), ["Lead", "Offer", "Won"]);
+    expect(restored[0]! < restored[1]! && restored[1]! < restored[2]!).toBe(true);
+
+    expect(sentActions(app)).toEqual([
+      {
+        name: "crm.open_account",
+        sourceComponentId: "root",
+        context: { name: "Acme @ Ankara", limit: "25000.50", currency: "TRY" },
+      },
+      { name: "screen:crm.deals", sourceComponentId: "root", context: {} },
+      {
+        name: "crm.order_stages",
+        sourceComponentId: "root",
+        context: {
+          items: [
+            { id: "s2", title: "Offer" },
+            { id: "s1", title: "Lead" },
+            { id: "s3", title: "Won" },
+            { title: "Lost" },
+          ],
+          version: "7",
+        },
+      },
+      { name: "crm.reset_stages", sourceComponentId: "root", context: { version: "7" } },
+    ]);
+    expect(reportedErrors(app)).toEqual([]);
+  });
+});

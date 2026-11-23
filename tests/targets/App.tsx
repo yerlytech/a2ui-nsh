@@ -25,6 +25,7 @@ import {
   Catalog,
   buildV10BasicCatalogDocument,
   createBasicCatalogRegistry,
+  registerXlargeCatalogComponents,
 } from "../../src/index";
 
 function serializeCompactContext(context: unknown): string {
@@ -43,9 +44,17 @@ export function TargetCatalogApp(): JSX.Element {
   const lastErrorCode = signal("none");
 
   const registry = createBasicCatalogRegistry(BASIC_CATALOG_V1_ID);
+  registerXlargeCatalogComponents(registry);
+
+  // An extra catalog definition (xlarge's, for its target suite) may come in params.
+  const catalogs = [Catalog.fromJson(buildV10BasicCatalogDocument())];
+  const extraCatalog = host.params?.["catalog"];
+  if (extraCatalog !== undefined && extraCatalog !== null) {
+    catalogs.push(Catalog.fromJson(extraCatalog));
+  }
 
   const store = new A2uiStore({
-    catalogs: [Catalog.fromJson(buildV10BasicCatalogDocument())],
+    catalogs,
     strictMode: true,
     onAction: (envelope) => {
       actionCount.set(actionCount() + 1);

@@ -132,3 +132,31 @@ Then four more, in a second commit of the same round:
   and note; the last row, the state now, drawn stronger.
 `when`/`unless` stay not read. These too have synthetic fixtures (no real
 capture was readable), walked by `src/catalog/xlarge/display_walk.test.tsx`.
+
+A third commit of round 2 draws three flow components:
+
+- **`Wizard`**: each of `children` is a page, shown one at a time with back
+  and next. All pages share one draft (`FormDraftContext`, as `Form`); next
+  refuses a page whose required field holds nothing. On the last page the
+  button is `submitLabel` and sends `submit` with the whole draft (defaults
+  filled, blanks left out, amounts as typed text), asking first with
+  `confirm`. After a send the draft empties and page one shows; with
+  `after`, the event `screen:<after>` with `{}` opens that screen.
+- **`Steps`**: a progress list of named steps read from the data model at
+  `/<answer>` (a list, or `{ steps, current }`); each step's translated name
+  is marked done, current or to do (`stepsList` in `model.ts`). Sends nothing.
+- **`Arrange`**: the `items` binding, each showing its `field`, with a
+  move-up and a move-down button per item, so Tab and Enter reorder them on
+  every target, the terminal included (`tests/targets/xlarge.target.test.tsx`
+  runs on `--target tui` and `--target web`). With `add`/`addLabel` a person
+  adds an item (`{ [addItem ?? field]: text }`). Save sends `save` with
+  `{ items, version }`; reset restores the data model's order and, with
+  `reset`, also sends that action with `{ version }`. `confirm` asks before
+  a send; new items from the data model replace the local order.
+
+New host words: `nextLabel`, `addLabel`, `resetLabel`, `moveUpLabel`,
+`moveDownLabel`, `stepStateLabels`. The xlarge catalog definition names
+these properties without describing them, so `after` (Wizard), the shape of
+`answer`, and `add`/`addItem`/`reset` (Arrange) are read as written above;
+a real xlarge capture should confirm them. Synthetic fixtures again, walked
+by `src/catalog/xlarge/flows_walk.test.tsx`.
