@@ -39,7 +39,8 @@ affects those targets.
 - `src/catalog/xlarge/` — xlarge's own catalog (`tech.yerly.xlarge/v1`):
   `Card`, `Field`, `Form`, `Table`, `Text`, `Toast`, `Refusal`, `Image`,
   `QrCode`, `Button`, `Confirm`, `Preview`, `Columns`, `Detail`, `Metric`,
-  `ChequeLeaf`; xlarge's catalog definition is its own.
+  `ChequeLeaf`, `Wizard`, `Steps`, `Arrange` (19 of the catalog's 22);
+  xlarge's catalog definition is its own.
 - `tests/fixtures/` — real messages from consumers (xlarge's `crm.deals`) and
   synthetic ones (`*-synthetic.json`) where no real screen is captured yet.
 - `tests/conformance/` — upstream YAML conformance harness.

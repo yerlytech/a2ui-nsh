@@ -28,7 +28,8 @@ server sent it, so the renderers are measured against what xlarge emits.
 
 ## Not doing
 
-- The other 18 xlarge components (`Text`, `Button`, `Detail`, `Chart`, ...).
+- The other 18 xlarge components (`Text`, `Button`, `Detail`, `Chart`, ...)
+  (round 1; round 2 below draws 15 of them).
 - Field inputs `records`, `flag`, `file`, `html`; `datetime` is a text box.
 - List paging (`listAction`, `listInput`, `_more`), boards, grouping, moving
   rows, `confirm`, `pair`, matrix and variant forms, `when`/`unless`.
@@ -114,7 +115,9 @@ step logic is `askStep` in `model.ts`). New host words: `confirmQuestion`,
 `confirmLabel`, `acceptLabel`. A literal context key the server escapes as
 `@@` is unescaped once (`literalContext`) and escaped again once when sent.
 Synthetic fixtures again, walked by `src/catalog/xlarge/actions_walk.test.tsx`.
-Then four more, in a second commit of the same round:
+
+A third commit of round 2 draws four display components:
+
 - **`Columns`**: `children` side by side while Native Shell's
   `horizontalSizeClass` is `regular` (600pt and wider), each taking its share
   of `widths` (`2`, `"2fr"`, `"40%"`; missing entries share evenly), and
@@ -133,7 +136,7 @@ Then four more, in a second commit of the same round:
 `when`/`unless` stay not read. These too have synthetic fixtures (no real
 capture was readable), walked by `src/catalog/xlarge/display_walk.test.tsx`.
 
-A third commit of round 2 draws three flow components:
+A fourth commit of round 2 draws three flow components:
 
 - **`Wizard`**: each of `children` is a page, shown one at a time with back
   and next. All pages share one draft (`FormDraftContext`, as `Form`); next
