@@ -1,0 +1,13 @@
+{
+  "name": "a2ui-nsh Media Test Harness",
+  "id": "dev.a2ui.nsh.media.test",
+  "version": "0.1.0",
+  "build": 1,
+  "capabilities": {
+    "host": ["a2ui.*"],
+    "audio": true,
+    "network": {
+      "hosts": ["media.example.com"]
+    }
+  }
+}

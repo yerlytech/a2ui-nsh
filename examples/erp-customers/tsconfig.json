@@ -1,0 +1,14 @@
+{
+  "extends": "./.nsh/tsconfig.json",
+  "compilerOptions": {
+    "resolveJsonModule": true
+  },
+  "include": [
+    "App.tsx",
+    "*.ts",
+    "*.tsx",
+    "a2ui/*.json",
+    "../../src/**/*.ts",
+    "../../src/**/*.tsx"
+  ]
+}

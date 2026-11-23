@@ -1,0 +1,158 @@
+{
+  "version": "1.0",
+  "createSurface": {
+    "surfaceId": "media_showcase",
+    "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+    "dataModel": {
+      "controls": {
+        "discountCap": 15
+      }
+    },
+    "components": [
+      {
+        "id": "root",
+        "component": "Column",
+        "align": "stretch",
+        "@accessibility": {
+          "label": "Basic Catalog Slider, Video, and AudioPlayer Showcase"
+        },
+        "children": [
+          "showcase_title",
+          "showcase_subtitle",
+          "showcase_divider",
+          "slider_card",
+          "video_card",
+          "audio_card"
+        ]
+      },
+      {
+        "id": "showcase_title",
+        "component": "Text",
+        "text": "**Basic Catalog Controls & Media**"
+      },
+      {
+        "id": "showcase_subtitle",
+        "component": "Text",
+        "variant": "caption",
+        "text": "Pure A2UI v1.0 JSON surface showing Slider, Video, and AudioPlayer under default host-only capabilities."
+      },
+      {
+        "id": "showcase_divider",
+        "component": "Divider",
+        "axis": "horizontal"
+      },
+      {
+        "id": "slider_card",
+        "component": "Card",
+        "child": "slider_col"
+      },
+      {
+        "id": "slider_col",
+        "component": "Column",
+        "align": "stretch",
+        "children": [
+          "slider_heading",
+          "discount_slider",
+          "slider_readout"
+        ]
+      },
+      {
+        "id": "slider_heading",
+        "component": "Text",
+        "text": "**Pricing Guardrail**"
+      },
+      {
+        "id": "discount_slider",
+        "component": "Slider",
+        "label": "Discount Cap (%)",
+        "min": 0,
+        "max": 50,
+        "steps": 10,
+        "value": {
+          "@path": "/controls/discountCap"
+        },
+        "@checks": [
+          {
+            "condition": {
+              "@call": "numeric",
+              "args": {
+                "value": {
+                  "@path": "/controls/discountCap"
+                },
+                "min": 0,
+                "max": 40
+              }
+            },
+            "message": "Discounts above 40% require finance approval."
+          }
+        ]
+      },
+      {
+        "id": "slider_readout",
+        "component": "Text",
+        "variant": "caption",
+        "text": {
+          "@call": "formatString",
+          "args": {
+            "value": "Selected discount cap: ${/controls/discountCap}%"
+          }
+        }
+      },
+      {
+        "id": "video_card",
+        "component": "Card",
+        "child": "video_col"
+      },
+      {
+        "id": "video_col",
+        "component": "Column",
+        "align": "stretch",
+        "children": [
+          "video_heading",
+          "onboarding_video"
+        ]
+      },
+      {
+        "id": "video_heading",
+        "component": "Text",
+        "text": "**Video Component**"
+      },
+      {
+        "id": "onboarding_video",
+        "component": "Video",
+        "url": "https://media.example.invalid/erp-onboarding.mp4",
+        "@accessibility": {
+          "label": "ERP Onboarding Video"
+        }
+      },
+      {
+        "id": "audio_card",
+        "component": "Card",
+        "child": "audio_col"
+      },
+      {
+        "id": "audio_col",
+        "component": "Column",
+        "align": "stretch",
+        "children": [
+          "audio_heading",
+          "briefing_audio"
+        ]
+      },
+      {
+        "id": "audio_heading",
+        "component": "Text",
+        "text": "**AudioPlayer Component**"
+      },
+      {
+        "id": "briefing_audio",
+        "component": "AudioPlayer",
+        "url": "https://media.example.invalid/quarter-briefing.mp3",
+        "description": "Quarterly ERP Audio Briefing",
+        "@accessibility": {
+          "label": "Quarterly ERP Audio Briefing"
+        }
+      }
+    ]
+  }
+}

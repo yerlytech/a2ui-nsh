@@ -1,0 +1,1350 @@
+{
+  "version": "1.0",
+  "createSurface": {
+    "surfaceId": "erp_customers",
+    "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+    "dataModel": {
+      "search": {
+        "query": ""
+      },
+      "customers": [],
+      "form": {
+        "id": "",
+        "isNew": false,
+        "heading": "Customer Details",
+        "name": "",
+        "email": "",
+        "taxId": "",
+        "segment": ["enterprise"],
+        "paymentTerms": ["net30"],
+        "contractStart": "2026-01-15",
+        "annualValueText": "0.00",
+        "currency": "USD",
+        "active": true,
+        "notes": ""
+      },
+      "ui": {
+        "layoutMode": "desktop",
+        "visibleCount": 0,
+        "totalCount": 0,
+        "statusBanner": [],
+        "errorBanner": [],
+        "loadingView": [],
+        "workspaceView": [{ "active": true }],
+        "populatedList": [{ "active": true }],
+        "emptySearch": [],
+        "emptyDirectory": [],
+        "deleteModal": [{ "revision": 1 }]
+      }
+    },
+    "components": [
+      {
+        "id": "root",
+        "component": "Column",
+        "align": "stretch",
+        "@accessibility": {
+          "label": "ERP Customer Directory and Editor"
+        },
+        "children": [
+          "header_row",
+          "header_divider",
+          "status_banner_slot",
+          "error_banner_slot",
+          "loading_slot",
+          "workspace_slot"
+        ]
+      },
+      {
+        "id": "header_row",
+        "component": "Row",
+        "justify": "spaceBetween",
+        "align": "center",
+        "children": ["header_title_col", "header_actions_row"]
+      },
+      {
+        "id": "header_title_col",
+        "component": "Column",
+        "children": ["header_title_row", "header_subtitle"]
+      },
+      {
+        "id": "header_title_row",
+        "component": "Row",
+        "align": "center",
+        "children": ["header_icon", "header_title"]
+      },
+      {
+        "id": "header_icon",
+        "component": "Icon",
+        "name": "person",
+        "@accessibility": {
+          "hidden": true
+        }
+      },
+      {
+        "id": "header_title",
+        "component": "Text",
+        "text": "**ERP Customers**"
+      },
+      {
+        "id": "header_subtitle",
+        "component": "Text",
+        "variant": "caption",
+        "text": {
+          "@call": "formatString",
+          "args": {
+            "value": "Showing ${/ui/visibleCount} of ${/ui/totalCount} customers (${/ui/layoutMode})"
+          }
+        }
+      },
+      {
+        "id": "header_actions_row",
+        "component": "Row",
+        "align": "center",
+        "children": [
+          "reload_btn",
+          "simulate_error_btn",
+          "new_customer_btn"
+        ]
+      },
+      {
+        "id": "reload_btn",
+        "component": "Button",
+        "variant": "borderless",
+        "child": "reload_btn_label",
+        "action": {
+          "event": {
+            "name": "reload_customers"
+          }
+        }
+      },
+      {
+        "id": "reload_btn_label",
+        "component": "Text",
+        "text": "Reload"
+      },
+      {
+        "id": "simulate_error_btn",
+        "component": "Button",
+        "variant": "borderless",
+        "child": "simulate_error_btn_label",
+        "action": {
+          "event": {
+            "name": "simulate_server_error"
+          }
+        }
+      },
+      {
+        "id": "simulate_error_btn_label",
+        "component": "Text",
+        "text": "Simulate Error"
+      },
+      {
+        "id": "new_customer_btn",
+        "component": "Button",
+        "variant": "default",
+        "child": "new_customer_btn_label",
+        "action": {
+          "event": {
+            "name": "new_customer"
+          }
+        }
+      },
+      {
+        "id": "new_customer_btn_label",
+        "component": "Text",
+        "text": "New Customer"
+      },
+      {
+        "id": "header_divider",
+        "component": "Divider",
+        "axis": "horizontal"
+      },
+
+      {
+        "id": "status_banner_slot",
+        "component": "Column",
+        "align": "stretch",
+        "children": {
+          "componentId": "status_banner_card",
+          "path": "/ui/statusBanner"
+        }
+      },
+      {
+        "id": "status_banner_card",
+        "component": "Card",
+        "@accessibility": {
+          "label": "Status notification",
+          "live": "polite"
+        },
+        "child": "status_banner_row"
+      },
+      {
+        "id": "status_banner_row",
+        "component": "Row",
+        "justify": "spaceBetween",
+        "align": "center",
+        "children": ["status_banner_left", "status_dismiss_btn"]
+      },
+      {
+        "id": "status_banner_left",
+        "component": "Row",
+        "align": "center",
+        "children": ["status_banner_icon", "status_banner_text"]
+      },
+      {
+        "id": "status_banner_icon",
+        "component": "Icon",
+        "name": "check",
+        "@accessibility": {
+          "hidden": true
+        }
+      },
+      {
+        "id": "status_banner_text",
+        "component": "Text",
+        "text": {
+          "@path": "message"
+        }
+      },
+      {
+        "id": "status_dismiss_btn",
+        "component": "Button",
+        "variant": "borderless",
+        "child": "status_dismiss_label",
+        "action": {
+          "event": {
+            "name": "dismiss_banner",
+            "context": {
+              "kind": "status"
+            }
+          }
+        }
+      },
+      {
+        "id": "status_dismiss_label",
+        "component": "Text",
+        "text": "Dismiss"
+      },
+
+      {
+        "id": "error_banner_slot",
+        "component": "Column",
+        "align": "stretch",
+        "children": {
+          "componentId": "error_banner_card",
+          "path": "/ui/errorBanner"
+        }
+      },
+      {
+        "id": "error_banner_card",
+        "component": "Card",
+        "@accessibility": {
+          "label": "Server error",
+          "live": "assertive"
+        },
+        "child": "error_banner_row"
+      },
+      {
+        "id": "error_banner_row",
+        "component": "Row",
+        "justify": "spaceBetween",
+        "align": "center",
+        "children": ["error_banner_left", "error_banner_actions"]
+      },
+      {
+        "id": "error_banner_left",
+        "component": "Row",
+        "align": "center",
+        "children": ["error_banner_icon", "error_banner_text_col"]
+      },
+      {
+        "id": "error_banner_icon",
+        "component": "Icon",
+        "name": "error",
+        "@accessibility": {
+          "hidden": true
+        }
+      },
+      {
+        "id": "error_banner_text_col",
+        "component": "Column",
+        "children": ["error_banner_title", "error_banner_message"]
+      },
+      {
+        "id": "error_banner_title",
+        "component": "Text",
+        "text": "**Sync error**"
+      },
+      {
+        "id": "error_banner_message",
+        "component": "Text",
+        "variant": "caption",
+        "text": {
+          "@path": "message"
+        }
+      },
+      {
+        "id": "error_banner_actions",
+        "component": "Row",
+        "align": "center",
+        "children": ["error_retry_btn", "error_dismiss_btn"]
+      },
+      {
+        "id": "error_retry_btn",
+        "component": "Button",
+        "variant": "default",
+        "child": "error_retry_label",
+        "action": {
+          "event": {
+            "name": "retry_load"
+          }
+        }
+      },
+      {
+        "id": "error_retry_label",
+        "component": "Text",
+        "text": "Retry"
+      },
+      {
+        "id": "error_dismiss_btn",
+        "component": "Button",
+        "variant": "borderless",
+        "child": "error_dismiss_label",
+        "action": {
+          "event": {
+            "name": "dismiss_banner",
+            "context": {
+              "kind": "error"
+            }
+          }
+        }
+      },
+      {
+        "id": "error_dismiss_label",
+        "component": "Text",
+        "text": "Dismiss"
+      },
+
+      {
+        "id": "loading_slot",
+        "component": "Column",
+        "align": "stretch",
+        "children": {
+          "componentId": "loading_skeleton_card",
+          "path": "/ui/loadingView"
+        }
+      },
+      {
+        "id": "loading_skeleton_card",
+        "component": "Card",
+        "@accessibility": {
+          "label": "Loading customers",
+          "live": "polite"
+        },
+        "child": "loading_skeleton_col"
+      },
+      {
+        "id": "loading_skeleton_col",
+        "component": "Column",
+        "align": "stretch",
+        "children": [
+          "loading_header_row",
+          "loading_placeholder_1",
+          "loading_placeholder_2",
+          "loading_placeholder_3"
+        ]
+      },
+      {
+        "id": "loading_header_row",
+        "component": "Row",
+        "align": "center",
+        "children": ["loading_icon", "loading_title"]
+      },
+      {
+        "id": "loading_icon",
+        "component": "Icon",
+        "name": "refresh",
+        "@accessibility": {
+          "hidden": true
+        }
+      },
+      {
+        "id": "loading_title",
+        "component": "Text",
+        "text": {
+          "@path": "message"
+        }
+      },
+      {
+        "id": "loading_placeholder_1",
+        "component": "Card",
+        "child": "loading_placeholder_1_text"
+      },
+      {
+        "id": "loading_placeholder_1_text",
+        "component": "Text",
+        "variant": "caption",
+        "text": "Fetching customer directory..."
+      },
+      {
+        "id": "loading_placeholder_2",
+        "component": "Card",
+        "child": "loading_placeholder_2_text"
+      },
+      {
+        "id": "loading_placeholder_2_text",
+        "component": "Text",
+        "variant": "caption",
+        "text": "Loading contract and billing terms..."
+      },
+      {
+        "id": "loading_placeholder_3",
+        "component": "Card",
+        "child": "loading_placeholder_3_text"
+      },
+      {
+        "id": "loading_placeholder_3_text",
+        "component": "Text",
+        "variant": "caption",
+        "text": "Preparing validation rules..."
+      },
+
+      {
+        "id": "workspace_slot",
+        "component": "Column",
+        "align": "stretch",
+        "children": {
+          "componentId": "workspace_split",
+          "path": "/ui/workspaceView"
+        }
+      },
+      {
+        "id": "workspace_split",
+        "component": "Row",
+        "align": "start",
+        "children": ["list_pane", "detail_pane"]
+      },
+
+      {
+        "id": "list_pane",
+        "component": "Column",
+        "weight": 1,
+        "align": "stretch",
+        "@accessibility": {
+          "label": "Customer List Pane"
+        },
+        "children": [
+          "search_input",
+          "populated_list_slot",
+          "empty_search_slot",
+          "empty_directory_slot"
+        ]
+      },
+      {
+        "id": "search_input",
+        "component": "TextField",
+        "label": "Search customers",
+        "placeholder": "Filter by name, email, or tax ID...",
+        "value": {
+          "@path": "/search/query"
+        }
+      },
+
+      {
+        "id": "populated_list_slot",
+        "component": "Column",
+        "align": "stretch",
+        "children": {
+          "componentId": "customer_list",
+          "path": "/ui/populatedList"
+        }
+      },
+      {
+        "id": "customer_list",
+        "component": "List",
+        "direction": "vertical",
+        "align": "stretch",
+        "@accessibility": {
+          "label": "Customers"
+        },
+        "children": {
+          "componentId": "customer_list_item",
+          "path": "/customers"
+        }
+      },
+      {
+        "id": "customer_list_item",
+        "component": "Card",
+        "child": "customer_item_row"
+      },
+      {
+        "id": "customer_item_row",
+        "component": "Row",
+        "justify": "spaceBetween",
+        "align": "center",
+        "children": ["customer_item_info", "customer_select_btn"]
+      },
+      {
+        "id": "customer_item_info",
+        "component": "Column",
+        "weight": 1,
+        "children": [
+          "customer_item_name",
+          "customer_item_email",
+          "customer_item_meta",
+          "customer_item_value"
+        ]
+      },
+      {
+        "id": "customer_item_name",
+        "component": "Text",
+        "text": {
+          "@path": "name"
+        }
+      },
+      {
+        "id": "customer_item_email",
+        "component": "Text",
+        "variant": "caption",
+        "text": {
+          "@path": "email"
+        },
+        "@metadata": {
+          "extensions": {
+            "nsh_numberOfLines": 1,
+            "nsh_textOverflow": "ellipsis"
+          }
+        }
+      },
+      {
+        "id": "customer_item_meta",
+        "component": "Text",
+        "variant": "caption",
+        "text": {
+          "@call": "formatString",
+          "args": {
+            "value": "${segmentLabel} · ${statusLabel}"
+          }
+        }
+      },
+      {
+        "id": "customer_item_value",
+        "component": "Text",
+        "variant": "caption",
+        "text": {
+          "@call": "formatCurrency",
+          "args": {
+            "value": {
+              "@path": "annualValue"
+            },
+            "currency": {
+              "@path": "currency"
+            }
+          }
+        }
+      },
+      {
+        "id": "customer_select_btn",
+        "component": "Button",
+        "variant": "borderless",
+        "child": "customer_select_btn_label",
+        "@accessibility": {
+          "label": {
+            "@call": "formatString",
+            "args": {
+              "value": "Select ${name}"
+            }
+          }
+        },
+        "action": {
+          "event": {
+            "name": "select_customer",
+            "context": {
+              "customerId": {
+                "@path": "id"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "customer_select_btn_label",
+        "component": "Text",
+        "text": {
+          "@path": "actionLabel"
+        }
+      },
+
+      {
+        "id": "empty_search_slot",
+        "component": "Column",
+        "align": "stretch",
+        "children": {
+          "componentId": "empty_search_card",
+          "path": "/ui/emptySearch"
+        }
+      },
+      {
+        "id": "empty_search_card",
+        "component": "Card",
+        "@accessibility": {
+          "label": "No search results"
+        },
+        "child": "empty_search_col"
+      },
+      {
+        "id": "empty_search_col",
+        "component": "Column",
+        "align": "start",
+        "children": [
+          "empty_search_header",
+          "empty_search_hint",
+          "clear_search_btn"
+        ]
+      },
+      {
+        "id": "empty_search_header",
+        "component": "Row",
+        "align": "center",
+        "children": ["empty_search_icon", "empty_search_title"]
+      },
+      {
+        "id": "empty_search_icon",
+        "component": "Icon",
+        "name": "search",
+        "@accessibility": {
+          "hidden": true
+        }
+      },
+      {
+        "id": "empty_search_title",
+        "component": "Text",
+        "text": {
+          "@call": "formatString",
+          "args": {
+            "value": "No customers match \"${query}\""
+          }
+        }
+      },
+      {
+        "id": "empty_search_hint",
+        "component": "Text",
+        "variant": "caption",
+        "text": "Try another company name, email address, or tax ID, or clear the search filter."
+      },
+      {
+        "id": "clear_search_btn",
+        "component": "Button",
+        "variant": "default",
+        "child": "clear_search_btn_label",
+        "action": {
+          "event": {
+            "name": "clear_search"
+          }
+        }
+      },
+      {
+        "id": "clear_search_btn_label",
+        "component": "Text",
+        "text": "Clear Search"
+      },
+
+      {
+        "id": "empty_directory_slot",
+        "component": "Column",
+        "align": "stretch",
+        "children": {
+          "componentId": "empty_directory_card",
+          "path": "/ui/emptyDirectory"
+        }
+      },
+      {
+        "id": "empty_directory_card",
+        "component": "Card",
+        "@accessibility": {
+          "label": "Empty customer directory"
+        },
+        "child": "empty_directory_col"
+      },
+      {
+        "id": "empty_directory_col",
+        "component": "Column",
+        "align": "start",
+        "children": [
+          "empty_directory_title",
+          "empty_directory_hint",
+          "empty_new_customer_btn"
+        ]
+      },
+      {
+        "id": "empty_directory_title",
+        "component": "Text",
+        "text": "No customers in directory"
+      },
+      {
+        "id": "empty_directory_hint",
+        "component": "Text",
+        "variant": "caption",
+        "text": "Create a new customer record to populate the ERP directory."
+      },
+      {
+        "id": "empty_new_customer_btn",
+        "component": "Button",
+        "variant": "default",
+        "child": "empty_new_customer_btn_label",
+        "action": {
+          "event": {
+            "name": "new_customer"
+          }
+        }
+      },
+      {
+        "id": "empty_new_customer_btn_label",
+        "component": "Text",
+        "text": "Create First Customer"
+      },
+
+      {
+        "id": "detail_pane",
+        "component": "Column",
+        "weight": 2,
+        "align": "stretch",
+        "@accessibility": {
+          "label": "Customer Edit Form Pane"
+        },
+        "children": ["customer_form_card"]
+      },
+      {
+        "id": "customer_form_card",
+        "component": "Card",
+        "child": "customer_form_col"
+      },
+      {
+        "id": "customer_form_col",
+        "component": "Column",
+        "align": "stretch",
+        "children": [
+          "form_header_row",
+          "form_divider_top",
+          "customer_tabs",
+          "form_divider_bottom",
+          "form_actions_row"
+        ]
+      },
+      {
+        "id": "form_header_row",
+        "component": "Row",
+        "justify": "spaceBetween",
+        "align": "center",
+        "children": ["form_heading_text", "form_contract_badge"]
+      },
+      {
+        "id": "form_heading_text",
+        "component": "Text",
+        "text": {
+          "@path": "/form/heading"
+        }
+      },
+      {
+        "id": "form_contract_badge",
+        "component": "Text",
+        "variant": "caption",
+        "text": {
+          "@call": "formatDate",
+          "args": {
+            "value": {
+              "@path": "/form/contractStart"
+            },
+            "format": "MMM d, yyyy"
+          }
+        }
+      },
+      {
+        "id": "form_divider_top",
+        "component": "Divider",
+        "axis": "horizontal"
+      },
+
+      {
+        "id": "customer_tabs",
+        "component": "Tabs",
+        "@accessibility": {
+          "label": "Customer edit sections"
+        },
+        "tabs": [
+          {
+            "title": "Details",
+            "child": "tab_details_panel"
+          },
+          {
+            "title": "Billing",
+            "child": "tab_billing_panel"
+          }
+        ]
+      },
+      {
+        "id": "tab_details_panel",
+        "component": "Column",
+        "align": "stretch",
+        "children": [
+          "field_name",
+          "field_email",
+          "field_tax_id",
+          "field_segment",
+          "field_active",
+          "field_notes"
+        ]
+      },
+      {
+        "id": "field_name",
+        "component": "TextField",
+        "label": "Name",
+        "placeholder": "Company legal name",
+        "value": {
+          "@path": "/form/name"
+        },
+        "@checks": [
+          {
+            "condition": {
+              "@call": "required",
+              "args": {
+                "value": {
+                  "@path": "/form/name"
+                }
+              }
+            },
+            "message": "Customer name is required."
+          },
+          {
+            "condition": {
+              "@call": "length",
+              "args": {
+                "value": {
+                  "@path": "/form/name"
+                },
+                "min": 2,
+                "max": 80
+              }
+            },
+            "message": "Customer name must be between 2 and 80 characters."
+          }
+        ]
+      },
+      {
+        "id": "field_email",
+        "component": "TextField",
+        "label": "Email",
+        "placeholder": "billing@company.example",
+        "value": {
+          "@path": "/form/email"
+        },
+        "@checks": [
+          {
+            "condition": {
+              "@call": "required",
+              "args": {
+                "value": {
+                  "@path": "/form/email"
+                }
+              }
+            },
+            "message": "Billing email is required."
+          },
+          {
+            "condition": {
+              "@call": "email",
+              "args": {
+                "value": {
+                  "@path": "/form/email"
+                }
+              }
+            },
+            "message": "Enter a valid billing email address."
+          }
+        ]
+      },
+      {
+        "id": "field_tax_id",
+        "component": "TextField",
+        "label": "Tax ID",
+        "placeholder": "US-12-3456789",
+        "value": {
+          "@path": "/form/taxId"
+        },
+        "@checks": [
+          {
+            "condition": {
+              "@call": "required",
+              "args": {
+                "value": {
+                  "@path": "/form/taxId"
+                }
+              }
+            },
+            "message": "Tax ID is required."
+          },
+          {
+            "condition": {
+              "@call": "regex",
+              "args": {
+                "value": {
+                  "@path": "/form/taxId"
+                },
+                "pattern": "^[A-Z]{2}-[0-9]{2}-[0-9]{7}$"
+              }
+            },
+            "message": "Tax ID must match format XX-00-0000000."
+          }
+        ]
+      },
+      {
+        "id": "field_segment",
+        "component": "ChoicePicker",
+        "label": "Segment",
+        "variant": "mutuallyExclusive",
+        "displayStyle": "chips",
+        "value": {
+          "@path": "/form/segment"
+        },
+        "options": [
+          { "label": "Enterprise", "value": "enterprise" },
+          { "label": "Mid-Market", "value": "midmarket" },
+          { "label": "SMB", "value": "smb" }
+        ],
+        "@checks": [
+          {
+            "condition": {
+              "@call": "required",
+              "args": {
+                "value": {
+                  "@path": "/form/segment"
+                }
+              }
+            },
+            "message": "Select a customer segment."
+          }
+        ]
+      },
+      {
+        "id": "field_active",
+        "component": "CheckBox",
+        "label": "Active",
+        "value": {
+          "@path": "/form/active"
+        }
+      },
+      {
+        "id": "field_notes",
+        "component": "TextField",
+        "label": "Notes",
+        "variant": "longText",
+        "placeholder": "Delivery or invoicing instructions",
+        "value": {
+          "@path": "/form/notes"
+        },
+        "@checks": [
+          {
+            "condition": {
+              "@call": "length",
+              "args": {
+                "value": {
+                  "@path": "/form/notes"
+                },
+                "max": 280
+              }
+            },
+            "message": "Notes must be 280 characters or fewer."
+          }
+        ]
+      },
+
+      {
+        "id": "tab_billing_panel",
+        "component": "Column",
+        "align": "stretch",
+        "children": [
+          "billing_summary_card",
+          "field_payment_terms",
+          "field_contract_start",
+          "field_annual_value"
+        ]
+      },
+      {
+        "id": "billing_summary_card",
+        "component": "Card",
+        "child": "billing_summary_row"
+      },
+      {
+        "id": "billing_summary_row",
+        "component": "Row",
+        "justify": "spaceBetween",
+        "align": "center",
+        "children": ["billing_value_col", "billing_date_col"]
+      },
+      {
+        "id": "billing_value_col",
+        "component": "Column",
+        "children": ["billing_value_caption", "billing_value_formatted"]
+      },
+      {
+        "id": "billing_value_caption",
+        "component": "Text",
+        "variant": "caption",
+        "text": "Annual Contract Value"
+      },
+      {
+        "id": "billing_value_formatted",
+        "component": "Text",
+        "text": {
+          "@call": "formatCurrency",
+          "args": {
+            "value": {
+              "@path": "/form/annualValueText"
+            },
+            "currency": {
+              "@path": "/form/currency"
+            }
+          }
+        }
+      },
+      {
+        "id": "billing_date_col",
+        "component": "Column",
+        "children": ["billing_date_caption", "billing_date_formatted"]
+      },
+      {
+        "id": "billing_date_caption",
+        "component": "Text",
+        "variant": "caption",
+        "text": "Contract Start Date"
+      },
+      {
+        "id": "billing_date_formatted",
+        "component": "Text",
+        "text": {
+          "@call": "formatDate",
+          "args": {
+            "value": {
+              "@path": "/form/contractStart"
+            },
+            "format": "MMM d, yyyy"
+          }
+        }
+      },
+      {
+        "id": "field_payment_terms",
+        "component": "ChoicePicker",
+        "label": "Payment Terms",
+        "variant": "mutuallyExclusive",
+        "displayStyle": "checkbox",
+        "value": {
+          "@path": "/form/paymentTerms"
+        },
+        "options": [
+          { "label": "Net 15", "value": "net15" },
+          { "label": "Net 30", "value": "net30" },
+          { "label": "Net 45", "value": "net45" },
+          { "label": "Net 60", "value": "net60" }
+        ],
+        "@checks": [
+          {
+            "condition": {
+              "@call": "required",
+              "args": {
+                "value": {
+                  "@path": "/form/paymentTerms"
+                }
+              }
+            },
+            "message": "Select payment terms."
+          }
+        ]
+      },
+      {
+        "id": "field_contract_start",
+        "component": "DateTimeInput",
+        "label": "Contract Start",
+        "enableDate": true,
+        "enableTime": false,
+        "min": "2020-01-01",
+        "max": "2030-12-31",
+        "value": {
+          "@path": "/form/contractStart"
+        },
+        "@checks": [
+          {
+            "condition": {
+              "@call": "required",
+              "args": {
+                "value": {
+                  "@path": "/form/contractStart"
+                }
+              }
+            },
+            "message": "Contract start date is required."
+          }
+        ]
+      },
+      {
+        "id": "field_annual_value",
+        "component": "TextField",
+        "label": "Annual Value (USD)",
+        "variant": "number",
+        "placeholder": "50000.00",
+        "value": {
+          "@path": "/form/annualValueText"
+        },
+        "@checks": [
+          {
+            "condition": {
+              "@call": "required",
+              "args": {
+                "value": {
+                  "@path": "/form/annualValueText"
+                }
+              }
+            },
+            "message": "Annual contract value is required."
+          },
+          {
+            "condition": {
+              "@call": "numeric",
+              "args": {
+                "value": {
+                  "@path": "/form/annualValueText"
+                },
+                "min": 0,
+                "max": 100000000
+              }
+            },
+            "message": "Annual value must be a valid non-negative amount."
+          }
+        ]
+      },
+
+      {
+        "id": "form_divider_bottom",
+        "component": "Divider",
+        "axis": "horizontal"
+      },
+      {
+        "id": "form_actions_row",
+        "component": "Row",
+        "justify": "spaceBetween",
+        "align": "center",
+        "children": ["delete_modal_slot", "save_customer_btn"]
+      },
+      {
+        "id": "delete_modal_slot",
+        "component": "Row",
+        "children": {
+          "componentId": "delete_modal",
+          "path": "/ui/deleteModal"
+        }
+      },
+      {
+        "id": "delete_modal",
+        "component": "Modal",
+        "trigger": "delete_trigger_btn",
+        "content": "delete_modal_content",
+        "@accessibility": {
+          "label": "Confirm Customer Deletion",
+          "description": "Permanently deletes the selected customer record"
+        }
+      },
+      {
+        "id": "delete_trigger_btn",
+        "component": "Button",
+        "variant": "default",
+        "child": "delete_trigger_label",
+        "action": {
+          "event": {
+            "name": "open_delete_modal",
+            "context": {
+              "customerId": {
+                "@path": "/form/id"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "delete_trigger_label",
+        "component": "Text",
+        "text": "Delete"
+      },
+      {
+        "id": "delete_modal_content",
+        "component": "Column",
+        "align": "stretch",
+        "children": [
+          "delete_modal_title",
+          "delete_modal_warning",
+          "delete_modal_actions"
+        ]
+      },
+      {
+        "id": "delete_modal_title",
+        "component": "Text",
+        "text": "**Delete Customer**"
+      },
+      {
+        "id": "delete_modal_warning",
+        "component": "Text",
+        "text": {
+          "@call": "formatString",
+          "args": {
+            "value": "Delete ${/form/name}? This permanently removes the customer record and cannot be undone."
+          }
+        }
+      },
+      {
+        "id": "delete_modal_actions",
+        "component": "Row",
+        "justify": "end",
+        "align": "center",
+        "children": ["cancel_delete_btn", "confirm_delete_btn"]
+      },
+      {
+        "id": "cancel_delete_btn",
+        "component": "Button",
+        "variant": "default",
+        "child": "cancel_delete_label",
+        "action": {
+          "event": {
+            "name": "cancel_delete"
+          }
+        }
+      },
+      {
+        "id": "cancel_delete_label",
+        "component": "Text",
+        "text": "Cancel"
+      },
+      {
+        "id": "confirm_delete_btn",
+        "component": "Button",
+        "variant": "primary",
+        "child": "confirm_delete_label",
+        "action": {
+          "event": {
+            "name": "delete_customer",
+            "context": {
+              "customerId": {
+                "@path": "/form/id"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "confirm_delete_label",
+        "component": "Text",
+        "text": "Confirm Delete"
+      },
+
+      {
+        "id": "save_customer_btn",
+        "component": "Button",
+        "variant": "primary",
+        "child": "save_customer_label",
+        "@checks": [
+          {
+            "condition": {
+              "@call": "and",
+              "args": {
+                "values": [
+                  {
+                    "@call": "required",
+                    "args": { "value": { "@path": "/form/name" } }
+                  },
+                  {
+                    "@call": "length",
+                    "args": {
+                      "value": { "@path": "/form/name" },
+                      "min": 2,
+                      "max": 80
+                    }
+                  },
+                  {
+                    "@call": "required",
+                    "args": { "value": { "@path": "/form/email" } }
+                  },
+                  {
+                    "@call": "email",
+                    "args": { "value": { "@path": "/form/email" } }
+                  },
+                  {
+                    "@call": "required",
+                    "args": { "value": { "@path": "/form/taxId" } }
+                  },
+                  {
+                    "@call": "regex",
+                    "args": {
+                      "value": { "@path": "/form/taxId" },
+                      "pattern": "^[A-Z]{2}-[0-9]{2}-[0-9]{7}$"
+                    }
+                  },
+                  {
+                    "@call": "length",
+                    "args": {
+                      "value": { "@path": "/form/notes" },
+                      "max": 280
+                    }
+                  },
+                  {
+                    "@call": "required",
+                    "args": { "value": { "@path": "/form/segment" } }
+                  },
+                  {
+                    "@call": "required",
+                    "args": { "value": { "@path": "/form/paymentTerms" } }
+                  },
+                  {
+                    "@call": "required",
+                    "args": { "value": { "@path": "/form/contractStart" } }
+                  },
+                  {
+                    "@call": "required",
+                    "args": { "value": { "@path": "/form/annualValueText" } }
+                  },
+                  {
+                    "@call": "numeric",
+                    "args": {
+                      "value": { "@path": "/form/annualValueText" },
+                      "min": 0,
+                      "max": 100000000
+                    }
+                  }
+                ]
+              }
+            },
+            "message": "Resolve validation errors before saving."
+          }
+        ],
+        "action": {
+          "event": {
+            "name": "save_customer",
+            "context": {
+              "id": { "@path": "/form/id" },
+              "name": { "@path": "/form/name" },
+              "email": { "@path": "/form/email" },
+              "taxId": { "@path": "/form/taxId" },
+              "segment": { "@path": "/form/segment" },
+              "paymentTerms": { "@path": "/form/paymentTerms" },
+              "contractStart": { "@path": "/form/contractStart" },
+              "annualValueText": { "@path": "/form/annualValueText" },
+              "active": { "@path": "/form/active" },
+              "notes": { "@path": "/form/notes" }
+            }
+          }
+        }
+      },
+      {
+        "id": "save_customer_label",
+        "component": "Text",
+        "text": "Save Customer"
+      }
+    ]
+  }
+}

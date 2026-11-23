@@ -1,0 +1,9 @@
+{
+  "name": "a2ui-nsh Conformance Runner",
+  "id": "dev.a2ui.nsh.conformance",
+  "version": "0.1.0",
+  "build": 1,
+  "capabilities": {
+    "host": ["conformance.*", "a2ui.*"]
+  }
+}

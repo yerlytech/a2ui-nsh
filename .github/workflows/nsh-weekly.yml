@@ -1,0 +1,268 @@
+name: Weekly nsh compatibility
+
+on:
+  schedule:
+    # Thursday 06:00 UTC (longbridge/nsh publishes stable releases on Wednesday SGT).
+    - cron: "0 6 * * 4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nsh-weekly-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  A2UI_CONFORMANCE_COMMIT: 496df0e76e2ad9aba4cc2a12abe066f43d4f171d
+
+jobs:
+  nsh-latest:
+    name: Build and test against latest nsh release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout upstream A2UI v1.0 conformance suites
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: google/A2UI
+          ref: ${{ env.A2UI_CONFORMANCE_COMMIT }}
+          path: target/refs/google-A2UI
+          sparse-checkout: |
+            conformance
+            specification
+            catalogs
+          persist-credentials: false
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+
+      - name: Install just (>= 1.29.0)
+        run: |
+          uv tool install rust-just
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install latest nsh release (SHA-256 verified)
+        id: nsh
+        run: |
+          set -euo pipefail
+          asset="nsh-linux-x86_64.tar.gz"
+          base_url="https://github.com/longbridge/nsh/releases/latest/download"
+          work="$RUNNER_TEMP/nsh-dist"
+          mkdir -p "$work"
+          curl -fsSL "${base_url}/${asset}" -o "${work}/${asset}"
+          curl -fsSL "${base_url}/${asset}.sha256" -o "${work}/${asset}.sha256"
+          (cd "$work" && sha256sum -c "${asset}.sha256")
+          tar -xzf "${work}/${asset}" -C "$work"
+          test -x "${work}/nsh/bin/nsh"
+          echo "${work}/nsh/bin" >> "$GITHUB_PATH"
+          version="$("${work}/nsh/bin/nsh" --version)"
+          echo "Installed: ${version}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare report directory
+        run: mkdir -p target/nsh-weekly
+
+      - name: Type-check (just check)
+        id: check
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          just check 2>&1 | tee target/nsh-weekly/check.log
+
+      - name: Unit, component, and example tests (just test)
+        id: test
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          just test 2>&1 | tee target/nsh-weekly/test.log
+
+      - name: A2UI v1.0 conformance suites (just conformance)
+        id: conformance
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          just conformance target/refs/google-A2UI 2>&1 | tee target/nsh-weekly/conformance.log
+
+      - name: Release QuickJS bytecode builds (just build)
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          just build 2>&1 | tee target/nsh-weekly/build.log
+
+      # Real-target checks on ubuntu-24.04 (Spec 002 T7):
+      # - TUI (`just test-tui`): runs on ubuntu-24.04 via nsh-tui-host's in-memory
+      #   ratatui terminal (needs `nsh component add tui` and `jq`, pre-installed).
+      # - Web packaging (`just package-web`): runs on ubuntu-24.04 (builds static
+      #   Web/WASM site and verifies strict CSP; needs `nsh component add web`, no browser).
+      # - Web headless tests (`just test-web`): runs when Chrome, Edge, or Chromium
+      #   is present on the runner; skipped with an explicit note when absent because
+      #   `nsh test --target web` requires a headless Chrome/Edge/Chromium binary.
+      # - macOS AppKit walk (`just walk-macos`): skipped on ubuntu-24.04 because
+      #   `--target macos` requires a macOS runner (`macos-*`) with AppKit GUI support.
+      # - Mobile / other native targets (`ios`, `android`, `windows`, `linux`, `gpui`):
+      #   out of scope for Spec 002 (deferred to Spec 3).
+
+      - name: Install nsh TUI runtime (nsh component add tui)
+        id: nsh_tui
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          nsh component add tui 2>&1 | tee target/nsh-weekly/component-tui.log
+
+      - name: TUI target tests (just test-tui)
+        id: test_tui
+        if: steps.nsh_tui.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          just test-tui 2>&1 | tee target/nsh-weekly/test-tui.log
+
+      - name: Install nsh Web runtime (nsh component add web)
+        id: nsh_web
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          nsh component add web 2>&1 | tee target/nsh-weekly/component-web.log
+
+      - name: Package Web/WASM ERP demo (just package-web)
+        id: package_web
+        if: steps.nsh_web.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          just package-web 2>&1 | tee target/nsh-weekly/package-web.log
+
+      - name: Detect Chrome/Edge/Chromium for --target web tests
+        id: web_browser
+        run: |
+          set -euo pipefail
+          browser=""
+          for candidate in google-chrome google-chrome-stable chromium chromium-browser microsoft-edge; do
+            if found="$(command -v "$candidate" 2>/dev/null)"; then
+              browser="$found"
+              break
+            fi
+          done
+          if [ -n "$browser" ]; then
+            echo "Detected web test browser: ${browser}"
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "path=${browser}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Skipping just test-web: no Chrome, Edge, or Chromium binary found on this runner (nsh test --target web requires headless Chrome/Edge/Chromium)."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "path=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Web/WASM target tests (just test-web)
+        id: test_web
+        if: steps.nsh_web.outcome == 'success' && steps.web_browser.outputs.available == 'true'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          just test-web 2>&1 | tee target/nsh-weekly/test-web.log
+
+      - name: Write compatibility summary
+        if: always()
+        env:
+          NSH_VERSION: ${{ steps.nsh.outputs.version }}
+          CHECK_OUTCOME: ${{ steps.check.outcome }}
+          TEST_OUTCOME: ${{ steps.test.outcome }}
+          CONFORMANCE_OUTCOME: ${{ steps.conformance.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          NSH_TUI_OUTCOME: ${{ steps.nsh_tui.outcome }}
+          TEST_TUI_OUTCOME: ${{ steps.test_tui.outcome }}
+          NSH_WEB_OUTCOME: ${{ steps.nsh_web.outcome }}
+          PACKAGE_WEB_OUTCOME: ${{ steps.package_web.outcome }}
+          WEB_BROWSER_AVAILABLE: ${{ steps.web_browser.outputs.available }}
+          WEB_BROWSER_PATH: ${{ steps.web_browser.outputs.path }}
+          TEST_WEB_OUTCOME: ${{ steps.test_web.outcome }}
+        run: |
+          if [ "$NSH_WEB_OUTCOME" != "success" ]; then
+            test_web_summary="skipped (nsh component add web failed)"
+          elif [ "$WEB_BROWSER_AVAILABLE" != "true" ]; then
+            test_web_summary="skipped (no Chrome/Edge/Chromium on runner; --target web requires Chrome)"
+          else
+            test_web_summary="${TEST_WEB_OUTCOME}"
+          fi
+          {
+            echo "## Weekly nsh Compatibility Report"
+            echo ""
+            echo "- **nsh release:** \`${NSH_VERSION:-unknown}\`"
+            echo "- **Runner:** \`ubuntu-24.04\`"
+            echo "- **google/A2UI pin:** \`${A2UI_CONFORMANCE_COMMIT}\`"
+            echo "- **Web test browser:** \`${WEB_BROWSER_PATH:-none (just test-web skipped)}\`"
+            echo ""
+            echo "| Step | Outcome |"
+            echo "|---|---|"
+            echo "| \`just check\` | ${CHECK_OUTCOME} |"
+            echo "| \`just test\` | ${TEST_OUTCOME} |"
+            echo "| \`just conformance\` | ${CONFORMANCE_OUTCOME} |"
+            echo "| \`just build\` | ${BUILD_OUTCOME} |"
+            echo "| \`nsh component add tui\` | ${NSH_TUI_OUTCOME} |"
+            echo "| \`just test-tui\` | ${TEST_TUI_OUTCOME} |"
+            echo "| \`nsh component add web\` | ${NSH_WEB_OUTCOME} |"
+            echo "| \`just package-web\` | ${PACKAGE_WEB_OUTCOME} |"
+            echo "| \`just test-web\` | ${test_web_summary} |"
+            echo "| \`just walk-macos\` | skipped (requires macOS AppKit runner; ubuntu-24.04 only) |"
+            if [ -f target/conformance-manifest.jsonl ]; then
+              passed=$(grep -c '"status":"passed"' target/conformance-manifest.jsonl || true)
+              failed=$(grep -c '"status":"failed"' target/conformance-manifest.jsonl || true)
+              skipped=$(grep -c '"status":"skipped"' target/conformance-manifest.jsonl || true)
+              echo ""
+              echo "Conformance manifest: **${passed} passed**, **${failed} failed**, **${skipped} skipped**."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload compatibility logs and conformance manifest
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nsh-weekly-report
+          path: |
+            target/nsh-weekly/
+            target/conformance-manifest.jsonl
+            target/walk-tui/
+            target/walk-web/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Report overall status
+        if: always()
+        env:
+          NSH_VERSION: ${{ steps.nsh.outputs.version }}
+          CHECK_OUTCOME: ${{ steps.check.outcome }}
+          TEST_OUTCOME: ${{ steps.test.outcome }}
+          CONFORMANCE_OUTCOME: ${{ steps.conformance.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          NSH_TUI_OUTCOME: ${{ steps.nsh_tui.outcome }}
+          TEST_TUI_OUTCOME: ${{ steps.test_tui.outcome }}
+          NSH_WEB_OUTCOME: ${{ steps.nsh_web.outcome }}
+          PACKAGE_WEB_OUTCOME: ${{ steps.package_web.outcome }}
+          WEB_BROWSER_AVAILABLE: ${{ steps.web_browser.outputs.available }}
+          TEST_WEB_OUTCOME: ${{ steps.test_web.outcome }}
+        run: |
+          failed=0
+          if [ "$CHECK_OUTCOME" != "success" ] \
+            || [ "$TEST_OUTCOME" != "success" ] \
+            || [ "$CONFORMANCE_OUTCOME" != "success" ] \
+            || [ "$BUILD_OUTCOME" != "success" ] \
+            || [ "$NSH_TUI_OUTCOME" != "success" ] \
+            || [ "$TEST_TUI_OUTCOME" != "success" ] \
+            || [ "$NSH_WEB_OUTCOME" != "success" ] \
+            || [ "$PACKAGE_WEB_OUTCOME" != "success" ]; then
+            failed=1
+          fi
+          if [ "$WEB_BROWSER_AVAILABLE" = "true" ] && [ "$TEST_WEB_OUTCOME" != "success" ]; then
+            failed=1
+          fi
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::a2ui-nsh compatibility failed against ${NSH_VERSION:-latest nsh} (check=${CHECK_OUTCOME}, test=${TEST_OUTCOME}, conformance=${CONFORMANCE_OUTCOME}, build=${BUILD_OUTCOME}, nsh_tui=${NSH_TUI_OUTCOME}, test_tui=${TEST_TUI_OUTCOME}, nsh_web=${NSH_WEB_OUTCOME}, package_web=${PACKAGE_WEB_OUTCOME}, test_web=${TEST_WEB_OUTCOME}, web_browser=${WEB_BROWSER_AVAILABLE})."
+            exit 1
+          fi

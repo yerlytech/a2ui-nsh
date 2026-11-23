@@ -1,0 +1,25 @@
+# Upstream dependencies and reference repositories watched by `just upstream`.
+
+[[watch]]
+name = "nsh"
+source = "github:longbridge/nsh"
+pin = "v0.6.1"
+pinned_in = "docs/specs/001-a2ui-nsh-core-and-desktop.md"
+why = "Native Shell runtime, TSX bundler, nsh/base components, and headless test runner"
+check = "nsh/base prop changes, accessibility prop support, nsh.json capability schema, and QuickJS runtime changes; run just nsh-check-latest"
+
+[[watch]]
+name = "a2ui"
+source = "ghcommit:google/A2UI"
+pin = "496df0e76e2ad9aba4cc2a12abe066f43d4f171d"
+pinned_in = ".github/workflows/nsh-weekly.yml"
+why = "A2UI v1.0 specification, Basic Catalog v1 JSON schemas, and upstream conformance YAML suites"
+check = "v1.0 schema or conformance YAML additions; refresh target/refs/google-A2UI and run just conformance"
+
+[[watch]]
+name = "gitleaks"
+source = "github:gitleaks/gitleaks"
+pin = "v8.30.1"
+pinned_in = ".pre-commit-config.yaml"
+why = "checks every save for leaked secrets"
+check = "what its rules now flag; run the hook over the whole tree once before following"

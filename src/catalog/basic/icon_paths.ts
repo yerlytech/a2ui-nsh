@@ -1,0 +1,158 @@
+/**
+ * Clean-room 24×24 SVG path data for all 59 A2UI Basic Catalog v1 icon names
+ * (`catalogs/basic/v1/catalog.json` lines 76–134) plus a fallback glyph path.
+ *
+ * All paths below are original geometric vector data authored directly for
+ * `a2ui-nsh` on a 24×24 unit grid, filled with the `evenodd` fill rule via
+ * `nsh`'s native `Path2D` and `<Canvas>`.
+ */
+
+/** Maximum accepted length for a dynamic `svgPath` string (Design Rule 10). */
+export const MAX_SVG_PATH_LENGTH = 8192;
+
+/** Fallback question-mark badge path used for unknown names or invalid `svgPath`. */
+export const FALLBACK_ICON_PATH =
+  "M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 4A8 8 0 1 1 12 20A8 8 0 1 1 12 4ZM11 16H13V18H11ZM12 7C10.3 7 9 8.2 9 9.8H10.8C10.8 9.1 11.3 8.6 12 8.6C12.7 8.6 13.2 9.1 13.2 9.8C13.2 10.4 12.8 10.8 12.1 11.3C11.4 11.8 11 12.4 11 13.5V14.5H12.8V13.6C12.8 12.9 13.1 12.6 13.8 12.1C14.5 11.6 15 10.9 15 9.8C15 8.2 13.7 7 12 7Z";
+
+/** All 59 named icons defined in A2UI Basic Catalog v1. */
+export const BASIC_ICON_PATHS: Readonly<Record<string, string>> = {
+  accountCircle:
+    "M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 6A3 3 0 1 1 12 12A3 3 0 1 1 12 6ZM12 14C9.5 14 7.3 15.2 6.2 17A8 8 0 0 0 17.8 17C16.7 15.2 14.5 14 12 14Z",
+  add: "M11 5H13V11H19V13H13V19H11V13H5V11H11Z",
+  arrowBack: "M20 11H7.8L13.4 5.4L12 4L4 12L12 20L13.4 18.6L7.8 13H20Z",
+  arrowForward: "M4 11H16.2L10.6 5.4L12 4L20 12L12 20L10.6 18.6L16.2 13H4Z",
+  attachFile:
+    "M16.5 6V17.5C16.5 19.7 14.7 21.5 12.5 21.5C10.3 21.5 8.5 19.7 8.5 17.5V6.5C8.5 4.8 9.8 3.5 11.5 3.5C13.2 3.5 14.5 4.8 14.5 6.5V16.5C14.5 17.3 13.8 18 13 18C12.2 18 11.5 17.3 11.5 16.5V7H10V16.5C10 18.2 11.3 19.5 13 19.5C14.7 19.5 16 18.2 16 16.5V6.5C16 4 14 2 11.5 2C9 2 7 4 7 6.5V17.5C7 20.5 9.5 23 12.5 23C15.5 23 18 20.5 18 17.5V6Z",
+  calendarToday:
+    "M5 4H7V2H9V4H15V2H17V4H19A2 2 0 0 1 21 6V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V6A2 2 0 0 1 5 4ZM5 9V20H19V9Z",
+  call: "M6.6 10.8C8 13.6 10.4 16 13.2 17.4L15.4 15.2C15.7 14.9 16.1 14.8 16.5 15C17.6 15.4 18.8 15.6 20 15.6A1 1 0 0 1 21 16.6V20A1 1 0 0 1 20 21C10.6 21 3 13.4 3 4A1 1 0 0 1 4 3H7.5A1 1 0 0 1 8.5 4C8.5 5.2 8.7 6.4 9.1 7.5C9.2 7.9 9.1 8.3 8.8 8.6Z",
+  camera:
+    "M9 3L7.2 5H4A2 2 0 0 0 2 7V19A2 2 0 0 0 4 21H20A2 2 0 0 0 22 19V7A2 2 0 0 0 20 5H16.8L15 3ZM12 8A5 5 0 1 1 12 18A5 5 0 1 1 12 8ZM12 10A3 3 0 1 0 12 16A3 3 0 1 0 12 10Z",
+  check: "M9 16.2L4.8 12L3.4 13.4L9 19L21 7L19.6 5.6Z",
+  close:
+    "M19 6.4L17.6 5L12 10.6L6.4 5L5 6.4L10.6 12L5 17.6L6.4 19L12 13.4L17.6 19L19 17.6L13.4 12Z",
+  delete:
+    "M6 19A2 2 0 0 0 8 21H16A2 2 0 0 0 18 19V7H6ZM19 4H15.5L14.5 3H9.5L8.5 4H5V6H19Z",
+  download: "M5 20H19V18H5ZM11 4H13V12.2L16.6 8.6L18 10L12 16L6 10L7.4 8.6L11 12.2Z",
+  edit: "M3 17.3V21H6.7L17.8 9.9L14.1 6.2ZM20.7 7A1 1 0 0 0 20.7 5.6L18.4 3.3A1 1 0 0 0 17 3.3L15.2 5.1L18.9 8.8Z",
+  event:
+    "M5 4H7V2H9V4H15V2H17V4H19A2 2 0 0 1 21 6V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V6A2 2 0 0 1 5 4ZM5 9V20H19V9ZM12 12H17V17H12Z",
+  error:
+    "M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM11 7H13V13H11ZM11 15H13V17H11Z",
+  fastForward: "M4 18L12.5 12L4 6ZM13 6V18L21.5 12Z",
+  favorite:
+    "M12 21L10.6 19.7C5.4 15 2 11.9 2 8.2C2 5.1 4.4 2.7 7.5 2.7C9.2 2.7 10.9 3.5 12 4.8C13.1 3.5 14.8 2.7 16.5 2.7C19.6 2.7 22 5.1 22 8.2C22 11.9 18.6 15 13.4 19.7Z",
+  favoriteOff:
+    "M16.5 3C14.8 3 13.1 3.8 12 5.1C10.9 3.8 9.2 3 7.5 3C4.4 3 2 5.4 2 8.5C2 12.2 5.4 15.3 10.6 20L12 21.3L13.4 20C18.6 15.3 22 12.2 22 8.5C22 5.4 19.6 3 16.5 3ZM12.1 18.5L12 18.6L11.9 18.5C7.1 14.2 4 11.4 4 8.5C4 6.5 5.5 5 7.5 5C9 5 10.5 6 11.1 7.4H12.9C13.5 6 15 5 16.5 5C18.5 5 20 6.5 20 8.5C20 11.4 16.9 14.2 12.1 18.5Z",
+  folder:
+    "M10 4H4A2 2 0 0 0 2 6V18A2 2 0 0 0 4 20H20A2 2 0 0 0 22 18V8A2 2 0 0 0 20 6H12Z",
+  help: "M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM11 16H13V18H11ZM12 6C10.1 6 8.7 7.4 8.7 9.2H10.6C10.6 8.4 11.2 7.8 12 7.8C12.8 7.8 13.4 8.4 13.4 9.2C13.4 9.9 12.9 10.3 12.1 10.9C11.4 11.5 11 12.1 11 13.3V14.2H12.9V13.4C12.9 12.7 13.3 12.2 14.1 11.6C14.8 11 15.3 10.2 15.3 9.2C15.3 7.4 13.9 6 12 6Z",
+  home: "M10 20V14H14V20H19V12H22L12 3L2 12H5V20Z",
+  info: "M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM11 10H13V17H11ZM11 6H13V8H11Z",
+  locationOn:
+    "M12 2C8.1 2 5 5.1 5 9C5 14.2 12 22 12 22C12 22 19 14.2 19 9C19 5.1 15.9 2 12 2ZM12 6.5A2.5 2.5 0 1 1 12 11.5A2.5 2.5 0 1 1 12 6.5Z",
+  lock: "M18 8H17V6A5 5 0 0 0 7 6V8H6A2 2 0 0 0 4 10V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V10A2 2 0 0 0 18 8ZM9 6A3 3 0 0 1 15 6V8H9ZM12 13A2 2 0 1 1 12 17A2 2 0 1 1 12 13Z",
+  lockOpen:
+    "M18 8H17V6A5 5 0 0 0 7.2 4.8L9.1 5.4A3 3 0 0 1 15 6V8H6A2 2 0 0 0 4 10V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V10A2 2 0 0 0 18 8ZM12 13A2 2 0 1 1 12 17A2 2 0 1 1 12 13Z",
+  mail: "M4 4H20A2 2 0 0 1 22 6V18A2 2 0 0 1 20 20H4A2 2 0 0 1 2 18V6A2 2 0 0 1 4 4ZM20 6L12 11L4 6V8L12 13L20 8Z",
+  menu: "M3 6H21V8H3ZM3 11H21V13H3ZM3 16H21V18H3Z",
+  moreVert:
+    "M12 4A2 2 0 1 1 12 8A2 2 0 1 1 12 4ZM12 10A2 2 0 1 1 12 14A2 2 0 1 1 12 10ZM12 16A2 2 0 1 1 12 20A2 2 0 1 1 12 16Z",
+  moreHoriz:
+    "M6 10A2 2 0 1 1 6 14A2 2 0 1 1 6 10ZM12 10A2 2 0 1 1 12 14A2 2 0 1 1 12 10ZM18 10A2 2 0 1 1 18 14A2 2 0 1 1 18 10Z",
+  notificationsOff:
+    "M12 22A2 2 0 0 0 14 20H10A2 2 0 0 0 12 22ZM18 14.2V11C18 8 16.4 5.5 13.5 4.8V4A1.5 1.5 0 0 0 10.5 4V4.8C9.8 5 9.1 5.3 8.5 5.7L18 15.2ZM3.3 4.7L6.5 7.9C6.2 8.9 6 9.9 6 11V16L4 18V19H17.6L19.3 20.7L20.7 19.3L4.7 3.3Z",
+  notifications:
+    "M12 22A2 2 0 0 0 14 20H10A2 2 0 0 0 12 22ZM18 16V11C18 8 16.4 5.5 13.5 4.8V4A1.5 1.5 0 0 0 10.5 4V4.8C7.6 5.5 6 8 6 11V16L4 18V19H20V18Z",
+  pause: "M6 5H10V19H6ZM14 5H18V19H14Z",
+  payment:
+    "M4 4H20A2 2 0 0 1 22 6V18A2 2 0 0 1 20 20H4A2 2 0 0 1 2 18V6A2 2 0 0 1 4 4ZM4 8V11H20V8Z",
+  person:
+    "M12 4A4 4 0 1 1 12 12A4 4 0 1 1 12 4ZM12 14C7.6 14 4 15.8 4 18V20H20V18C20 15.8 16.4 14 12 14Z",
+  phone:
+    "M7 2H17A2 2 0 0 1 19 4V20A2 2 0 0 1 17 22H7A2 2 0 0 1 5 20V4A2 2 0 0 1 7 2ZM7 5V17H17V5ZM11 19H13V20.5H11Z",
+  photo:
+    "M4 4H20A2 2 0 0 1 22 6V18A2 2 0 0 1 20 20H4A2 2 0 0 1 2 18V6A2 2 0 0 1 4 4ZM5 17L9 12L12 15.5L15.5 11L19 17Z",
+  play: "M8 5V19L19 12Z",
+  print:
+    "M18 3H6V7H18ZM19 8H5A3 3 0 0 0 2 11V17H6V21H18V17H22V11A3 3 0 0 0 19 8ZM16 19H8V14H16ZM19 10.5A1 1 0 1 1 19 12.5A1 1 0 1 1 19 10.5Z",
+  refresh:
+    "M17.6 6.4A8 8 0 1 0 19.7 14H17.6A6 6 0 1 1 16.2 7.8L13 11H20V4Z",
+  rewind: "M11 18V6L2.5 12ZM11.5 12L20 18V6Z",
+  search:
+    "M10.5 3A7.5 7.5 0 1 0 10.5 18A7.5 7.5 0 1 0 10.5 3ZM10.5 5A5.5 5.5 0 1 1 10.5 16A5.5 5.5 0 1 1 10.5 5ZM16.2 14.8L21 19.6L19.6 21L14.8 16.2Z",
+  send: "M2.5 21L22.5 12L2.5 3V10L16.5 12L2.5 14Z",
+  settings:
+    "M12 2L14 4.5L17.2 4.2L18 7.3L21 8.8L20.1 12L21 15.2L18 16.7L17.2 19.8L14 19.5L12 22L10 19.5L6.8 19.8L6 16.7L3 15.2L3.9 12L3 8.8L6 7.3L6.8 4.2L10 4.5ZM12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8Z",
+  share:
+    "M18 16A3 3 0 0 0 16 16.8L8.9 12.7A3 3 0 0 0 9 12A3 3 0 0 0 8.9 11.3L16 7.2A3 3 0 1 0 15 5A3 3 0 0 0 15.1 5.7L8 9.8A3 3 0 1 0 8 14.2L15.1 18.3A3 3 0 1 0 18 16Z",
+  shoppingCart:
+    "M7 18A2 2 0 1 0 7 22A2 2 0 1 0 7 18ZM17 18A2 2 0 1 0 17 22A2 2 0 1 0 17 18ZM1 2V4H4L7.6 11.6L6.2 14A2 2 0 0 0 8 17H19V15H8.4L9.5 13H17A2 2 0 0 0 18.7 12L22 6H6.2L5.3 4H4L3 2Z",
+  skipNext: "M6 18L14.5 12L6 6ZM16 6H18V18H16Z",
+  skipPrevious: "M6 6H8V18H6ZM9.5 12L18 18V6Z",
+  star: "M12 2L14.9 8.6L22 9.3L16.6 14L18.2 21L12 17.3L5.8 21L7.4 14L2 9.3L9.1 8.6Z",
+  starHalf:
+    "M22 9.3L14.9 8.6L12 2L9.1 8.6L2 9.3L7.4 14L5.8 21L12 17.3L18.2 21L16.6 14ZM12 15.4V6.1L13.7 10.1L18.1 10.5L14.8 13.4L15.8 17.7Z",
+  starOff:
+    "M22 9.3L14.9 8.6L12 2L9.1 8.6L2 9.3L7.4 14L5.8 21L12 17.3L18.2 21L16.6 14ZM12 15.4L8.2 17.7L9.2 13.4L5.9 10.5L10.3 10.1L12 6.1L13.7 10.1L18.1 10.5L14.8 13.4L15.8 17.7Z",
+  stop: "M6 6H18V18H6Z",
+  upload: "M5 20H19V18H5ZM11 16H13V7.8L16.6 11.4L18 10L12 4L6 10L7.4 11.4L11 7.8Z",
+  visibility:
+    "M12 5C7 5 2.7 8.1 1 12C2.7 15.9 7 19 12 19C17 19 21.3 15.9 23 12C21.3 8.1 17 5 12 5ZM12 8.5A3.5 3.5 0 1 1 12 15.5A3.5 3.5 0 1 1 12 8.5ZM12 10A2 2 0 1 0 12 14A2 2 0 1 0 12 10Z",
+  visibilityOff:
+    "M3.3 4.7L6 7.4C4 8.6 2.2 10.2 1 12C2.7 15.9 7 19 12 19C13.9 19 15.7 18.5 17.3 17.7L19.3 19.7L20.7 18.3L4.7 3.3ZM12 5C10.5 5 9.1 5.3 7.8 5.8L10.2 8.2C10.8 8 11.4 8 12 8A4 4 0 0 1 16 12C16 12.6 15.9 13.2 15.7 13.7L18.1 16.1C20.2 14.9 21.9 13.6 23 12C21.3 8.1 17 5 12 5Z",
+  volumeDown: "M5 9V15H9L14 20V4L9 9ZM16.5 12C16.5 10.2 15.5 8.7 14 7.9V16C15.5 15.3 16.5 13.8 16.5 12Z",
+  volumeMute: "M7 9V15H11L16 20V4L11 9Z",
+  volumeOff:
+    "M3.3 4.7L7.6 9H5V15H9L14 20V15.4L19.3 20.7L20.7 19.3L4.7 3.3ZM14 4L11.2 6.8L14 9.6ZM16.5 12C16.5 10.2 15.5 8.7 14 7.9V10.1L16.4 12.5C16.5 12.3 16.5 12.2 16.5 12Z",
+  volumeUp:
+    "M3 9V15H7L12 20V4L7 9ZM14.5 12C14.5 10.2 13.5 8.7 12 7.9V16C13.5 15.3 14.5 13.8 14.5 12ZM14 3.2V5.3C16.9 6.2 19 8.8 19 12C19 15.2 16.9 17.8 14 18.7V20.8C18 19.9 21 16.3 21 12C21 7.7 18 4.1 14 3.2Z",
+  warning: "M1 21H23L12 2ZM13 18H11V16H13ZM13 14H11V10H13Z",
+};
+
+/** Ordered list of all 59 Basic Catalog v1 named icons. */
+export const BASIC_ICON_NAME_LIST: readonly string[] =
+  Object.keys(BASIC_ICON_PATHS);
+
+const SVG_PATH_ALLOWED_CHARS = /^[MmZzLlHhVvCcSsQqTtAa0-9eE.,+\-\s]+$/;
+const SVG_PATH_STARTS_WITH_MOVE = /^\s*[Mm]/;
+
+/**
+ * Validates that `svgPath` is a syntactically well-formed, bounded SVG path
+ * command string before passing it to `new Path2D(svgPath)`.
+ */
+export function isValidSvgPath(svgPath: unknown): svgPath is string {
+  if (typeof svgPath !== "string") {
+    return false;
+  }
+  const trimmed = svgPath.trim();
+  if (trimmed.length === 0 || trimmed.length > MAX_SVG_PATH_LENGTH) {
+    return false;
+  }
+  return (
+    SVG_PATH_STARTS_WITH_MOVE.test(trimmed) &&
+    SVG_PATH_ALLOWED_CHARS.test(trimmed)
+  );
+}
+
+/** Resolves an icon name or `{ svgPath }` object to SVG path data (with fallback). */
+export function resolveIconSvgPath(name: unknown): {
+  readonly pathData: string;
+  readonly isFallback: boolean;
+} {
+  if (typeof name === "string") {
+    const known = BASIC_ICON_PATHS[name];
+    if (known !== undefined) {
+      return { pathData: known, isFallback: false };
+    }
+    return { pathData: FALLBACK_ICON_PATH, isFallback: true };
+  }
+  if (name !== null && typeof name === "object" && "svgPath" in name) {
+    const rawSvg = (name as { svgPath?: unknown }).svgPath;
+    if (isValidSvgPath(rawSvg)) {
+      return { pathData: rawSvg.trim(), isFallback: false };
+    }
+    return { pathData: FALLBACK_ICON_PATH, isFallback: true };
+  }
+  return { pathData: FALLBACK_ICON_PATH, isFallback: true };
+}

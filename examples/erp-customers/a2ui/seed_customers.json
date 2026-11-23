@@ -1,0 +1,67 @@
+[
+  {
+    "id": "cust-101",
+    "name": "Cedar Ridge Timber Works",
+    "email": "billing@cedarridge.example",
+    "taxId": "US-12-3456789",
+    "segment": "enterprise",
+    "paymentTerms": "net30",
+    "contractStart": "2025-03-15",
+    "annualValueCents": 18450000,
+    "currency": "USD",
+    "active": true,
+    "notes": "Quarterly pallet deliveries to Portland depot."
+  },
+  {
+    "id": "cust-102",
+    "name": "Alder Creek Logistics",
+    "email": "accounts@aldercreek.example",
+    "taxId": "US-48-9012345",
+    "segment": "midmarket",
+    "paymentTerms": "net45",
+    "contractStart": "2025-07-01",
+    "annualValueCents": 9240000,
+    "currency": "USD",
+    "active": true,
+    "notes": "Prefers consolidated monthly invoices."
+  },
+  {
+    "id": "cust-103",
+    "name": "Cobalt Harbor Supply",
+    "email": "finance@cobaltharbor.example",
+    "taxId": "US-73-6543210",
+    "segment": "smb",
+    "paymentTerms": "net15",
+    "contractStart": "2026-01-10",
+    "annualValueCents": 3480000,
+    "currency": "USD",
+    "active": true,
+    "notes": "Seasonal marine hardware orders."
+  },
+  {
+    "id": "cust-104",
+    "name": "Bramble Finch Textiles",
+    "email": "ap@bramblefinch.example",
+    "taxId": "US-55-7788990",
+    "segment": "midmarket",
+    "paymentTerms": "net60",
+    "contractStart": "2024-11-20",
+    "annualValueCents": 12800000,
+    "currency": "USD",
+    "active": false,
+    "notes": "Account paused pending spring renewal."
+  },
+  {
+    "id": "cust-105",
+    "name": "Redstone Foundry Works",
+    "email": "ledger@redstonefoundry.example",
+    "taxId": "US-91-2233445",
+    "segment": "enterprise",
+    "paymentTerms": "net30",
+    "contractStart": "2025-09-01",
+    "annualValueCents": 24600000,
+    "currency": "USD",
+    "active": true,
+    "notes": "Priority fulfillment SLA on cast parts."
+  }
+]

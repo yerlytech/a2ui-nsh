@@ -1,0 +1,107 @@
+# Architecture
+
+`a2ui-nsh` renders A2UI v1.0 JSON envelopes on Native Shell (`longbridge/nsh`, measured on `0.6.1`) with zero runtime npm dependencies. Every boundary keeps the protocol core pure and isolates platform UI and I/O at the edges.
+
+## Layer Boundaries
+
+```text
+Agent (A2UI v1.0 JSON envelopes over host channel)
+  │
+  ▼
+src/core/          Pure TypeScript (zero nsh, DOM, or I/O imports)
+  ├── pointer.ts          RFC 6901 JSON Pointer parsing, encoding, scope resolution, limits
+  ├── data_model.ts       Structural-sharing DataModel, DataContext, touched-path change sets
+  ├── expression.ts       ${...} template parser, @@ unescaping, UAX #31 identifier checks
+  ├── json_schema.ts      Self-contained JSON Schema Draft 2020-12 validator
+  ├── v1_0_schemas.ts     Embedded A2UI v1.0 protocol & Basic Catalog v1 schemas
+  ├── catalog.ts          Catalog loader/deriver, CatalogRegistry, composition constraints
+  ├── validator.ts        PayloadValidator (strict/permissive), depth/cycle/topology checks
+  ├── processor.ts        MessageProcessor (surface lifecycle, out-of-order buffering, errors)
+  ├── functions/          14 Basic Catalog v1 functions + @index, safe regex dialect, CLDR pluralize, TR35 formatDate
+  ├── rpc.ts              RpcManager (callRendererFunction / callAgentFunction, caching, cancellation)
+  ├── actions.ts          Dispatch-time context/userMessage evaluation, action metadata checks
+  └── resolver.ts         Reactive NodeResolver, ComponentNode graph, template identity preservation
+  │
+  ▼
+src/store/         Native Shell reactive bridge
+  └── surface_store.ts    A2uiStore & SurfaceSignalStore wrapping nsh signal() graph
+  │
+  ▼
+src/renderer/      Framework shell & catalog dispatch
+  ├── A2uiSurface.tsx     Root surface component, node dispatcher, binding unwrappers
+  ├── registry.ts         ComponentRegistry (catalogId + componentType -> TSX renderer)
+  └── accessibility.ts    @accessibility.{label,description,live,hidden} normalization & live announcements
+  │
+  ▼
+src/catalog/basic/ Basic Catalog v1 TSX components (all 18 of 18)
+  ├── Display & layout:   Text (+ markdown.ts, optional @metadata.extensions truncation),
+  │                       Image (+ media_url.ts), Icon (+ icon_paths.ts, 59 named icons),
+  │                       Row, Column (+ layout_helpers.ts), Card, Divider
+  ├── Collections & nav:  List, Tabs, Modal
+  ├── Interactive inputs: Button, TextField, CheckBox, ChoicePicker, DateTimeInput (+ datetime_helpers.ts,
+  │                       validation_feedback.tsx), Slider
+  └── Media:              Video, AudioPlayer (paused-by-default / user-gesture playback, degraded fallbacks)
+```
+
+### Key Seams
+
+1. **Multi-catalog extension seam (for `xlarge` and other domain catalogs):**
+   - `CatalogRegistry` registers JSON catalog definitions by `catalogId` and enforces A2UI v1.0 resolution order: explicit component `@catalogId` / function `catalogId` → surface `catalogId` → error (no implicit fallback).
+   - `ComponentRegistry` maps `(catalogId, componentType)` to TSX component renderers; custom domain components render alongside Basic Catalog components on the same surface.
+   - `FunctionRegistry` supports registering custom domain functions scoped by `catalogId`, `allowedCallers`, and `requiresUserActivation`.
+2. **Future Rust core seam:**
+   - `src/core/` has zero `nsh` imports and sits behind `MessageProcessor` and `NodeResolver`. Keeping the protocol core in pure TypeScript preserves stock `.nshpkg` OTA delivery, cross-platform stock hosts across all 8 `nsh` targets, and QuickJS heap/CPU/node sandboxing; a Rust core can still be swapped behind the same seam later without rewriting catalog components.
+3. **Injected side-effect seams:**
+   - Clock (`nowIso`), timers, URL opening (`openUrl` with `requiresUserActivation` enforcement), and agent transport enter through typed callbacks rather than ambient globals.
+
+## Basic Catalog v1 Coverage
+
+All **18 of 18** Basic Catalog v1 components are shipped (Spec 001 + Spec 002 Slice 1b), each with a dedicated `*.test.tsx` covering rendering, bindings/interactions, `@checks` validation (where `Checkable`), capability-denial/fallback handling (`Video`, `AudioPlayer`), and `@accessibility`:
+
+- **Display & layout (7):** `Text`, `Image`, `Icon`, `Row`, `Column`, `Card`, `Divider`.
+- **Collections & navigation (3):** `List`, `Tabs`, `Modal`.
+- **Interactive inputs (6):** `Button`, `TextField`, `CheckBox`, `ChoicePicker`, `DateTimeInput`, `Slider`.
+- **Media (2):** `Video`, `AudioPlayer`.
+- **Standard functions (14 + `@index`):** `required`, `regex`, `length`, `numeric`, `email`, `formatString`, `formatNumber`, `formatCurrency`, `formatDate`, `pluralize`, `openUrl`, `and`, `or`, `not`, plus system `@index`.
+
+## Real Targets, Walks & Packaging (macOS, TUI, Web/WASM)
+
+One TSX codebase renders across `nsh`'s headless engine, macOS AppKit (`--target macos`), terminal ratatui (`--target tui`, `platform.idiom === "terminal"`), and Web/WASM (`--target web`, `platform.os === "web"`) without per-target widget rewrites:
+
+- **18-component real-target suite (`tests/targets/`):** `tests/targets/catalog.target.test.tsx` (with minimal `App.tsx`, `nsh.json`, and `tsconfig.json`) exercises all 18 Basic Catalog v1 components without `host.handlers`, so the exact same suite runs headless, on `--target tui`, and on `--target web`.
+- **TUI target (`just test-tui`, `just run-tui`):** Requires `nsh component add tui` (and `jq` to render plain-text cell grids). `examples/erp-customers/tui.test.tsx` walks all 7 ERP flows plus Step 8 media showcase (`Slider`, `Video`, `AudioPlayer`) at wide (`120×40` cells = `960×640` pt → `desktop` side-by-side) and compact (`80×24` cells = `640×384` pt → `compact` stacked) terminal grids, asserting `nsh-tui-cells` JSON snapshots saved under `target/walk-tui/` (with `*.txt` renders). Because `nsh package` has no TUI target, prebuilt bundles run via `nsh-tui-host --bundle target/erp-release/bundle.js`.
+- **Web/WASM target (`just test-web`, `just run-web`, `just package-web`):** Requires `nsh component add web` (supported browsers: Safari 16.4+, Chrome/Edge 97+, Firefox 108+).
+  - `examples/erp-customers/web.test.tsx` runs in headless Chrome/Edge/Chromium at desktop (`1280×800`) and phone/compact (`390×844`) viewports across all 7 ERP flows plus Step 8 media showcase, saving PNG screenshots under `target/walk-web/`.
+  - `just package-web` runs `nsh package examples/erp-customers --target web --out target/erp-web` to produce a self-contained static site under `target/erp-web/ERP Customers/` (`index.html`, `manifest.webmanifest`, WASM/JS assets) and verifies the strict `connect-src 'self'` CSP meta tag.
+- **Web target limitations:**
+  - `just test-web` (`nsh test --target web`) requires Chrome, Edge, or Chromium installed on the host.
+  - The packaged ERP demo runs its in-app local A2UI agent with no `web.host` backend bridge yet.
+  - Packaged web output enforces strict CSP (`connect-src 'self'`, compatible with `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; base-uri 'none'`). Under default `"capabilities": { "host": ["a2ui.*"] }`, outbound network and media requests are blocked by both the `nsh` capability sandbox and CSP, and `Video` / `AudioPlayer` degrade cleanly without crashing.
+  - Browsers block unmuted `<video>` autoplay and reject `AudioPlayer.play()` with `"not-allowed"` prior to a user gesture; `BasicVideo` starts paused and `BasicAudioPlayer` plays only on explicit user press.
+  - `nsh test --target web` (and `--target tui`) reject `open(..., { host: { handlers } })` with `ERR_NSH_TEST_UNSUPPORTED`, so real-target suites omit `host.handlers` while `host.handlers` assertions remain in headless `just test`.
+
+## Security & Capability Sandbox
+
+- **Fail-closed protocol guards:** Explicit caps on JSON nesting depth, JSON Pointer array indices, expression length/depth, pending RPC count, and portable A2UI regex patterns (`<= 256` code points, rejecting backreferences, lookbehinds, named groups, `\p{...}`, and nested quantifiers before `RegExp` compilation).
+- **Minimal `nsh` capabilities:** `nsh.json` and `examples/erp-customers/nsh.json` grant only `"capabilities": { "host": ["a2ui.*"] }`. `"audio": true` and `capabilities.network` remain opt-in (`src/renderer/media_test_harness/` isolates granted-media tests); unauthorized `fetch`, `fs`, `openUrl`, audio, and non-`a2ui.*` host messages fail closed with `ERR_ACCESS_DENIED` (verified by `src/renderer/sandbox.test.tsx`, `src/catalog/basic/AudioPlayer.test.tsx`, and `tests/conformance/c6_sandbox.suite.ts`), and `Video` / `AudioPlayer` render degraded status cards instead of crashing.
+- **QuickJS hardening:** Release bytecode builds (`just build`) run inside `nsh`'s hardened QuickJS VM (`eval`/`Function` disabled, frozen prototypes, 256 MB heap, 2 s per-call CPU budget, 200,000 node limit).
+
+## Measured `nsh 0.6.1` Gaps & Mitigations
+
+Every workaround below was measured directly on `nsh 0.6.1 (2f51d86)` (full references in [`specs/001-a2ui-nsh-core-and-desktop.md`](specs/001-a2ui-nsh-core-and-desktop.md#3-core-choice-and-spike-findings) and [`specs/002-slice-1b-web-and-tui.md`](specs/002-slice-1b-web-and-tui.md#3-measurements-and-nsh-061-2f51d86-gaps)):
+
+1. **`nsh/base` `ComponentHostProps` omits several accessibility props:** Controls needing `accessibilityDescription` or `accessibilityElementsHidden` (including `BasicSlider`) are wrapped in a transparent `<View>` (`src/renderer/accessibility.ts`).
+2. **`accessibilityLiveRegion` is Android-only in TSX:** Cross-platform live announcements pair `role="alert"` (`assertive`) with `announce()` on dynamic content updates.
+3. **`nsh/test` omits accessibility-description / layout introspection APIs present in Rust:** Core conformance runs directly against `src/core/`, and adapter tests mirror normalized accessibility metadata alongside `nsh/test` selector assertions.
+4. **QuickJS `Intl` lacks `Intl.PluralRules`, some locale date tables, and IANA timezones:** `src/core/functions/locale.ts` and `date_format.ts` provide deterministic CLDR plural rules and Unicode TR35 formatting.
+5. **Startup `statusBar` warning under host-only capabilities:** Harmless runtime log under `"capabilities": { "host": ["a2ui.*"] }`.
+6. **Basic Catalog v1 defines 59 named icons:** `src/catalog/basic/icon_paths.ts` bundles all 59 SVG paths plus a fallback path rendered on `Canvas`/`Path2D`.
+7. **`TextView` Markdown link/image disabling & `host.available()`:** `src/catalog/basic/markdown.ts` strips `link` and `image` AST nodes before rendering `<TextView>`; test harnesses read `host.params` directly when no handlers are attached.
+8. **Horizontal `List`, non-bubbling `Modal` trigger `onPress`, and center-only backdrop hit-testing:** Vertical `List` uses virtualized `<List viewport="parent">` on graphical targets and a plain column `<View>` on TUI (where `<List viewport="parent">` clips unmeasured rows when stacked above siblings in an `80×24` scroll view); horizontal `List` uses `<Scroll horizontal>`; `BasicModal` exposes `ModalTriggerContext` for pressable triggers.
+9. **`DatePicker` / `TimeField` ISO normalization, missing time bounds, and `AccessibilityRole` without `"textbox"`:** `src/catalog/basic/datetime_helpers.ts` normalizes ISO 8601 strings and clamps time bounds; `BasicTextField` leaves `role` unset on `<Input>` for the native platform role.
+10. **`nsh.json` `"window"` requires `"application": true`:** `examples/erp-customers/nsh.json` keeps strict host-only capabilities rather than widening privilege.
+11. **`nsh test --target tui|web` rejects `host.handlers` (`ERR_NSH_TEST_UNSUPPORTED`):** Real-target suites (`tests/targets/catalog.target.test.tsx`, `examples/erp-customers/tui.test.tsx`, `examples/erp-customers/web.test.tsx`) omit `host.handlers`, while `host.handlers` suites remain in headless `just test`.
+12. **`Slider` `step` semantics:** `nsh/base` `Slider.step` defaults to `1` (`0` = continuous) rather than A2UI's division count `steps`; `BasicSlider` maps `steps` to `(max - min) / steps` (`0` when omitted) and clamps/snaps writes in `writeBinding()`.
+13. **`Video` missing `poster` prop & silent headless denial; `AudioPlayer` synchronous capability check:** `BasicVideo` layers an `<Image>` poster overlay and validates URLs with `sanitizeMediaUrl()` up front; `BasicAudioPlayer` catches synchronous constructor `ERR_ACCESS_DENIED` / `unavailable` errors, renders a degraded banner, and calls `dispose()` in `cleanup()`.
+14. **TUI media, icon, and packaging differences:** TUI leaves `Environment::audio` false, renders `<Video>` as blank cells (`BasicVideo` and `BasicAudioPlayer` render compact terminal fallback cards on `platform.idiom === "terminal"`), collapses `<= 48×48` pt `<Canvas>` icons (`LeftOut::IfIcon`, with icon-only buttons showing `accessibilityLabel`), and has no `nsh package` target.
+15. **Web autoplay gesture lock & single-line text truncation:** Web blocks unmuted `<video>` autoplay and rejects `AudioPlayer.play()` with `"not-allowed"` before a user gesture (`BasicVideo` defaults to `paused={true}`, `BasicAudioPlayer` plays only on press). `BasicText` supports optional `@metadata.extensions` (`nsh_numberOfLines`, `nsh_textOverflow`) so long single-line values such as customer e-mail addresses ellipsize (`…`) instead of breaking mid-word.

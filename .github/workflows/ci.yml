@@ -1,0 +1,151 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Keep in sync with docs/upstream.toml.
+  NSH_VERSION: v0.6.1
+
+jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      targets: ${{ steps.filter.outputs.targets }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Filter target-related paths
+        id: filter
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base="$(git rev-list --max-parents=0 HEAD | tail -n 1)"
+          fi
+          changed="$(git diff --name-only "$base" HEAD)"
+          if printf '%s\n' "$changed" | grep -Eq '^(src/|tests/|examples/|App\.tsx$|nsh\.json$|tsconfig\.json$|Justfile$|docs/upstream\.toml$|\.github/workflows/ci\.yml$)'; then
+            echo "targets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "targets=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  check-test:
+    name: Check and test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+
+      - name: Install just
+        run: |
+          uv tool install rust-just
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install nsh ${{ env.NSH_VERSION }}
+        run: |
+          set -euo pipefail
+          curl -fsSL https://nsh.dev/install.sh | NSH_VERSION="${NSH_VERSION}" sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+
+      - name: Verify nsh version
+        run: |
+          nsh --version
+          nsh --version | grep -F "0.6.1"
+
+      - name: Check
+        run: just check
+
+      - name: Test
+        run: just test
+
+  tui:
+    name: TUI target
+    needs: changes
+    if: needs.changes.outputs.targets == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+
+      - name: Install just
+        run: |
+          uv tool install rust-just
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install nsh ${{ env.NSH_VERSION }}
+        run: |
+          set -euo pipefail
+          curl -fsSL https://nsh.dev/install.sh | NSH_VERSION="${NSH_VERSION}" sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+
+      - name: Install TUI runtime
+        run: nsh component add tui
+
+      - name: Test TUI
+        run: just test-tui
+
+  web:
+    name: Web target
+    needs: changes
+    if: needs.changes.outputs.targets == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+
+      - name: Install just
+        run: |
+          uv tool install rust-just
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install nsh ${{ env.NSH_VERSION }}
+        run: |
+          set -euo pipefail
+          curl -fsSL https://nsh.dev/install.sh | NSH_VERSION="${NSH_VERSION}" sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+
+      - name: Install Web runtime
+        run: nsh component add web
+
+      - name: Test Web
+        run: just test-web
