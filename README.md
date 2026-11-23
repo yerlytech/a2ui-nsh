@@ -21,6 +21,15 @@ All 18 A2UI Basic Catalog v1 components are implemented:
 
 The protocol core also implements the 14 standard Basic Catalog functions and `@index`, data binding and expressions, validation, actions, renderer/agent function calls, and multiple catalogs.
 
+## xlarge catalog components
+
+xlarge, an ERP, sends its screens against its own A2UI 1.0 catalog
+(`tech.yerly.xlarge/v1`). `src/catalog/xlarge/` draws the four components its
+`crm.deals` screen uses: `Card`, `Field`, `Form`, and `Table`. Register them
+with `registerXlargeCatalogComponents(registry, { translate })` and register
+xlarge's catalog definition on the store. Coverage per catalog is in
+[`docs/catalog-parity.md`](docs/catalog-parity.md).
+
 ## Targets and known limits
 
 ### macOS desktop

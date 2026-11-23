@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Renderers for xlarge's own A2UI 1.0 catalog (`tech.yerly.xlarge/v1`):
+  `Card`, `Field`, `Form`, and `Table`, enough to draw its `crm.deals` screen,
+  with a `translate` seam for its i18n codes (spec 003).
+- `NodeResolver.dispatchNodeAction` to send an action payload on behalf of a
+  node (spec 003).
+- `docs/catalog-parity.md`: components drawn per catalog.
+- `just test` also runs `tests/fixtures/`.
+
 ## [0.1.0] - 2026-11-23
 
 First release.

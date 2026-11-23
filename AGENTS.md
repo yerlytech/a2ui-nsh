@@ -36,6 +36,9 @@ affects those targets.
 - `src/renderer/` — `<A2uiSurface>`, component registry, accessibility, and
   sandbox seams.
 - `src/catalog/basic/` — all 18 Basic Catalog v1 components and their tests.
+- `src/catalog/xlarge/` — xlarge's own catalog (`tech.yerly.xlarge/v1`):
+  `Card`, `Field`, `Form`, `Table`; xlarge's catalog definition is its own.
+- `tests/fixtures/` — real messages from consumers (xlarge's `crm.deals`).
 - `tests/conformance/` — upstream YAML conformance harness.
 - `tests/targets/` — shared suite for the real TUI and Web targets.
 - `examples/erp-customers/` — end-to-end demo application.

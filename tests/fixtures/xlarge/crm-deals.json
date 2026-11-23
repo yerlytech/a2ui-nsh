@@ -1,0 +1,1211 @@
+{
+  "source": "xlarge, branch a2ui-1-0-wire, spec 208: the messages POST /api/v1/action {\"name\": \"screen:crm.deals\"} answered a workspace owner, captured by src/apps/server/src/screen_walks.rs the_deals_screen_is_one_any_a2ui_renderer_reads on 2026-11-23; catalog is src/catalog/catalog.json",
+  "catalog": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "protocolVersion": "1.0",
+    "catalogId": "tech.yerly.xlarge/v1",
+    "title": "xlarge",
+    "description": "The screen vocabulary of xlarge: 22 components an ERP screen is built from. A custom A2UI 1.0 catalog; spec 208. A property whose schema is a DataBinding or a Dynamic value is sent as {\"@path\": ...} when it reads the data model.",
+    "components": {
+      "Card": {
+        "type": "object",
+        "properties": {
+          "children": {
+            "$ref": "common_types.json#/$defs/ChildList"
+          },
+          "component": {
+            "const": "Card"
+          },
+          "enumPrefix": {
+            "type": "string"
+          },
+          "heading": {
+            "$ref": "common_types.json#/$defs/DynamicString"
+          },
+          "headingPrefix": {
+            "type": "string"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "plain": {
+            "type": "boolean"
+          },
+          "slot": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "sticky": {
+            "type": "boolean"
+          },
+          "subtitle": {
+            "$ref": "common_types.json#/$defs/DynamicString"
+          },
+          "title": {
+            "type": "string"
+          },
+          "tones": {
+            "type": "object"
+          },
+          "unless": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "when": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Text": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "component": {
+            "const": "Text"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "params": {
+            "type": "object"
+          },
+          "text": {
+            "$ref": "common_types.json#/$defs/DynamicString"
+          },
+          "tone": {
+            "type": "string"
+          },
+          "unless": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "when": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Table": {
+        "type": "object",
+        "properties": {
+          "board": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "boardFirst": {
+            "type": "boolean"
+          },
+          "build": {
+            "type": "string"
+          },
+          "card": {
+            "type": "string"
+          },
+          "cards": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "columns": {
+            "type": "array"
+          },
+          "component": {
+            "const": "Table"
+          },
+          "group": {
+            "type": "string"
+          },
+          "groupColumnLabel": {
+            "type": "string"
+          },
+          "groupColumnValue": {
+            "type": "string"
+          },
+          "groupColumns": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "groupOptions": {
+            "type": "array"
+          },
+          "groupPrefix": {
+            "type": "string"
+          },
+          "listAction": {
+            "type": "string"
+          },
+          "listInput": {
+            "type": "object"
+          },
+          "move": {
+            "type": "string"
+          },
+          "moveField": {
+            "type": "string"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "rowAction": {
+            "type": "string"
+          },
+          "rowOpens": {
+            "type": "string"
+          },
+          "rows": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "search": {
+            "type": "boolean"
+          },
+          "searchAction": {
+            "type": "string"
+          },
+          "searchInput": {
+            "type": "object"
+          },
+          "searchText": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unless": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "when": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Form": {
+        "type": "object",
+        "properties": {
+          "after": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "children": {
+            "$ref": "common_types.json#/$defs/ChildList"
+          },
+          "component": {
+            "const": "Form"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "context": {
+            "type": "object"
+          },
+          "dialog": {
+            "type": "boolean"
+          },
+          "filters": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "import": {
+            "type": "boolean"
+          },
+          "matrix": {
+            "type": "string"
+          },
+          "matrixField": {
+            "type": "string"
+          },
+          "once": {
+            "type": "boolean"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "pair": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "row": {
+            "type": "boolean"
+          },
+          "submit": {
+            "type": "string"
+          },
+          "submitLabel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unless": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "variant": {
+            "type": "string"
+          },
+          "variantChoices": {
+            "type": "string"
+          },
+          "variantError": {
+            "type": "string"
+          },
+          "variantField": {
+            "type": "string"
+          },
+          "variantLabel": {
+            "type": "string"
+          },
+          "variantPrompt": {
+            "type": "string"
+          },
+          "version": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "when": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Field": {
+        "type": "object",
+        "properties": {
+          "accept": {
+            "type": "string"
+          },
+          "article": {
+            "type": "string"
+          },
+          "autofill": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "array"
+          },
+          "component": {
+            "const": "Field"
+          },
+          "default": {
+            "$ref": "common_types.json#/$defs/DynamicValue"
+          },
+          "draft": {
+            "type": "boolean"
+          },
+          "example": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "input": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "labelParams": {
+            "type": "object"
+          },
+          "links": {
+            "type": "array"
+          },
+          "optionPrefix": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array"
+          },
+          "optionsAt": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "retention": {
+            "type": "string"
+          },
+          "scan": {
+            "type": "boolean"
+          },
+          "searchInput": {
+            "type": "object"
+          },
+          "show": {
+            "type": "string"
+          },
+          "suggest": {
+            "type": "string"
+          },
+          "value": {
+            "$ref": "common_types.json#/$defs/DynamicValue"
+          },
+          "when": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Button": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "add": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "away": {
+            "type": "string"
+          },
+          "cash": {
+            "type": "string"
+          },
+          "component": {
+            "const": "Button"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "context": {
+            "type": "object"
+          },
+          "digest": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "labelParams": {
+            "type": "object"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "product": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "string"
+          },
+          "queue": {
+            "type": "string"
+          },
+          "till": {
+            "type": "string"
+          },
+          "unless": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "variant": {
+            "type": "string"
+          },
+          "version": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "when": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Toast": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "component": {
+            "const": "Toast"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "params": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Detail": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "const": "Detail"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "record": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "rows": {
+            "$ref": "common_types.json#/$defs/DynamicValue"
+          },
+          "skipEmpty": {
+            "type": "boolean"
+          },
+          "unless": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "update": {
+            "type": "string"
+          },
+          "when": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Metric": {
+        "type": "object",
+        "properties": {
+          "accent": {
+            "type": "string"
+          },
+          "better": {
+            "type": "string"
+          },
+          "change": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "component": {
+            "const": "Metric"
+          },
+          "format": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "value": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Wizard": {
+        "type": "object",
+        "properties": {
+          "after": {
+            "type": "string"
+          },
+          "children": {
+            "$ref": "common_types.json#/$defs/ChildList"
+          },
+          "component": {
+            "const": "Wizard"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "submit": {
+            "type": "string"
+          },
+          "submitLabel": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Confirm": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "cancel": {
+            "type": "string"
+          },
+          "component": {
+            "const": "Confirm"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "confirmLabel": {
+            "type": "string"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Refusal": {
+        "type": "object",
+        "properties": {
+          "back": {
+            "type": "string"
+          },
+          "backLabel": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "component": {
+            "const": "Refusal"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "pageTitle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Columns": {
+        "type": "object",
+        "properties": {
+          "children": {
+            "$ref": "common_types.json#/$defs/ChildList"
+          },
+          "component": {
+            "const": "Columns"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "widths": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Image": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "const": "Image"
+          },
+          "label": {
+            "type": "string"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "src": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "QrCode": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "const": "QrCode"
+          },
+          "label": {
+            "type": "string"
+          },
+          "link": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "src": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "when": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "ChequeLeaf": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "const": "ChequeLeaf"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "rows": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "statePrefix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Steps": {
+        "type": "object",
+        "properties": {
+          "answer": {
+            "type": "string"
+          },
+          "component": {
+            "const": "Steps"
+          },
+          "pageTitle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Chart": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "const": "Chart"
+          },
+          "data": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "format": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "labelFormat": {
+            "type": "string"
+          },
+          "labelPrefix": {
+            "type": "string"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "sum": {
+            "type": "boolean"
+          },
+          "tones": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Arrange": {
+        "type": "object",
+        "properties": {
+          "add": {
+            "type": "string"
+          },
+          "addItem": {
+            "type": "string"
+          },
+          "addLabel": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "component": {
+            "const": "Arrange"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "field": {
+            "type": "string"
+          },
+          "items": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "reset": {
+            "type": "string"
+          },
+          "save": {
+            "type": "string"
+          },
+          "version": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Preview": {
+        "type": "object",
+        "properties": {
+          "about": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "component": {
+            "const": "Preview"
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "draft": {
+            "type": "array"
+          },
+          "label": {
+            "type": "string"
+          },
+          "pageTitle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Conversation": {
+        "type": "object",
+        "properties": {
+          "around": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "called": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "component": {
+            "const": "Conversation"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "rows": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "screen": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      },
+      "Calendar": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "const": "Calendar"
+          },
+          "month": {
+            "$ref": "common_types.json#/$defs/DataBinding"
+          },
+          "pageTitle": {
+            "type": "string"
+          },
+          "screen": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "component"
+        ]
+      }
+    },
+    "$defs": {
+      "anyComponent": {
+        "oneOf": [
+          {
+            "$ref": "#/components/Card"
+          },
+          {
+            "$ref": "#/components/Text"
+          },
+          {
+            "$ref": "#/components/Table"
+          },
+          {
+            "$ref": "#/components/Form"
+          },
+          {
+            "$ref": "#/components/Field"
+          },
+          {
+            "$ref": "#/components/Button"
+          },
+          {
+            "$ref": "#/components/Toast"
+          },
+          {
+            "$ref": "#/components/Detail"
+          },
+          {
+            "$ref": "#/components/Metric"
+          },
+          {
+            "$ref": "#/components/Wizard"
+          },
+          {
+            "$ref": "#/components/Confirm"
+          },
+          {
+            "$ref": "#/components/Refusal"
+          },
+          {
+            "$ref": "#/components/Columns"
+          },
+          {
+            "$ref": "#/components/Image"
+          },
+          {
+            "$ref": "#/components/QrCode"
+          },
+          {
+            "$ref": "#/components/ChequeLeaf"
+          },
+          {
+            "$ref": "#/components/Steps"
+          },
+          {
+            "$ref": "#/components/Chart"
+          },
+          {
+            "$ref": "#/components/Arrange"
+          },
+          {
+            "$ref": "#/components/Preview"
+          },
+          {
+            "$ref": "#/components/Conversation"
+          },
+          {
+            "$ref": "#/components/Calendar"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "component"
+        }
+      },
+      "anyFunction": {
+        "not": {}
+      }
+    }
+  },
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "crm.deals",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "crm.deals",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": [
+              "add",
+              "filter",
+              "table"
+            ],
+            "pageTitle": "crm.title.deals",
+            "title": "crm.title.deals"
+          },
+          {
+            "id": "add",
+            "component": "Form",
+            "children": [
+              "title",
+              "partner",
+              "pipeline",
+              "amount",
+              "contact",
+              "email",
+              "phone",
+              "note"
+            ],
+            "dialog": true,
+            "icon": "plus",
+            "submit": "crm.open_deal",
+            "submitLabel": "crm.action.open_deal",
+            "title": "crm.action.open_deal"
+          },
+          {
+            "id": "title",
+            "component": "Field",
+            "checks": [
+              "required"
+            ],
+            "example": "crm.example.deal",
+            "field": "title",
+            "input": "text",
+            "label": "crm.field.title"
+          },
+          {
+            "id": "partner",
+            "component": "Field",
+            "checks": [
+              "required"
+            ],
+            "field": "partner",
+            "from": "partners.list",
+            "input": "record",
+            "label": "crm.field.partner",
+            "show": "name",
+            "value": "id"
+          },
+          {
+            "id": "pipeline",
+            "component": "Field",
+            "field": "pipeline",
+            "from": "crm.pipelines",
+            "input": "record",
+            "label": "crm.field.pipeline",
+            "optionPrefix": "",
+            "show": "name",
+            "value": "id"
+          },
+          {
+            "id": "amount",
+            "component": "Field",
+            "example": "25000",
+            "field": "amount",
+            "input": "money",
+            "label": "crm.field.amount"
+          },
+          {
+            "id": "contact",
+            "component": "Field",
+            "example": "crm.example.contact",
+            "field": "contact",
+            "input": "text",
+            "label": "crm.field.contact"
+          },
+          {
+            "id": "email",
+            "component": "Field",
+            "field": "email",
+            "input": "email",
+            "label": "crm.field.email"
+          },
+          {
+            "id": "phone",
+            "component": "Field",
+            "example": "crm.example.phone",
+            "field": "phone",
+            "input": "text",
+            "label": "crm.field.phone"
+          },
+          {
+            "id": "note",
+            "component": "Field",
+            "field": "note",
+            "input": "text",
+            "label": "crm.field.note"
+          },
+          {
+            "id": "filter",
+            "component": "Form",
+            "children": [
+              "which",
+              "state"
+            ],
+            "filters": "table",
+            "submitLabel": "crm.action.show"
+          },
+          {
+            "id": "which",
+            "component": "Field",
+            "field": "pipeline",
+            "from": "crm.pipelines",
+            "input": "record",
+            "label": "crm.field.pipeline",
+            "optionPrefix": "",
+            "show": "name",
+            "value": "id"
+          },
+          {
+            "id": "state",
+            "component": "Field",
+            "default": "active",
+            "field": "state",
+            "input": "choice",
+            "label": "crm.field.state",
+            "optionPrefix": "crm.state.",
+            "options": [
+              "active",
+              "won",
+              "lost"
+            ]
+          },
+          {
+            "id": "table",
+            "component": "Table",
+            "columns": [
+              {
+                "field": "title",
+                "grow": true,
+                "label": "crm.field.title"
+              },
+              {
+                "field": "partnerName",
+                "label": "crm.field.partner"
+              },
+              {
+                "enumPrefix": "",
+                "field": "pipelineName",
+                "label": "crm.field.pipeline"
+              },
+              {
+                "enumPrefix": "",
+                "field": "stageName",
+                "label": "crm.field.stage"
+              },
+              {
+                "field": "amount",
+                "format": "money",
+                "label": "crm.field.amount"
+              },
+              {
+                "field": "enteredOn",
+                "format": "date",
+                "label": "crm.field.entered_on"
+              },
+              {
+                "field": "nextMeeting",
+                "grow": true,
+                "label": "crm.field.next_meeting"
+              }
+            ],
+            "listAction": "crm.deals",
+            "listInput": {
+              "limit": 50
+            },
+            "rowAction": "screen:crm.deal",
+            "rows": {
+              "@path": "/deals"
+            },
+            "search": true,
+            "searchAction": "crm.deals",
+            "searchInput": {
+              "limit": 50
+            }
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "crm.deals",
+        "path": "/",
+        "value": {
+          "deals": [],
+          "partners.list": [
+            {
+              "id": "01M84VPC5AXDJZ91G0BE9P9KE3",
+              "code": "co-the",
+              "name": "acme",
+              "kind": "both",
+              "taxNumber": null,
+              "email": null,
+              "phone": null,
+              "address": null,
+              "city": null,
+              "street": null,
+              "streetNumber": null,
+              "unit": null,
+              "zip": null,
+              "country": null,
+              "province": null,
+              "gln": null,
+              "leitwegId": null,
+              "endpointScheme": null,
+              "endpointId": null,
+              "latitude": null,
+              "longitude": null,
+              "parent": null,
+              "relation": "company",
+              "preferred": false,
+              "autoPost": false,
+              "tags": [],
+              "archived": false,
+              "version": 1
+            }
+          ],
+          "crm.pipelines": [
+            {
+              "id": "ta7wcgheou4aoff7hco8",
+              "name": "crm.pipeline.sales",
+              "position": 1,
+              "version": 1
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

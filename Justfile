@@ -23,7 +23,7 @@ check:
 [group('build')]
 lint: check
 
-# Run unit and component tests under src/ (and examples/ when present) with nsh test.
+# Run unit and component tests under src/, tests/fixtures/ (and examples/ when present) with nsh test.
 [group('test')]
 test:
     #!/usr/bin/env bash
@@ -42,6 +42,13 @@ test:
         failed=$((failed + 1))
       fi
     done
+    if [ -d tests/fixtures ]; then
+      while IFS= read -r file; do
+        if ! nsh test "$file"; then
+          failed=$((failed + 1))
+        fi
+      done < <(find tests/fixtures -type f \( -name '*.test.ts' -o -name '*.test.tsx' \) | sort)
+    fi
     if [ -f tests/conformance/yaml.test.ts ]; then
       if ! nsh test tests/conformance/yaml.test.ts; then
         failed=$((failed + 1))

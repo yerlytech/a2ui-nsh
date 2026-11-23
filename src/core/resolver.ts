@@ -1664,6 +1664,71 @@ export class NodeResolver {
     };
   }
 
+  /**
+   * Dispatches an A2UI v1.0 action payload (`{ event }` or `{ functionCall }`)
+   * on behalf of `node`, exactly as a resolved `Action` property would: scoped
+   * to the node's data path, with its component ID as `sourceComponentId`.
+   *
+   * For catalogs whose components name their actions in plain string
+   * properties (such as a form's `submit`), so the renderer can build the
+   * payload at press time instead of reading a resolved `Action` property.
+   */
+  dispatchNodeAction(
+    node: ComponentNode,
+    actionPayload: unknown,
+    options?: NodeActionDispatchOptions,
+  ): Promise<ActionDispatchResult> {
+    return this.dispatchForNode(node, actionPayload, options);
+  }
+
+  private dispatchForNode(
+    node: ComponentNode,
+    rawAction: unknown,
+    options?: NodeActionDispatchOptions,
+  ): Promise<ActionDispatchResult> {
+    const userActivation = options?.userActivation ?? true;
+    const collectionIndices = deriveCollectionIndicesFromScope(
+      node.dataPath,
+      this.surface.dataModel,
+    );
+    if (this.processor) {
+      return this.processor.dispatchAction({
+        surfaceId: this.surface.id,
+        sourceComponentId: node.componentId,
+        actionPayload: rawAction,
+        scope: node.dataPath,
+        collectionIndices,
+        metadata: options?.metadata,
+        userActivation,
+        locale: this.locale,
+      });
+    }
+    const fallbackRpc = new RpcManager({
+      catalogRegistry: this.catalogRegistry ?? new CatalogRegistry(),
+      functionRegistry: this.functionRegistry,
+      getSurface: (id) => (id === this.surface.id ? this.surface : undefined),
+      openUrl: this.openUrl,
+      locale: this.locale,
+    });
+    return dispatchCoreAction({
+      rpc: fallbackRpc,
+      surfaceId: this.surface.id,
+      surfaceDefaultCatalogId: this.surface.defaultCatalogId,
+      sourceComponentId: node.componentId,
+      dataModel: this.surface.dataModel,
+      actionPayload: rawAction,
+      scope: node.dataPath,
+      collectionIndices,
+      metadata: options?.metadata,
+      userActivation,
+      locale: this.locale,
+      openUrl: this.openUrl,
+      nowIso: this.nowIso,
+      onAction: this.onAction,
+      isSurfaceAlive: () => !this.surface.disposed,
+    });
+  }
+
   private getOrCreateAction(
     record: NodeRecord,
     cacheKey: string,
@@ -1674,49 +1739,8 @@ export class NodeResolver {
       return cached.fn;
     }
 
-    const fn: NodeAction = (options?: NodeActionDispatchOptions) => {
-      const userActivation = options?.userActivation ?? true;
-      const collectionIndices = deriveCollectionIndicesFromScope(
-        record.node.dataPath,
-        this.surface.dataModel,
-      );
-      if (this.processor) {
-        return this.processor.dispatchAction({
-          surfaceId: this.surface.id,
-          sourceComponentId: record.node.componentId,
-          actionPayload: rawAction,
-          scope: record.node.dataPath,
-          collectionIndices,
-          metadata: options?.metadata,
-          userActivation,
-          locale: this.locale,
-        });
-      }
-      const fallbackRpc = new RpcManager({
-        catalogRegistry: this.catalogRegistry ?? new CatalogRegistry(),
-        functionRegistry: this.functionRegistry,
-        getSurface: (id) => (id === this.surface.id ? this.surface : undefined),
-        openUrl: this.openUrl,
-        locale: this.locale,
-      });
-      return dispatchCoreAction({
-        rpc: fallbackRpc,
-        surfaceId: this.surface.id,
-        surfaceDefaultCatalogId: this.surface.defaultCatalogId,
-        sourceComponentId: record.node.componentId,
-        dataModel: this.surface.dataModel,
-        actionPayload: rawAction,
-        scope: record.node.dataPath,
-        collectionIndices,
-        metadata: options?.metadata,
-        userActivation,
-        locale: this.locale,
-        openUrl: this.openUrl,
-        nowIso: this.nowIso,
-        onAction: this.onAction,
-        isSurfaceAlive: () => !this.surface.disposed,
-      });
-    };
+    const fn: NodeAction = (options?: NodeActionDispatchOptions) =>
+      this.dispatchForNode(record.node, rawAction, options);
 
     record.actionCache.set(cacheKey, { raw: rawAction, fn });
     return fn;

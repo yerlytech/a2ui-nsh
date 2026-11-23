@@ -41,6 +41,10 @@ src/catalog/basic/ Basic Catalog v1 TSX components (all 18 of 18)
   ├── Interactive inputs: Button, TextField, CheckBox, ChoicePicker, DateTimeInput (+ datetime_helpers.ts,
   │                       validation_feedback.tsx), Slider
   └── Media:              Video, AudioPlayer (paused-by-default / user-gesture playback, degraded fallbacks)
+  │
+src/catalog/xlarge/ xlarge's own catalog (tech.yerly.xlarge/v1): Card, Field, Form, Table (4 of 22, spec 003)
+  ├── model.ts            pure helpers: field controls, options, held values, cell formats, event payloads
+  └── context.ts          renderer options (translate seam) and the Form draft context
 ```
 
 ### Key Seams
@@ -48,6 +52,7 @@ src/catalog/basic/ Basic Catalog v1 TSX components (all 18 of 18)
 1. **Multi-catalog extension seam (for `xlarge` and other domain catalogs):**
    - `CatalogRegistry` registers JSON catalog definitions by `catalogId` and enforces A2UI v1.0 resolution order: explicit component `@catalogId` / function `catalogId` → surface `catalogId` → error (no implicit fallback).
    - `ComponentRegistry` maps `(catalogId, componentType)` to TSX component renderers; custom domain components render alongside Basic Catalog components on the same surface.
+   - `NodeResolver.dispatchNodeAction(node, payload)` sends an A2UI action payload on behalf of a node, for catalogs whose components name their actions in plain string properties (xlarge's `submit`, `rowAction`); it is the same path a resolved `Action` property takes.
    - `FunctionRegistry` supports registering custom domain functions scoped by `catalogId`, `allowedCallers`, and `requiresUserActivation`.
 2. **Future Rust core seam:**
    - `src/core/` has zero `nsh` imports and sits behind `MessageProcessor` and `NodeResolver`. Keeping the protocol core in pure TypeScript preserves stock `.nshpkg` OTA delivery, cross-platform stock hosts across all 8 `nsh` targets, and QuickJS heap/CPU/node sandboxing; a Rust core can still be swapped behind the same seam later without rewriting catalog components.

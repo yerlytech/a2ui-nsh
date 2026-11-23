@@ -390,3 +390,12 @@ export {
   type VideoPresentationMode,
   type VideoPresentationState,
 } from "./catalog/basic";
+
+export {
+  XLARGE_CATALOG_V1_ID,
+  XLARGE_DRAWN_COMPONENTS,
+  collectFieldSpecs,
+  createXlargeRenderers,
+  registerXlargeCatalogComponents,
+  type XlargeRendererOptions,
+} from "./catalog/xlarge";
