@@ -36,9 +36,10 @@ const WORDS: Record<string, string> = {
   "crm.action.back_to_deals": "Back to deals",
   "crm.title.partner": "Partner",
   "crm.partner.logo": "Partner logo",
+  "crm.partner.photo": "Partner photo",
   "crm.title.pay": "Pay",
-  "crm.pay.scan": "Scan to pay",
-  "crm.pay.receipt": "Receipt",
+  "pos.field.pay_link": "Pay link",
+  "invoice.qr.emv": "TR payment code",
 };
 
 const ALL_MESSAGES: unknown[] = Object.values(FIXTURES).flatMap((fixture) => fixture.messages);
@@ -78,11 +79,18 @@ describe("xlarge Text, Toast, Refusal, Image and QrCode fixtures", () => {
     expect(app.texts()).toContain("Saved Forklift fleet");
     await app.press("id:synthetic.toast:saved:dismiss");
     expect(app.shows("id:synthetic.toast:saved")).toBe(false);
-    // Image and QrCode: named by their labels; the receipt's src wins.
+    // Image: one picture per attachment id, named by its label (the harness
+    // has no fileUrl, so each is the named placeholder).
     expect(app.shows("label:Partner logo")).toBe(true);
-    expect(app.shows("label:Scan to pay")).toBe(true);
-    expect(app.shows("label:Receipt")).toBe(true);
-    expect(app.count("id:synthetic.qrcode:receipt")).toBe(1);
+    expect(app.shows("id:synthetic.image:photos:0")).toBe(true);
+    expect(app.shows("id:synthetic.image:photos:1")).toBe(true);
+    expect(app.count("label:Partner photo")).toBe(2);
+    // QrCode: the server's SVG, named and captioned by its label alone.
+    expect(app.count("id:synthetic.qrcode:pay_qr")).toBe(1);
+    expect(app.count("id:synthetic.qrcode:emv_qr")).toBe(1);
+    expect(app.shows("label:Pay link")).toBe(true);
+    expect(app.texts()).toContain("TR payment code");
+    expect(app.texts().some((t) => t.includes("xlarge.test/pay"))).toBe(false);
     // Refusal: explains, then goes back.
     expect(app.texts()).toContain("This deal is closed");
     expect(app.texts()).toContain("Reopen it first");

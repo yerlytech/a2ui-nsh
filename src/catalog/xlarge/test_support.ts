@@ -30,7 +30,12 @@ export function harnessOptions(
   return {
     host: {
       params: { catalog: XLARGE_CATALOG, messages, translations, strictMode: true, ...extra },
-      handlers: { "a2ui.action": null, "a2ui.error": null, "a2ui.exception": null },
+      handlers: {
+        "a2ui.action": null,
+        "a2ui.error": null,
+        "a2ui.exception": null,
+        "a2ui.openUrl": null,
+      },
     },
   };
 }

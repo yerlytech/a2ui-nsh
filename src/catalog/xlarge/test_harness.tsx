@@ -7,7 +7,11 @@
  * - `translations`: optional i18n code → words map (missing codes show as-is);
  * - `strictMode`: optional, validates every message strictly;
  * - `toastMs`: optional, how long a `Toast` shows (the renderer option);
- * - `terminal`: optional, draws as a terminal host would (the renderer option).
+ * - `terminal`: optional, draws as a terminal host would (the renderer option);
+ * - `fileBase`: optional, an `Image`'s attachment id is drawn from
+ *   `fileBase + encodeURIComponent(id)` (the `fileUrl` renderer option);
+ * - `openLinks`: optional, a `QrCode`'s "open in app" button posts
+ *   `a2ui.openUrl` (the `openUrl` renderer option).
  *
  * Reports outbound actions and errors via `host.post("a2ui.*", ...)`, and
  * answers `a2ui.readData` with the surface data at a path.
@@ -49,6 +53,11 @@ function XlargeHarnessApp(): JSX.Element {
     translate: (code) => translations[code] ?? code,
     toastMs: typeof params["toastMs"] === "number" ? params["toastMs"] : undefined,
     terminal: typeof params["terminal"] === "boolean" ? params["terminal"] : undefined,
+    fileUrl:
+      typeof params["fileBase"] === "string"
+        ? (id) => `${params["fileBase"] as string}${encodeURIComponent(id)}`
+        : undefined,
+    openUrl: params["openLinks"] === true ? (url) => safePost("a2ui.openUrl", { url }) : undefined,
   });
 
   const store = new A2uiStore({

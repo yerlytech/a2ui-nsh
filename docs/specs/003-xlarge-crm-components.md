@@ -86,12 +86,25 @@ five more components of `tech.yerly.xlarge/v1`, drawn in this commit:
   (`backLabel` code, or the host's word) sends `back` with `{}`: as it came
   when it holds a `:` (an action name), else `screen:<back>`, the action
   xlarge opens screens with (`screenAction`).
-- **`Image`**: the picture at `src` (data binding, unsafe schemes refused),
-  named by the translated `label`; a missing or failed picture leaves a
-  named placeholder.
-- **`QrCode`**: `src` wins; otherwise `link` is encoded by a pure QR encoder
-  in `model.ts` (Native Shell 0.6.1 has no QR primitive; no dependency added)
-  and drawn on a `Canvas`, dark on light with a four-module quiet zone.
+- **`Image`**: `src` binds to an attachment id or a list of them, as xlarge's
+  data model holds them (xlarge serves `/api/v1/files/<id>` with the
+  session). One picture per id: a value that already is a safe URL is drawn
+  as it is; an id goes through the host's `fileUrl(id)` and the result is
+  checked against unsafe schemes. Each is named by the translated `label`; a
+  bare id without `fileUrl`, or a missing or failed picture, leaves a named
+  placeholder.
+- **`QrCode`**: `src` binds to the SVG markup xlarge's server drew; it is
+  drawn as a `data:image/svg+xml;charset=utf-8,<encoded svg>` picture (a safe
+  picture URL is drawn as it is). Without a drawing, or when it fails, `link`
+  is encoded by a pure QR encoder in `model.ts` (Native Shell 0.6.1 has no QR
+  primitive; no dependency added) and drawn on a `Canvas`, dark on light with
+  a four-module quiet zone. The accessible name and caption are only the
+  translated `label` (default the host's `qrLabel`, "QR code"): the `link`
+  text is never shown, since an `otpauth:` link carries the TOTP secret. Such
+  a link is offered as an "open in app" button (`openInAppLabel`) when the
+  host gives `openUrl`. Measured on nsh 0.6.1 by
+  `tests/targets/svg.target.test.tsx`: Web loads the SVG data URI (232×232);
+  headless and TUI report no load for any picture, PNG included.
 
 `when`/`unless` stay not read. No real xlarge capture of these components
 was available, so each has a synthetic fixture

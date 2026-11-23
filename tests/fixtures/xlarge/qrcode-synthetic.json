@@ -1,5 +1,6 @@
 {
   "source": "synthetic, no real xlarge screen yet",
+  "shape": "components copied from xlarge src/modules/pos/surfaces/sale.toml (pay_qr) and src/modules/invoice/surfaces/invoice.toml (emv_qr); src holds the SVG the server drew",
   "messages": [
     {
       "version": "1.0",
@@ -10,14 +11,20 @@
       "updateComponents": {
         "surfaceId": "synthetic.qrcode",
         "components": [
-          { "id": "root", "component": "Card", "title": "crm.title.pay", "children": ["pay", "receipt"] },
-          { "id": "pay", "component": "QrCode", "link": { "@path": "/payLink" }, "label": "crm.pay.scan" },
+          { "id": "root", "component": "Card", "title": "crm.title.pay", "children": ["pay_qr", "emv_qr"] },
           {
-            "id": "receipt",
+            "id": "pay_qr",
             "component": "QrCode",
-            "src": { "@path": "/receiptQr" },
-            "link": { "@path": "/payLink" },
-            "label": "crm.pay.receipt"
+            "src": { "@path": "/sale/payQr" },
+            "label": "pos.field.pay_link",
+            "when": { "@path": "/sale/payQr" }
+          },
+          {
+            "id": "emv_qr",
+            "component": "QrCode",
+            "src": { "@path": "/invoice/emvQr" },
+            "label": "invoice.qr.emv",
+            "when": { "@path": "/invoice/emvQr" }
           }
         ]
       }
@@ -28,8 +35,13 @@
         "surfaceId": "synthetic.qrcode",
         "path": "/",
         "value": {
-          "payLink": "https://xlarge.test/pay/d1",
-          "receiptQr": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+          "sale": {
+            "payQr": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 29 29\" width=\"232\" height=\"232\"><rect width=\"29\" height=\"29\" fill=\"#fff\"/><path d=\"M4 4h7v7H4zM18 4h7v7h-7zM4 18h7v7H4z\" fill=\"#000\"/></svg>",
+            "payLink": "https://xlarge.test/pay/s1"
+          },
+          "invoice": {
+            "emvQr": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 33 33\" width=\"264\" height=\"264\"><rect width=\"33\" height=\"33\" fill=\"#fff\"/><path d=\"M4 4h7v7H4zM22 4h7v7h-7zM4 22h7v7H4z\" fill=\"#000\"/></svg>"
+          }
         }
       }
     }

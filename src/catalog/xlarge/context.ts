@@ -101,6 +101,22 @@ export interface XlargeRendererOptions {
   readonly weekdayLabels?: readonly string[];
   /** A `Calendar`'s month names, January first (twelve). Default: English. */
   readonly monthLabels?: readonly string[];
+  /**
+   * Turns an attachment id an `Image` holds into the URL of its picture
+   * (xlarge serves `/api/v1/files/<id>` with the session). The result is
+   * still checked against unsafe schemes. Default: none, so a bare id draws
+   * the named placeholder.
+   */
+  readonly fileUrl?: (id: string) => string | undefined;
+  /**
+   * Opens an `otpauth:` link in the app that holds it (a `QrCode`'s "open in
+   * app" button). Default: none, so no button is offered.
+   */
+  readonly openUrl?: (url: string) => void;
+  /** A `QrCode`'s name and caption without `label`. Default: `"QR code"`. */
+  readonly qrLabel?: string;
+  /** A `QrCode`'s button that opens its link in an app. Default: `"Open in app"`. */
+  readonly openInAppLabel?: string;
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
@@ -143,6 +159,10 @@ export interface ResolvedXlargeOptions {
   readonly terminal: boolean;
   readonly weekdayLabels: readonly string[];
   readonly monthLabels: readonly string[];
+  readonly fileUrl: ((id: string) => string | undefined) | undefined;
+  readonly openUrl: ((url: string) => void) | undefined;
+  readonly qrLabel: string;
+  readonly openInAppLabel: string;
 }
 
 /** Fills in the defaults of `XlargeRendererOptions`. */
@@ -179,5 +199,9 @@ export function resolveXlargeOptions(
     terminal: options.terminal ?? platform.idiom === "terminal",
     weekdayLabels: options.weekdayLabels?.length === 7 ? options.weekdayLabels : WEEKDAYS,
     monthLabels: options.monthLabels?.length === 12 ? options.monthLabels : MONTHS,
+    fileUrl: options.fileUrl,
+    openUrl: options.openUrl,
+    qrLabel: options.qrLabel ?? "QR code",
+    openInAppLabel: options.openInAppLabel ?? "Open in app",
   };
 }

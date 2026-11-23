@@ -1,5 +1,6 @@
 {
   "source": "synthetic, no real xlarge screen yet",
+  "shape": "src holds what xlarge's data model holds: an attachment id, or a list of them, served at /api/v1/files/<id>",
   "messages": [
     {
       "version": "1.0",
@@ -10,8 +11,9 @@
       "updateComponents": {
         "surfaceId": "synthetic.image",
         "components": [
-          { "id": "root", "component": "Card", "title": "crm.title.partner", "children": ["logo"] },
-          { "id": "logo", "component": "Image", "src": { "@path": "/partner/logo" }, "label": "crm.partner.logo" }
+          { "id": "root", "component": "Card", "title": "crm.title.partner", "children": ["logo", "photos"] },
+          { "id": "logo", "component": "Image", "src": { "@path": "/partner/logo" }, "label": "crm.partner.logo" },
+          { "id": "photos", "component": "Image", "src": { "@path": "/partner/photos" }, "label": "crm.partner.photo" }
         ]
       }
     },
@@ -22,7 +24,8 @@
         "path": "/",
         "value": {
           "partner": {
-            "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+            "logo": "01JDX4Q7Z8K2M5N6P7R8S9T0V1",
+            "photos": ["01JDX4R1A2B3C4D5E6F7G8H9J0", "01JDX4R2K3M4N5P6Q7R8S9T0V1"]
           }
         }
       }

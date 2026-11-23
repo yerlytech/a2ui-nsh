@@ -23,7 +23,7 @@ check:
 [group('build')]
 lint: check
 
-# Run unit and component tests under src/, tests/fixtures/ (and examples/ when present) with nsh test.
+# Run unit and component tests under src/, tests/fixtures/, the headless SVG probe (and examples/ when present) with nsh test.
 [group('test')]
 test:
     #!/usr/bin/env bash
@@ -48,6 +48,9 @@ test:
           failed=$((failed + 1))
         fi
       done < <(find tests/fixtures -type f \( -name '*.test.ts' -o -name '*.test.tsx' \) | sort)
+    fi
+    if ! nsh test tests/targets/svg.target.test.tsx; then
+      failed=$((failed + 1))
     fi
     if [ -f tests/conformance/yaml.test.ts ]; then
       if ! nsh test tests/conformance/yaml.test.ts; then
@@ -76,7 +79,7 @@ walk-macos:
     nsh test examples/erp-customers/walk.macos.test.tsx --target macos
     ls -lh target/walk-macos/*.png
 
-# Run the real-target TUI suites (18-component catalog + xlarge Arrange keyboard check + ERP walk) and render target/walk-tui/*.txt.
+# Run the real-target TUI suites (18-component catalog + xlarge Arrange keyboard check + SVG data URI probe + ERP walk) and render target/walk-tui/*.txt.
 [group('test')]
 test-tui:
     #!/usr/bin/env bash
@@ -93,6 +96,7 @@ test-tui:
     mkdir -p target/walk-tui
     nsh test tests/targets/catalog.target.test.tsx --target tui
     nsh test tests/targets/xlarge.target.test.tsx --target tui
+    nsh test tests/targets/svg.target.test.tsx --target tui
     nsh test examples/erp-customers/tui.test.tsx --target tui
     for json in target/walk-tui/*.json; do
       [ -f "$json" ] || continue
@@ -111,7 +115,7 @@ run-tui:
     fi
     nsh run examples/erp-customers --target tui
 
-# Run the real-target Web/WASM suites (18-component catalog + xlarge Arrange keyboard check + ERP walk in headless Chromium) and list target/walk-web/*.png.
+# Run the real-target Web/WASM suites (18-component catalog + xlarge Arrange keyboard check + SVG data URI probe + ERP walk in headless Chromium) and list target/walk-web/*.png.
 [group('test')]
 test-web:
     #!/usr/bin/env bash
@@ -124,6 +128,7 @@ test-web:
     mkdir -p target/walk-web
     nsh test tests/targets/catalog.target.test.tsx --target web
     nsh test tests/targets/xlarge.target.test.tsx --target web
+    nsh test tests/targets/svg.target.test.tsx --target web
     nsh test examples/erp-customers/web.test.tsx --target web
     ls -lh target/walk-web/*.png
 
