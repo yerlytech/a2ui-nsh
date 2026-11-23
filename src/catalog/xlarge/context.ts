@@ -70,6 +70,12 @@ export interface XlargeRendererOptions {
    * until it is dismissed. Default: `5000`.
    */
   readonly toastMs?: number;
+  /** What a `Button` with `confirm` asks. Default: `"Are you sure?"`. */
+  readonly confirmQuestion?: string;
+  /** The yes button of a `Confirm` without `confirmLabel`. Default: `"Confirm"`. */
+  readonly confirmLabel?: string;
+  /** The accept button of a `Preview` without `label`. Default: `"Accept"`. */
+  readonly acceptLabel?: string;
 }
 
 /** `XlargeRendererOptions` with every default filled in. */
@@ -82,6 +88,9 @@ export interface ResolvedXlargeOptions {
   readonly backLabel: string;
   readonly dismissLabel: string;
   readonly toastMs: number;
+  readonly confirmQuestion: string;
+  readonly confirmLabel: string;
+  readonly acceptLabel: string;
 }
 
 /** Fills in the defaults of `XlargeRendererOptions`. */
@@ -100,5 +109,8 @@ export function resolveXlargeOptions(
       options.toastMs !== undefined && Number.isFinite(options.toastMs) && options.toastMs >= 0
         ? options.toastMs
         : 5000,
+    confirmQuestion: options.confirmQuestion ?? "Are you sure?",
+    confirmLabel: options.confirmLabel ?? "Confirm",
+    acceptLabel: options.acceptLabel ?? "Accept",
   };
 }

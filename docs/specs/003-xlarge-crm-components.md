@@ -94,3 +94,23 @@ five more components of `tech.yerly.xlarge/v1`, drawn in this commit:
 was available, so each has a synthetic fixture
 (`tests/fixtures/xlarge/<component>-synthetic.json`, `source` says so),
 walked by `src/catalog/xlarge/text_walk.test.tsx`.
+
+A second commit of round 2 draws three components that send actions:
+
+- **`Button`**: the translated `label` filled from `labelParams`, an optional
+  Basic Catalog `icon`, drawn by `variant`. Pressing sends `{ event: { name:
+  action, context } }` with the literal `context` (or `{}`). With `confirm`
+  it asks first; only yes sends. The point-of-sale properties stay not read:
+  no captured screen uses them.
+- **`Confirm`**: asks the translated `question` with a yes (`confirmLabel`)
+  and a cancel (`cancel`) button; only yes sends `action` with `{}`; either
+  answer closes it.
+- **`Preview`**: the translated `about` and one line per `draft` entry
+  (amounts as typed text); its accept button (`label`) sends `action` with
+  `{}`, asking first with `confirm`.
+
+The three share one ask (`ask.tsx`: `AskPanel`, `sendXlargeAction`; the pure
+step logic is `askStep` in `model.ts`). New host words: `confirmQuestion`,
+`confirmLabel`, `acceptLabel`. A literal context key the server escapes as
+`@@` is unescaped once (`literalContext`) and escaped again once when sent.
+Synthetic fixtures again, walked by `src/catalog/xlarge/actions_walk.test.tsx`.

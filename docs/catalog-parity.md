@@ -41,11 +41,11 @@ from `src/catalog/xlarge/` (spec 003).
 
 All 14 Basic Catalog functions are implemented as well (`docs/conformance.md`).
 
-## xlarge catalog v1: 9 of 22
+## xlarge catalog v1: 12 of 22
 
 Before spec 003: 0 of 22. Spec 003 drew the four xlarge's `crm.deals`
 screen uses; its round 2 (night spec 028) added `Text`, `Toast`, `Refusal`,
-`Image`, and `QrCode`.
+`Image`, `QrCode`, `Button`, `Confirm`, and `Preview`.
 
 | Component | Drawn | Renderer | Tests | Fixture |
 |---|---|---|---|---|
@@ -58,7 +58,10 @@ screen uses; its round 2 (night spec 028) added `Text`, `Toast`, `Refusal`,
 | Refusal | yes | `src/catalog/xlarge/Refusal.tsx` | `Refusal.test.tsx`, `text_walk.test.tsx` | `refusal-synthetic.json` (synthetic: no real xlarge screen yet) |
 | Image | yes | `src/catalog/xlarge/Image.tsx` | `Image.test.tsx`, `text_walk.test.tsx` | `image-synthetic.json` (synthetic: no real xlarge screen yet) |
 | QrCode | yes | `src/catalog/xlarge/QrCode.tsx` | `QrCode.test.tsx`, `model.test.ts` (encoder), `text_walk.test.tsx` | `qrcode-synthetic.json` (synthetic: no real xlarge screen yet) |
-| Button, Detail, Metric, Wizard, Confirm, Columns, ChequeLeaf, Steps, Chart, Arrange, Preview, Conversation, Calendar | no | — | — | — |
+| Button | yes | `src/catalog/xlarge/Button.tsx` (ask: `ask.tsx`) | `Button.test.tsx`, `model.test.ts`, `actions_walk.test.tsx` | `button-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Confirm | yes | `src/catalog/xlarge/Confirm.tsx` (ask: `ask.tsx`) | `Confirm.test.tsx`, `model.test.ts`, `actions_walk.test.tsx` | `confirm-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Preview | yes | `src/catalog/xlarge/Preview.tsx` (ask: `ask.tsx`) | `Preview.test.tsx`, `model.test.ts`, `actions_walk.test.tsx` | `preview-synthetic.json` (synthetic: no real xlarge screen yet) |
+| Detail, Metric, Wizard, Columns, ChequeLeaf, Steps, Chart, Arrange, Conversation, Calendar | no | — | — | — |
 
 Fixtures live in `tests/fixtures/xlarge/`.
 
@@ -79,6 +82,9 @@ ignored when drawn.
 | Refusal | `code`, `hint` (codes), `back` (its button sends the event `screen:<back>` with an empty context), `backLabel` (code; default the host's `backLabel`, `"Back"`) | `pageTitle` |
 | Image | `src` (data binding; unsafe schemes refused as in the Basic `Image`), `label` (code, the accessible name) | `pageTitle` |
 | QrCode | `src` (data binding, wins), `link` (data binding, encoded by the pure encoder in `model.ts`: byte mode, level M, versions 1–40), `label` (code: accessible name and caption; without it the link names the code) | `pageTitle`, `when` |
+| Button | `action` (the event name; without it the button is disabled), `label` (code) with `labelParams` (fills `{name}` as typed text), `icon` (a Basic Catalog icon name; other names draw no icon), `variant` (`secondary`/`quiet`/`ghost`/`plain`/`outline`, `danger`/`destructive`/`bad`; others primary), `confirm` (asks the host's `confirmQuestion` first, as `Confirm` does; only yes sends), `context` (sent as the literal event context; `@@` keys stand for literal `@` keys) | point-of-sale `add`, `cash`, `till`, `qty`, `product`, `queue`, `digest`, `away`, `version` (no captured screen uses them); `after`, `pageTitle`, `when`, `unless` |
+| Confirm | `question` (code; default the host's `confirmQuestion`), `action` (sent with an empty context on yes only), `confirmLabel` (code; default the host's `confirmLabel`, `"Confirm"`), `cancel` (code of the cancel button; default the host's `cancelLabel`); either answer closes it | `confirm` (a `Confirm` always asks), `after`, `pageTitle` |
+| Preview | `about` (code, heading), `draft` (one line per entry: `{ label, value, format, enumPrefix }` formatted as a table cell, amounts as typed text; plain entries as they came; other objects key by key), `action` (sent with an empty context on accept), `label` (code; default the host's `acceptLabel`, `"Accept"`), `confirm` (asks first, as `Confirm` does) | `pageTitle` |
 
 ### Field inputs
 

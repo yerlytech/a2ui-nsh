@@ -4,7 +4,8 @@
  * xlarge (an ERP) sends its screens against a custom catalog it publishes as
  * an A2UI 1.0 catalog definition. This module draws the four components its
  * `crm.deals` screen uses (`Card`, `Field`, `Form`, `Table`) and `Text`,
- * `Toast`, `Refusal`, `Image`, and `QrCode` (spec 003, round 2). The catalog
+ * `Toast`, `Refusal`, `Image`, `QrCode`, `Button`, `Confirm`, and `Preview`
+ * (spec 003, round 2). The catalog
  * definition itself is xlarge's: register it on the store (`Catalog.fromJson`)
  * next to these renderers. None of this is part of the A2UI Basic Catalog.
  */
@@ -13,11 +14,14 @@ import {
   ComponentRegistry,
   type A2uiComponentRenderer,
 } from "../../renderer/registry";
+import { createXlargeButton } from "./Button";
 import { createXlargeCard } from "./Card";
+import { createXlargeConfirm } from "./Confirm";
 import { resolveXlargeOptions, type XlargeRendererOptions } from "./context";
 import { createXlargeField } from "./Field";
 import { createXlargeForm } from "./Form";
 import { createXlargeImage } from "./Image";
+import { createXlargePreview } from "./Preview";
 import { createXlargeQrCode } from "./QrCode";
 import { createXlargeRefusal } from "./Refusal";
 import { createXlargeTable } from "./Table";
@@ -25,8 +29,12 @@ import { createXlargeText } from "./Text";
 import { createXlargeToast } from "./Toast";
 import { XLARGE_CATALOG_V1_ID } from "./model";
 
+export { AskPanel, sendXlargeAction, type AskPanelProps } from "./ask";
+export { createXlargeButton } from "./Button";
 export { createXlargeCard } from "./Card";
+export { createXlargeConfirm } from "./Confirm";
 export { createXlargeImage } from "./Image";
+export { createXlargePreview } from "./Preview";
 export { createXlargeQrCode } from "./QrCode";
 export { createXlargeRefusal } from "./Refusal";
 export { createXlargeText } from "./Text";
@@ -45,6 +53,9 @@ export { createXlargeTable } from "./Table";
 export {
   SHOW_CODES,
   XLARGE_CATALOG_V1_ID,
+  askStep,
+  buttonVariant,
+  draftLines,
   encodeQr,
   eventPayload,
   fieldControl,
@@ -54,6 +65,7 @@ export {
   formatCell,
   heldValues,
   isBlank,
+  literalContext,
   messageText,
   missingRequired,
   recordRowsPath,
@@ -62,6 +74,9 @@ export {
   tableColumns,
   tableRows,
   textTone,
+  type AskStep,
+  type ButtonVariant,
+  type DraftLine,
   type FieldControl,
   type FieldOption,
   type FieldSpec,
@@ -71,7 +86,7 @@ export {
   type Translate,
 } from "./model";
 
-/** The xlarge components this library draws (9 of the catalog's 22). */
+/** The xlarge components this library draws (12 of the catalog's 22). */
 export const XLARGE_DRAWN_COMPONENTS = [
   "Card",
   "Field",
@@ -82,6 +97,9 @@ export const XLARGE_DRAWN_COMPONENTS = [
   "Refusal",
   "Image",
   "QrCode",
+  "Button",
+  "Confirm",
+  "Preview",
 ] as const;
 
 /** Builds the xlarge renderers with `options` (translation, fixed words). */
@@ -99,6 +117,9 @@ export function createXlargeRenderers(
     Refusal: createXlargeRefusal(resolved),
     Image: createXlargeImage(resolved),
     QrCode: createXlargeQrCode(resolved),
+    Button: createXlargeButton(resolved),
+    Confirm: createXlargeConfirm(resolved),
+    Preview: createXlargePreview(resolved),
   };
 }
 

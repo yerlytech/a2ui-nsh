@@ -1,0 +1,29 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.preview", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.preview",
+        "components": [
+          {
+            "id": "root",
+            "component": "Preview",
+            "about": "crm.preview.deal",
+            "action": "crm.keep_deal",
+            "label": "crm.action.keep",
+            "confirm": true,
+            "draft": [
+              { "label": "crm.field.title", "value": "Forklift fleet" },
+              { "label": "crm.field.amount", "value": "25000.50", "format": "money" }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

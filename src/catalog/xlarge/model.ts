@@ -362,6 +362,126 @@ export function screenAction(back: unknown): string | undefined {
   return back.startsWith("screen:") ? back : `screen:${back}`;
 }
 
+/** How an xlarge `Button.variant` is drawn. Unknown variants draw primary. */
+export type ButtonVariant = "primary" | "secondary" | "danger";
+
+/** Maps xlarge's `Button.variant` onto one of the drawn variants. */
+export function buttonVariant(variant: unknown): ButtonVariant {
+  switch (variant) {
+    case "secondary":
+    case "quiet":
+    case "ghost":
+    case "plain":
+    case "outline":
+      return "secondary";
+    case "danger":
+    case "destructive":
+    case "bad":
+      return "danger";
+    default:
+      return "primary";
+  }
+}
+
+/**
+ * The literal a `context` object stands for, or `{}` for anything else. On the
+ * wire a literal key starting with `@` arrives escaped as `@@` (A2UI's
+ * reserved-key rule) and the component prop holds it as it came, so one level
+ * is undone here; `eventPayload` escapes it again exactly once.
+ */
+export function literalContext(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? (unescapeLiteral(value) as Record<string, unknown>) : {};
+}
+
+function unescapeLiteral(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(unescapeLiteral);
+  }
+  if (!isRecord(value)) {
+    return value;
+  }
+  const out: Record<string, unknown> = {};
+  for (const [key, inner] of Object.entries(value)) {
+    out[key.startsWith("@@") ? key.slice(1) : key] = unescapeLiteral(inner);
+  }
+  return out;
+}
+
+/** Where an ask stands after one step, and whether the action goes out now. */
+export interface AskStep {
+  /** The question with its yes and cancel buttons is showing. */
+  readonly asking: boolean;
+  /** The action is sent on this step. */
+  readonly send: boolean;
+}
+
+/**
+ * The one ask flow `Button`, `Confirm` and `Preview` share. A press with
+ * `confirm` asks first and sends nothing; a press without it sends at once;
+ * `yes` sends and closes the question; `cancel` closes it and sends nothing.
+ */
+export function askStep(step: "press" | "yes" | "cancel", confirm: boolean): AskStep {
+  switch (step) {
+    case "press":
+      return confirm ? { asking: true, send: false } : { asking: false, send: true };
+    case "yes":
+      return { asking: false, send: true };
+    default:
+      return { asking: false, send: false };
+  }
+}
+
+/** One line of a `Preview.draft`. */
+export interface DraftLine {
+  /** What the line is (translated), when the entry names it. */
+  readonly label?: string;
+  /** The value as text; amounts as typed, never through a float. */
+  readonly value: string;
+}
+
+/**
+ * The lines a `Preview` shows for its `draft`. A string or number entry is one
+ * line as it came. An object entry with `value` is one line, labelled by its
+ * `label` (a code) or `field`, its value formatted by `format`/`enumPrefix` as
+ * a table cell is. Any other object shows each of its keys as one line.
+ */
+export function draftLines(draft: unknown, translate: Translate): readonly DraftLine[] {
+  if (!Array.isArray(draft)) {
+    return [];
+  }
+  const out: DraftLine[] = [];
+  for (const entry of draft) {
+    if (!isRecord(entry)) {
+      if (entry !== null && entry !== undefined) {
+        out.push({ value: scalarText(entry) });
+      }
+      continue;
+    }
+    if ("value" in entry) {
+      const label =
+        typeof entry["label"] === "string"
+          ? translate(entry["label"])
+          : typeof entry["field"] === "string"
+            ? entry["field"]
+            : undefined;
+      const value = formatCell(
+        entry["value"],
+        {
+          format: typeof entry["format"] === "string" ? entry["format"] : undefined,
+          enumPrefix: typeof entry["enumPrefix"] === "string" ? entry["enumPrefix"] : undefined,
+        },
+        translate,
+      );
+      out.push(label !== undefined ? { label, value } : { value });
+      continue;
+    }
+    for (const [key, value] of Object.entries(entry)) {
+      out.push({ label: key, value: Array.isArray(value) ? value.map(scalarText).join(", ") : scalarText(value) });
+    }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // QR code (ISO/IEC 18004): byte mode, error correction level M, versions 1–40.
 // A pure encoder, because Native Shell 0.6.1 has no QR primitive. Its

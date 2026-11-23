@@ -1,0 +1,25 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.confirm", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.confirm",
+        "components": [
+          {
+            "id": "root",
+            "component": "Confirm",
+            "question": "crm.ask.close_deal",
+            "action": "crm.close_deal",
+            "confirmLabel": "crm.action.close",
+            "cancel": "crm.action.keep_open"
+          }
+        ]
+      }
+    }
+  ]
+}

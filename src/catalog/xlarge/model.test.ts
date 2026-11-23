@@ -1,5 +1,9 @@
 import { describe, expect, test } from "nsh/test";
 import {
+  askStep,
+  buttonVariant,
+  draftLines,
+  literalContext,
   encodeQr,
   eventPayload,
   fieldControl,
@@ -181,6 +185,70 @@ describe("xlarge catalog model", () => {
     expect(eventPayload("save", { a: 1, nested: { "@path": "/x" } })).toEqual({
       event: { name: "save", context: { a: 1, nested: { "@@path": "/x" } } },
     });
+  });
+
+  test("button variants map onto drawn variants, unknown ones to primary", () => {
+    expect(buttonVariant("secondary")).toBe("secondary");
+    expect(buttonVariant("ghost")).toBe("secondary");
+    expect(buttonVariant("danger")).toBe("danger");
+    expect(buttonVariant("destructive")).toBe("danger");
+    expect(buttonVariant("primary")).toBe("primary");
+    expect(buttonVariant("sparkly")).toBe("primary");
+    expect(buttonVariant(undefined)).toBe("primary");
+  });
+
+  test("a literal context is copied as given; anything else is empty", () => {
+    const given = { id: "d1", amount: "25000.50" };
+    const copy = literalContext(given);
+    expect(copy).toEqual(given);
+    expect(copy === given).toBe(false);
+    expect(literalContext({ "@@note": "x", nested: [{ "@@path": "/y" }] })).toEqual({
+      "@note": "x",
+      nested: [{ "@path": "/y" }],
+    });
+    expect(eventPayload("save", literalContext({ "@@note": "x" }))).toEqual({
+      event: { name: "save", context: { "@@note": "x" } },
+    });
+    expect(literalContext(undefined)).toEqual({});
+    expect(literalContext(["a"])).toEqual({});
+    expect(literalContext("x")).toEqual({});
+  });
+
+  test("the ask flow: confirm asks first, only yes sends, cancel sends nothing", () => {
+    expect(askStep("press", false)).toEqual({ asking: false, send: true });
+    expect(askStep("press", true)).toEqual({ asking: true, send: false });
+    expect(askStep("yes", true)).toEqual({ asking: false, send: true });
+    expect(askStep("cancel", true)).toEqual({ asking: false, send: false });
+  });
+
+  test("draft lines: labelled values, formatted amounts as text, plain entries", () => {
+    const words: Record<string, string> = { "f.title": "Title", "f.amount": "Amount", "s.open": "Open" };
+    const translate = (code: string): string => words[code] ?? code;
+    expect(
+      draftLines(
+        [
+          { label: "f.title", value: "Forklift fleet" },
+          { label: "f.amount", value: "25000.5", format: "money" },
+          { field: "state", value: "open", enumPrefix: "s." },
+          { value: 3 },
+          "a plain line",
+          7,
+          null,
+          { partner: "acme", tags: ["a", "b"] },
+        ],
+        translate,
+      ),
+    ).toEqual([
+      { label: "Title", value: "Forklift fleet" },
+      { label: "Amount", value: "25,000.50" },
+      { label: "state", value: "Open" },
+      { value: "3" },
+      { value: "a plain line" },
+      { value: "7" },
+      { label: "partner", value: "acme" },
+      { label: "tags", value: "a, b" },
+    ]);
+    expect(draftLines(undefined, translate)).toEqual([]);
   });
 
   test("text tones map onto drawn tones, unknown tones to plain", () => {
