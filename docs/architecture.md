@@ -42,7 +42,7 @@ src/catalog/basic/ Basic Catalog v1 TSX components (all 18 of 18)
   │                       validation_feedback.tsx), Slider
   └── Media:              Video, AudioPlayer (paused-by-default / user-gesture playback, degraded fallbacks)
   │
-src/catalog/xlarge/ xlarge's own catalog (tech.yerly.xlarge/v1): Card, Field, Form, Table, Text, Toast, Refusal, Image, QrCode, Button, Confirm, Preview (12 of 22, spec 003)
+src/catalog/xlarge/ xlarge's own catalog (tech.yerly.xlarge/v1): Card, Field, Form, Table, Text, Toast, Refusal, Image, QrCode, Button, Confirm, Preview, Columns, Detail, Metric, ChequeLeaf (16 of 22, spec 003)
   ├── model.ts            pure helpers: field controls, options, held values, cell formats, event payloads
   └── context.ts          renderer options (translate seam) and the Form draft context
 ```

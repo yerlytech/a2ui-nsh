@@ -912,3 +912,224 @@ export function encodeQr(text: string): QrMatrix | undefined {
   qr.drawFormatBits(bestMask);
   return { version, size, rows: qr.modules };
 }
+
+// ---------------------------------------------------------------------------
+// Columns, Detail, Metric, ChequeLeaf (spec 003, round 2).
+// ---------------------------------------------------------------------------
+
+/**
+ * The share of the row each of `count` columns takes, from `Columns.widths`.
+ * An entry is a positive number or its text (`2`, `"2fr"`, `"40%"`); a missing
+ * or unreadable entry counts as `1`, so columns without widths share evenly.
+ * These are layout weights, never amounts.
+ */
+export function columnWeights(widths: unknown, count: number): readonly number[] {
+  const list = Array.isArray(widths) ? widths : [];
+  const out: number[] = [];
+  for (let i = 0; i < count; i++) {
+    out.push(columnWeight(list[i]));
+  }
+  return out;
+}
+
+function columnWeight(raw: unknown): number {
+  if (typeof raw === "number") {
+    return Number.isFinite(raw) && raw > 0 ? raw : 1;
+  }
+  if (typeof raw === "string") {
+    const match = /^\s*(\d+(?:\.\d+)?)\s*(?:fr|%)?\s*$/.exec(raw);
+    const weight = match ? Number(match[1]) : 0;
+    return weight > 0 ? weight : 1;
+  }
+  return 1;
+}
+
+/** One labelled value a `Detail` shows. */
+export interface DetailEntry {
+  readonly field: string;
+  /** The translated label. */
+  readonly label: string;
+  /** The value as text (`formatCell`), `""` when it holds nothing. */
+  readonly text: string;
+}
+
+/**
+ * The labelled values of a `Detail`: `rows` lists them as `Table.columns`
+ * entries (`field`, `label` code, `format`, `enumPrefix`) or bare field names;
+ * without `rows`, every plain value of `record` is shown under its key. With
+ * `skipEmpty`, values that hold nothing are left out.
+ */
+export function detailEntries(
+  rows: unknown,
+  record: unknown,
+  skipEmpty: boolean,
+  translate: Translate,
+): readonly DetailEntry[] {
+  const data = isRecord(record) ? record : {};
+  const specs: TableColumn[] = [];
+  if (Array.isArray(rows)) {
+    for (const raw of rows) {
+      if (typeof raw === "string" && raw.length > 0) {
+        specs.push({ field: raw, label: raw, grow: false });
+      } else {
+        specs.push(...tableColumns([raw]));
+      }
+    }
+  } else {
+    for (const [field, value] of Object.entries(data)) {
+      if (value === null || typeof value !== "object") {
+        specs.push({ field, label: field, grow: false });
+      }
+    }
+  }
+  const out: DetailEntry[] = [];
+  for (const spec of specs) {
+    const text = formatCell(data[spec.field], spec, translate);
+    if (skipEmpty && text.trim() === "") {
+      continue;
+    }
+    out.push({ field: spec.field, label: translate(spec.label), text });
+  }
+  return out;
+}
+
+/** The `id` of a `Detail` record, as the context of its `update` action. */
+export function recordContext(record: unknown): Record<string, unknown> {
+  if (isRecord(record) && record["id"] !== undefined && record["id"] !== null) {
+    return { id: record["id"] };
+  }
+  return {};
+}
+
+/** A plain decimal as text: sign, whole digits, fraction digits (or `undefined`). */
+function splitDecimal(
+  text: string,
+): { readonly sign: string; readonly whole: string; readonly fraction: string } | undefined {
+  const match = /^([+-]?)(\d+)(?:\.(\d+))?$/.exec(text);
+  if (!match) {
+    return undefined;
+  }
+  return { sign: match[1] ?? "", whole: match[2] ?? "0", fraction: match[3] ?? "" };
+}
+
+/**
+ * A `Metric` value as text by its `format`, never through a float:
+ * `money`/`decimal`/`amount` as `formatAmount`; `percent` with a `%`;
+ * `number`/`integer`/`count` with grouped thousands and the fraction kept as
+ * typed; anything else as it came.
+ */
+export function metricText(value: unknown, format: unknown): string {
+  const text = scalarText(value).trim();
+  if (text === "") {
+    return "";
+  }
+  switch (format) {
+    case "money":
+    case "decimal":
+    case "amount":
+      return formatAmount(text);
+    case "percent":
+      return text.endsWith("%") ? text : `${text}%`;
+    case "number":
+    case "integer":
+    case "count": {
+      const parts = splitDecimal(text);
+      if (parts === undefined) {
+        return text;
+      }
+      const grouped = groupThousands(parts.whole);
+      return `${parts.sign === "-" ? "-" : ""}${grouped}${parts.fraction ? `.${parts.fraction}` : ""}`;
+    }
+    default:
+      return text;
+  }
+}
+
+/** Which way a `Metric.change` went. */
+export type ChangeDirection = "up" | "down" | "flat";
+
+/**
+ * The direction of a change read from its text (`"12.5"`, `"-3"`, `"+0.0"`,
+ * `"4%"`): a leading `-` is down, all zeros flat, anything else up.
+ * `undefined` when it is not a plain decimal.
+ */
+export function changeDirection(change: unknown): ChangeDirection | undefined {
+  const text = scalarText(change).trim().replace(/%$/, "");
+  const parts = splitDecimal(text);
+  if (parts === undefined) {
+    return undefined;
+  }
+  if (/^0*$/.test(parts.whole) && /^0*$/.test(parts.fraction)) {
+    return "flat";
+  }
+  return parts.sign === "-" ? "down" : "up";
+}
+
+/** A change as signed text, formatted as its metric's value (`"+12.5%"`). */
+export function changeText(change: unknown, format: unknown): string {
+  const text = scalarText(change).trim();
+  const direction = changeDirection(text);
+  if (direction === undefined || direction === "flat") {
+    return metricText(text, format);
+  }
+  const magnitude = text.replace(/^[+-]/, "");
+  return `${direction === "down" ? "-" : "+"}${metricText(magnitude, format)}`;
+}
+
+/** How a change is coloured: good, bad, or neither. */
+export type ChangeTone = "good" | "bad" | "neutral";
+
+/**
+ * The tone of a change by `Metric.better` (`"up"` or `"down"`, with the
+ * synonyms `higher`/`more` and `lower`/`less`): the better way is good, the
+ * other bad; a flat change, or a metric without `better`, is neutral.
+ */
+export function changeTone(direction: ChangeDirection | undefined, better: unknown): ChangeTone {
+  const wanted =
+    better === "up" || better === "higher" || better === "more"
+      ? "up"
+      : better === "down" || better === "lower" || better === "less"
+        ? "down"
+        : undefined;
+  if (wanted === undefined || direction === undefined || direction === "flat") {
+    return "neutral";
+  }
+  return direction === wanted ? "good" : "bad";
+}
+
+/** One state row of a cheque or promissory note's leaf. */
+export interface ChequeLeafRow {
+  readonly key: string;
+  /** The translated state word (`statePrefix + state`). */
+  readonly state: string;
+  readonly date: string;
+  readonly amount: string;
+  readonly party: string;
+  readonly note: string;
+}
+
+/**
+ * The rows of a `ChequeLeaf`: each row's `state` translated as
+ * `statePrefix + state`, its `date` (or `at`) as a date, its `amount` as
+ * `formatAmount`, and its `party` (or `partner`) and `note` as they came.
+ */
+export function chequeLeafRows(
+  rows: unknown,
+  statePrefix: unknown,
+  translate: Translate,
+): readonly ChequeLeafRow[] {
+  const prefix = typeof statePrefix === "string" ? statePrefix : "";
+  return tableRows(rows).map((row, index) => {
+    const id = row["id"];
+    const state = scalarText(row["state"]);
+    const amount = scalarText(row["amount"]);
+    return {
+      key: typeof id === "string" || typeof id === "number" ? `id:${id}` : `at:${index}`,
+      state: state === "" ? "" : translate(`${prefix}${state}`),
+      date: scalarText(row["date"] ?? row["at"]).slice(0, 10),
+      amount: amount === "" ? "" : formatAmount(amount),
+      party: scalarText(row["party"] ?? row["partner"]),
+      note: scalarText(row["note"]),
+    };
+  });
+}

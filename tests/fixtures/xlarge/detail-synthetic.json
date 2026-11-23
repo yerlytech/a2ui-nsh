@@ -1,0 +1,49 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.detail", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.detail",
+        "components": [
+          { "id": "root", "component": "Card", "title": "crm.title.deal", "children": ["deal"] },
+          {
+            "id": "deal",
+            "component": "Detail",
+            "record": { "@path": "/deal" },
+            "rows": [
+              { "field": "title", "label": "crm.field.title" },
+              { "field": "amount", "label": "crm.field.amount", "format": "money" },
+              { "field": "stage", "label": "crm.field.stage", "enumPrefix": "crm.stage." },
+              { "field": "closes", "label": "crm.field.closes", "format": "date" },
+              { "field": "note", "label": "crm.field.note" }
+            ],
+            "skipEmpty": true,
+            "update": "crm.deal.update"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "synthetic.detail",
+        "path": "/",
+        "value": {
+          "deal": {
+            "id": "deal-7",
+            "title": "Forklift fleet",
+            "amount": "25000.5",
+            "stage": "won",
+            "closes": "2026-12-15T00:00:00Z",
+            "note": ""
+          }
+        }
+      }
+    }
+  ]
+}

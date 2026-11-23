@@ -65,6 +65,8 @@ export interface XlargeRendererOptions {
   readonly backLabel?: string;
   /** The name of a toast's close button. Default: `"Dismiss"`. */
   readonly dismissLabel?: string;
+  /** The label of a `Detail`'s edit button (`update`). Default: `"Edit"`. */
+  readonly editLabel?: string;
   /**
    * How long a `Toast` shows before it passes, in milliseconds; `0` keeps it
    * until it is dismissed. Default: `5000`.
@@ -87,6 +89,7 @@ export interface ResolvedXlargeOptions {
   readonly cancelLabel: string;
   readonly backLabel: string;
   readonly dismissLabel: string;
+  readonly editLabel: string;
   readonly toastMs: number;
   readonly confirmQuestion: string;
   readonly confirmLabel: string;
@@ -105,6 +108,7 @@ export function resolveXlargeOptions(
     cancelLabel: options.cancelLabel ?? "Cancel",
     backLabel: options.backLabel ?? "Back",
     dismissLabel: options.dismissLabel ?? "Dismiss",
+    editLabel: options.editLabel ?? "Edit",
     toastMs:
       options.toastMs !== undefined && Number.isFinite(options.toastMs) && options.toastMs >= 0
         ? options.toastMs

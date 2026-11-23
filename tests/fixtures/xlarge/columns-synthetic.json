@@ -1,0 +1,30 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.columns", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.columns",
+        "components": [
+          { "id": "root", "component": "Columns", "widths": [2, 1], "children": ["main", "side"] },
+          { "id": "main", "component": "Card", "title": "crm.title.deal", "children": ["summary"] },
+          { "id": "summary", "component": "Text", "text": { "@path": "/summary" } },
+          { "id": "side", "component": "Card", "title": "crm.title.partner", "children": ["partner"] },
+          { "id": "partner", "component": "Text", "text": { "@path": "/partner" }, "tone": "strong" }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "synthetic.columns",
+        "path": "/",
+        "value": { "summary": "Forklift fleet for the new depot", "partner": "Acme Logistics" }
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.chequeleaf", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.chequeleaf",
+        "components": [
+          { "id": "root", "component": "Card", "title": "fin.title.cheque", "children": ["leaf"] },
+          {
+            "id": "leaf",
+            "component": "ChequeLeaf",
+            "rows": { "@path": "/leaf" },
+            "statePrefix": "fin.cheque.state."
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "synthetic.chequeleaf",
+        "path": "/",
+        "value": {
+          "leaf": [
+            { "id": 1, "state": "portfolio", "date": "2026-10-01T09:00:00Z", "amount": "15000", "party": "Acme Logistics" },
+            { "id": 2, "state": "endorsed", "date": "2026-10-15", "party": "Bolt Ltd", "note": "to supplier" },
+            { "id": 3, "state": "collected", "at": "2026-11-20", "amount": "15000.00" }
+          ]
+        }
+      }
+    }
+  ]
+}

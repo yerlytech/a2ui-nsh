@@ -114,3 +114,21 @@ step logic is `askStep` in `model.ts`). New host words: `confirmQuestion`,
 `confirmLabel`, `acceptLabel`. A literal context key the server escapes as
 `@@` is unescaped once (`literalContext`) and escaped again once when sent.
 Synthetic fixtures again, walked by `src/catalog/xlarge/actions_walk.test.tsx`.
+Then four more, in a second commit of the same round:
+- **`Columns`**: `children` side by side while Native Shell's
+  `horizontalSizeClass` is `regular` (600pt and wider), each taking its share
+  of `widths` (`2`, `"2fr"`, `"40%"`; missing entries share evenly), and
+  stacked full-width while it is `compact`.
+- **`Detail`**: the `record`'s labelled values by `rows` (`Table.columns`
+  entries or field names; without `rows`, every plain value), `skipEmpty`
+  leaving out empty ones; with `update`, an edit button (the host's
+  `editLabel`) sends `{ event: { name: <update>, context: { id } } }`.
+- **`Metric`**: the translated `label`, `value` formatted by `format` from
+  its text (never a float), and `change` signed with ▲/▼, coloured by
+  `better` (`up`/`down`); `accent` colours its edge, `hint` (a code) shows
+  under it. `icon` stays not read.
+- **`ChequeLeaf`**: the leaf's state rows, each `state` as
+  `translate(statePrefix + state)`, with its date, amount (from text), party,
+  and note; the last row, the state now, drawn stronger.
+`when`/`unless` stay not read. These too have synthetic fixtures (no real
+capture was readable), walked by `src/catalog/xlarge/display_walk.test.tsx`.

@@ -4,8 +4,16 @@ import {
   buttonVariant,
   draftLines,
   literalContext,
+  changeDirection,
+  changeText,
+  changeTone,
+  chequeLeafRows,
+  columnWeights,
+  detailEntries,
   encodeQr,
   eventPayload,
+  metricText,
+  recordContext,
   fieldControl,
   fieldOptions,
   fillParams,
@@ -338,5 +346,100 @@ describe("xlarge catalog model", () => {
     expect(bits).toBe(0x07c94);
     expect(encodeQr("é".repeat(1165))!.version).toBe(40);
     expect(encodeQr("x".repeat(2332))).toBe(undefined);
+  });
+});
+
+describe("xlarge Columns, Detail, Metric and ChequeLeaf helpers", () => {
+  test("columnWeights reads numbers and their text; the rest share evenly", () => {
+    expect(columnWeights([2, 1], 2)).toEqual([2, 1]);
+    expect(columnWeights(["2fr", "40%", " 1.5 "], 3)).toEqual([2, 40, 1.5]);
+    expect(columnWeights([0, -1, "wide", null], 4)).toEqual([1, 1, 1, 1]);
+    expect(columnWeights([3], 3)).toEqual([3, 1, 1]);
+    expect(columnWeights(undefined, 2)).toEqual([1, 1]);
+    expect(columnWeights([1, 2, 3], 1)).toEqual([1]);
+  });
+
+  test("detailEntries labels, formats and skips empty values", () => {
+    const record = { id: "d1", title: "Fleet", amount: "25000.5", stage: "won", note: "", nested: { a: 1 } };
+    const rows = [
+      { field: "title", label: "crm.field.title" },
+      { field: "amount", label: "crm.field.amount", format: "money" },
+      { field: "stage", label: "crm.field.stage", enumPrefix: "crm.stage." },
+      "note",
+      { label: "no field" },
+    ];
+    expect(detailEntries(rows, record, false, upper)).toEqual([
+      { field: "title", label: "CRM.FIELD.TITLE", text: "Fleet" },
+      { field: "amount", label: "CRM.FIELD.AMOUNT", text: "25,000.50" },
+      { field: "stage", label: "CRM.FIELD.STAGE", text: "CRM.STAGE.WON" },
+      { field: "note", label: "NOTE", text: "" },
+    ]);
+    expect(detailEntries(rows, record, true, upper).map((e) => e.field)).toEqual(["title", "amount", "stage"]);
+    // Without rows: every plain value under its key, nested objects left out.
+    expect(detailEntries(undefined, record, true, (c) => c).map((e) => e.field)).toEqual([
+      "id",
+      "title",
+      "amount",
+      "stage",
+    ]);
+    expect(detailEntries(rows, null, true, upper)).toEqual([]);
+  });
+
+  test("recordContext carries the record's id only", () => {
+    expect(recordContext({ id: 7, title: "x" })).toEqual({ id: 7 });
+    expect(recordContext({ title: "x" })).toEqual({});
+    expect(recordContext(undefined)).toEqual({});
+  });
+
+  test("metricText formats from the text, never through a float", () => {
+    expect(metricText("1250000.5", "money")).toBe("1,250,000.50");
+    expect(metricText("0.1", "decimal")).toBe("0.10");
+    expect(metricText("12345678901234567890.123", "amount")).toBe("12,345,678,901,234,567,890.123");
+    expect(metricText("12.5", "percent")).toBe("12.5%");
+    expect(metricText("12.5%", "percent")).toBe("12.5%");
+    expect(metricText("1204", "count")).toBe("1,204");
+    expect(metricText("-98765.4321", "number")).toBe("-98,765.4321");
+    expect(metricText(42, "integer")).toBe("42");
+    expect(metricText("n/a", "count")).toBe("n/a");
+    expect(metricText("1204", undefined)).toBe("1204");
+    expect(metricText(null, "money")).toBe("");
+  });
+
+  test("changeDirection, changeText and changeTone follow `better`", () => {
+    expect(changeDirection("12.5")).toBe("up");
+    expect(changeDirection("+4")).toBe("up");
+    expect(changeDirection("-3")).toBe("down");
+    expect(changeDirection("-0.00")).toBe("flat");
+    expect(changeDirection("4%")).toBe("up");
+    expect(changeDirection("soon")).toBe(undefined);
+
+    expect(changeText("12.5", "percent")).toBe("+12.5%");
+    expect(changeText("-2500.5", "money")).toBe("-2,500.50");
+    expect(changeText("+4", "count")).toBe("+4");
+    expect(changeText("0", undefined)).toBe("0");
+
+    expect(changeTone("up", "up")).toBe("good");
+    expect(changeTone("down", "up")).toBe("bad");
+    expect(changeTone("up", "lower")).toBe("bad");
+    expect(changeTone("down", "less")).toBe("good");
+    expect(changeTone("flat", "up")).toBe("neutral");
+    expect(changeTone("up", undefined)).toBe("neutral");
+    expect(changeTone(undefined, "up")).toBe("neutral");
+  });
+
+  test("chequeLeafRows translates states and formats dates and amounts", () => {
+    const rows = [
+      { id: 1, state: "portfolio", date: "2026-10-01T09:00:00Z", amount: "15000", party: "Acme" },
+      { state: "endorsed", at: "2026-10-15", partner: "Bolt", note: "to supplier" },
+      "not a row",
+      { id: "c", state: "" },
+    ];
+    expect(chequeLeafRows(rows, "fin.cheque.state.", upper)).toEqual([
+      { key: "id:1", state: "FIN.CHEQUE.STATE.PORTFOLIO", date: "2026-10-01", amount: "15,000.00", party: "Acme", note: "" },
+      { key: "at:1", state: "FIN.CHEQUE.STATE.ENDORSED", date: "2026-10-15", amount: "", party: "Bolt", note: "to supplier" },
+      { key: "id:c", state: "", date: "", amount: "", party: "", note: "" },
+    ]);
+    expect(chequeLeafRows([{ state: "bounced" }], undefined, upper)[0]!.state).toBe("BOUNCED");
+    expect(chequeLeafRows(undefined, "x.", upper)).toEqual([]);
   });
 });

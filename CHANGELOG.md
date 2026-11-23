@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - xlarge's `Text`, `Toast`, `Refusal`, `Image`, and `QrCode` (spec 003,
   round 2), with renderer options `toastMs`, `backLabel`, `dismissLabel`, and
   a pure QR encoder (`encodeQr`, no new dependency).
+- xlarge's `Columns` (side by side when wide, stacked when narrow), `Detail`
+  (its `update` sends the edit action), `Metric` (value and change formatted
+  from text, coloured by `better`), and `ChequeLeaf` (states through
+  `translate`) (spec 003, round 2), with the renderer option `editLabel`.
 - `NodeResolver.dispatchNodeAction` to send an action payload on behalf of a
   node (spec 003).
 - `docs/catalog-parity.md`: components drawn per catalog.

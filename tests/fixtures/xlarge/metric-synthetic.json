@@ -1,0 +1,55 @@
+{
+  "source": "synthetic, no real xlarge screen yet",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "synthetic.metric", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "synthetic.metric",
+        "components": [
+          { "id": "root", "component": "Card", "plain": true, "children": ["revenue", "complaints"] },
+          {
+            "id": "revenue",
+            "component": "Metric",
+            "label": "crm.kpi.revenue",
+            "value": { "@path": "/kpi/revenue" },
+            "format": "money",
+            "change": { "@path": "/kpi/revenueChange" },
+            "better": "up",
+            "accent": "accent",
+            "hint": "crm.kpi.this_month",
+            "icon": "money"
+          },
+          {
+            "id": "complaints",
+            "component": "Metric",
+            "label": "crm.kpi.complaints",
+            "value": { "@path": "/kpi/complaints" },
+            "format": "count",
+            "change": { "@path": "/kpi/complaintsChange" },
+            "better": "down",
+            "accent": "danger"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "synthetic.metric",
+        "path": "/",
+        "value": {
+          "kpi": {
+            "revenue": "1250000.5",
+            "revenueChange": "12.5",
+            "complaints": "1204",
+            "complaintsChange": "+4"
+          }
+        }
+      }
+    }
+  ]
+}
