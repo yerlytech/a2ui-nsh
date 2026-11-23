@@ -11,7 +11,8 @@
  * - `fileBase`: optional, an `Image`'s attachment id is drawn from
  *   `fileBase + encodeURIComponent(id)` (the `fileUrl` renderer option);
  * - `openLinks`: optional, a `QrCode`'s "open in app" button posts
- *   `a2ui.openUrl` (the `openUrl` renderer option).
+ *   `a2ui.openUrl` (the `openUrl` renderer option);
+ * - `againstBeforeLabel`: optional, the words after a `Metric`'s change.
  *
  * Reports outbound actions and errors via `host.post("a2ui.*", ...)`, and
  * answers `a2ui.readData` with the surface data at a path.
@@ -58,6 +59,8 @@ function XlargeHarnessApp(): JSX.Element {
         ? (id) => `${params["fileBase"] as string}${encodeURIComponent(id)}`
         : undefined,
     openUrl: params["openLinks"] === true ? (url) => safePost("a2ui.openUrl", { url }) : undefined,
+    againstBeforeLabel:
+      typeof params["againstBeforeLabel"] === "string" ? params["againstBeforeLabel"] : undefined,
   });
 
   const store = new A2uiStore({

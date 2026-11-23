@@ -10,12 +10,12 @@
       "updateComponents": {
         "surfaceId": "synthetic.chequeleaf",
         "components": [
-          { "id": "root", "component": "Card", "title": "fin.title.cheque", "children": ["leaf"] },
+          { "id": "root", "component": "Card", "title": "bank.title.cheque_book", "children": ["leaves"] },
           {
-            "id": "leaf",
+            "id": "leaves",
             "component": "ChequeLeaf",
-            "rows": { "@path": "/leaf" },
-            "statePrefix": "fin.cheque.state."
+            "rows": { "@path": "/leaves" },
+            "statePrefix": "bank.cheque_leaf_state."
           }
         ]
       }
@@ -26,10 +26,32 @@
         "surfaceId": "synthetic.chequeleaf",
         "path": "/",
         "value": {
-          "leaf": [
-            { "id": 1, "state": "portfolio", "date": "2026-10-01T09:00:00Z", "amount": "15000", "party": "Acme Logistics" },
-            { "id": 2, "state": "endorsed", "date": "2026-10-15", "party": "Bolt Ltd", "note": "to supplier" },
-            { "id": 3, "state": "collected", "at": "2026-11-20", "amount": "15000.00" }
+          "leaves": [
+            {
+              "id": "leaf-1",
+              "number": "CHK-2026-0001",
+              "state": "printed",
+              "date": "2026-11-20",
+              "payee": "Acme Logistics",
+              "amount": "15000.00",
+              "amountWords": "Fifteen thousand lira",
+              "memo": "Invoice 42",
+              "layout": {
+                "date": { "top": 12, "left": 160 },
+                "payee": { "top": 24, "left": 30 },
+                "amount": { "top": 24, "left": 160 },
+                "words": { "top": 36, "left": 30 },
+                "memo": { "top": 60, "left": 30 }
+              },
+              "stub": {
+                "number": "CHK-2026-0001",
+                "date": "2026-11-20",
+                "payee": "Acme Logistics",
+                "amount": "15000.00",
+                "memo": "Invoice 42"
+              }
+            },
+            { "id": "leaf-2", "number": "CHK-2026-0002", "state": "void", "stub": null }
           ]
         }
       }

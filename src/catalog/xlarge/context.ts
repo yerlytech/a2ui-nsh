@@ -113,6 +113,8 @@ export interface XlargeRendererOptions {
    * app" button). Default: none, so no button is offered.
    */
   readonly openUrl?: (url: string) => void;
+  /** The words after a `Metric`'s change percent. Default: `"vs before"`. */
+  readonly againstBeforeLabel?: string;
   /** A `QrCode`'s name and caption without `label`. Default: `"QR code"`. */
   readonly qrLabel?: string;
   /** A `QrCode`'s button that opens its link in an app. Default: `"Open in app"`. */
@@ -161,6 +163,7 @@ export interface ResolvedXlargeOptions {
   readonly monthLabels: readonly string[];
   readonly fileUrl: ((id: string) => string | undefined) | undefined;
   readonly openUrl: ((url: string) => void) | undefined;
+  readonly againstBeforeLabel: string;
   readonly qrLabel: string;
   readonly openInAppLabel: string;
 }
@@ -201,6 +204,7 @@ export function resolveXlargeOptions(
     monthLabels: options.monthLabels?.length === 12 ? options.monthLabels : MONTHS,
     fileUrl: options.fileUrl,
     openUrl: options.openUrl,
+    againstBeforeLabel: options.againstBeforeLabel ?? "vs before",
     qrLabel: options.qrLabel ?? "QR code",
     openInAppLabel: options.openInAppLabel ?? "Open in app",
   };

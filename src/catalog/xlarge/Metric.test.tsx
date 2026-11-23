@@ -13,7 +13,7 @@ const WORDS = {
 };
 
 describe("xlarge catalog Metric", () => {
-  test("formats the value and its change from their text, coloured by `better`", async () => {
+  test("formats the value from its text; the change is a whole percent, coloured by `better`", async () => {
     const app = await open(
       HARNESS,
       harnessOptions(
@@ -57,50 +57,68 @@ describe("xlarge catalog Metric", () => {
       ),
     );
     expect(reportedErrors(app)).toEqual([]);
+    // The change is a percent whatever `format` is: a money metric's change is
+    // not drawn as money, and 12.5 rounds half away from zero to 13.
     expect(app.texts()).toEqual([
       "Revenue",
       "1,250,000.50",
-      "▲ +12.50",
+      "▲ 13%",
+      "vs before",
       "This month",
       "Complaints",
       "1,204",
-      "▲ +4",
+      "▲ 4%",
+      "vs before",
       "7",
-      "0",
+      "0%",
+      "vs before",
     ]);
-    expect(app.shows("label:Revenue, 1,250,000.50, ▲ +12.50")).toBe(true);
+    expect(app.shows("label:Revenue, 1,250,000.50, ▲ 13% vs before")).toBe(true);
 
     // The better way and the worse way are drawn in different colours, and a
     // flat change in neither.
-    const good = app.spanStyle("id:s_metric:up_good >> text:▲ +12.50").color;
-    const bad = app.spanStyle("id:s_metric:up_bad >> text:▲ +4").color;
-    const flat = app.spanStyle("id:s_metric:flat >> text:0").color;
+    const good = app.spanStyle("id:s_metric:up_good >> text:▲ 13%").color;
+    const bad = app.spanStyle("id:s_metric:up_bad >> text:▲ 4%").color;
+    const flat = app.spanStyle("id:s_metric:flat >> text:0%").color;
     expect(good === bad).toBe(false);
     expect(flat === good || flat === bad).toBe(false);
   });
 
-  test("a down change is good when lower is better; no change, no line", async () => {
+  test("a down change is good when lower is better; no number, no line", async () => {
     const app = await open(
       HARNESS,
       harnessOptions(
         surfaceMessages(
           "s_metric_down",
           [
-            { id: "root", component: "Card", plain: true, children: ["down", "none", "worse"] },
+            { id: "root", component: "Card", plain: true, children: ["down", "none", "worse", "word"] },
             { id: "down", component: "Metric", value: { "@path": "/v" }, change: { "@path": "/c" }, better: "down", format: "percent" },
             { id: "none", component: "Metric", value: { "@path": "/v" } },
             { id: "worse", component: "Metric", value: { "@path": "/v" }, change: { "@path": "/c" }, better: "up", format: "percent" },
+            { id: "word", component: "Metric", value: { "@path": "/v" }, change: { "@path": "/w" } },
           ],
-          { v: "3.25", c: "-0.5" },
+          { v: "3.25", c: "-2.5", w: "n/a" },
         ),
+        {},
+        { againstBeforeLabel: "önceki döneme göre" },
       ),
     );
     expect(reportedErrors(app)).toEqual([]);
-    // Without `format` the value shows as it came.
-    expect(app.texts()).toEqual(["3.25%", "▼ -0.5%", "3.25", "3.25%", "▼ -0.5%"]);
+    // Without `format` the value shows as it came; -2.5 rounds away from zero.
+    expect(app.texts()).toEqual([
+      "3.25%",
+      "▼ 3%",
+      "önceki döneme göre",
+      "3.25",
+      "3.25%",
+      "▼ 3%",
+      "önceki döneme göre",
+      "3.25",
+    ]);
     expect(app.shows("id:s_metric_down:none:change")).toBe(false);
-    const good = app.spanStyle("id:s_metric_down:down >> text:▼ -0.5%").color;
-    const bad = app.spanStyle("id:s_metric_down:worse >> text:▼ -0.5%").color;
+    expect(app.shows("id:s_metric_down:word:change")).toBe(false);
+    const good = app.spanStyle("id:s_metric_down:down >> text:▼ 3%").color;
+    const bad = app.spanStyle("id:s_metric_down:worse >> text:▼ 3%").color;
     expect(good === bad).toBe(false);
   });
 });

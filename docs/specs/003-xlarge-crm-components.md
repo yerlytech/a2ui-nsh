@@ -152,12 +152,23 @@ A third commit of round 2 draws four display components:
   leaving out empty ones; with `update`, an edit button (the host's
   `editLabel`) sends `{ event: { name: <update>, context: { id } } }`.
 - **`Metric`**: the translated `label`, `value` formatted by `format` from
-  its text (never a float), and `change` signed with ▲/▼, coloured by
-  `better` (`up`/`down`); `accent` colours its edge, `hint` (a code) shows
-  under it. `icon` stays not read.
-- **`ChequeLeaf`**: the leaf's state rows, each `state` as
-  `translate(statePrefix + state)`, with its date, amount (from text), party,
-  and note; the last row, the state now, drawn stronger.
+  its text (never a float), and `change` as xlarge draws it whatever
+  `format` is: ▲/▼ and a whole-number percent, rounded half away from zero
+  on the text, then the host's `againstBeforeLabel` ("vs before"); coloured
+  by `better` (`up`/`down`); `accent` colours its edge, `hint` (a code)
+  shows under it. `icon` stays not read.
+- **`ChequeLeaf`**: the physical leaves of a prenumbered cheque book, one
+  per row of `rows`: the leaf's `number` (with
+  `translate(statePrefix + state)` beside it only when the leaf is `void`),
+  `date`, `payee`, `amount` (from text), `amountWords` and `memo`, then its
+  `stub` when it has one. xlarge prints each field at the row's `layout`
+  (millimetres); this renderer stacks them in a readable card and does not
+  read `layout`.
+
+`Table`, `Detail` and `Preview` share one cell format (`formatCell`); it
+also reads xlarge's `kurus` (whole minor units as major units, from the
+text: `"1250"` → `"12.50"`), `number` (grouped thousands) and `month_day`
+(`MM-DD`). An unknown format shows the value as it came.
 `when`/`unless` stay not read. These too have synthetic fixtures (no real
 capture was readable), walked by `src/catalog/xlarge/display_walk.test.tsx`.
 
@@ -211,7 +222,8 @@ A further commit of round 2 draws three richer components:
   message press sends `{ event: { name: "screen:<screen>", context: { id }
   } }`.
 
-New host options: `terminal`, `totalLabel`, `weekdayLabels`, `monthLabels`.
+New host options: `terminal`, `totalLabel`, `weekdayLabels`, `monthLabels`,
+and `againstBeforeLabel` (the words after a `Metric`'s change).
 The data keys these three read are this renderer's reading; no real xlarge
 capture was readable, so the fixtures are synthetic, walked by
 `src/catalog/xlarge/rich_walk.test.tsx`.

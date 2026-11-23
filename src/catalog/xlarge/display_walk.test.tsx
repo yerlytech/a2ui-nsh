@@ -36,10 +36,8 @@ const WORDS: Record<string, string> = {
   "crm.kpi.revenue": "Revenue",
   "crm.kpi.complaints": "Complaints",
   "crm.kpi.this_month": "This month",
-  "fin.title.cheque": "Cheque",
-  "fin.cheque.state.portfolio": "In portfolio",
-  "fin.cheque.state.endorsed": "Endorsed",
-  "fin.cheque.state.collected": "Collected",
+  "bank.title.cheque_book": "Cheque book",
+  "bank.cheque_leaf_state.void": "VOID",
 };
 
 const ALL_MESSAGES: unknown[] = Object.values(FIXTURES).flatMap((fixture) => fixture.messages);
@@ -83,12 +81,12 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf fixtures", () => {
       expect(app.texts()).toContain(words);
     }
     expect(app.shows("id:synthetic.detail:deal:row:note")).toBe(false);
-    // Metric: formatted from text, changes with their arrows.
-    for (const words of ["Revenue", "1,250,000.50", "▲ +12.50", "This month", "Complaints", "1,204", "▲ +4"]) {
+    // Metric: formatted from text, changes as whole percents with arrows.
+    for (const words of ["Revenue", "1,250,000.50", "▲ 13%", "vs before", "This month", "Complaints", "1,204", "▲ 4%"]) {
       expect(app.texts()).toContain(words);
     }
-    // ChequeLeaf: states through translate.
-    for (const words of ["In portfolio", "Endorsed", "Collected", "15,000.00", "to supplier"]) {
+    // ChequeLeaf: one leaf per row, the void one marked through translate.
+    for (const words of ["Cheque book", "CHK-2026-0001", "15,000.00", "Fifteen thousand lira", "CHK-2026-0002", "VOID"]) {
       expect(app.texts()).toContain(words);
     }
 

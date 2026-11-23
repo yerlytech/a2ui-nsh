@@ -235,7 +235,35 @@ export function formatAmount(value: unknown): string {
   return `${sign}${groupThousands(whole)}.${fraction}`;
 }
 
-/** One table cell as text, by the column's `format` and `enumPrefix`. */
+/**
+ * Whole minor units as major units with two decimals and grouped thousands,
+ * from the text (`"1250"` → `"12.50"`, `"-5"` → `"-0.05"`). A value that is
+ * not a whole number is shown as it came.
+ */
+export function formatKurus(value: unknown): string {
+  const text = scalarText(value).trim();
+  const match = /^([+-]?)(\d+)$/.exec(text);
+  if (!match) {
+    return text;
+  }
+  const digits = (match[2] ?? "").replace(/^0+/, "").padStart(3, "0");
+  const sign = match[1] === "-" && /[1-9]/.test(digits) ? "-" : "";
+  return formatAmount(`${sign}${digits.slice(0, -2)}.${digits.slice(-2)}`);
+}
+
+/** The month and day of a date (`"2026-11-20"` → `"11-20"`), or the value as it came. */
+export function formatMonthDay(value: unknown): string {
+  const text = scalarText(value).trim();
+  const match = /^\d{4}-(\d{2})-(\d{2})/.exec(text);
+  return match ? `${match[1]}-${match[2]}` : text;
+}
+
+/**
+ * One table cell as text, by the column's `format` and `enumPrefix`: `date`,
+ * `datetime`, `month_day`, `money`/`decimal` (`formatAmount`), `kurus`
+ * (`formatKurus`), `number` (grouped thousands), `flag` and `list`; any other
+ * format shows the value as it came.
+ */
 export function formatCell(
   value: unknown,
   column: Pick<TableColumn, "format" | "enumPrefix">,
@@ -252,9 +280,15 @@ export function formatCell(
       return scalarText(value).slice(0, 10);
     case "datetime":
       return scalarText(value).slice(0, 16).replace("T", " ");
+    case "month_day":
+      return formatMonthDay(value);
     case "money":
     case "decimal":
       return formatAmount(value);
+    case "kurus":
+      return formatKurus(value);
+    case "number":
+      return metricText(value, "number");
     case "flag":
       return typeof value === "boolean" ? (value ? "✓" : "✗") : scalarText(value);
     case "list":
@@ -1111,15 +1145,35 @@ export function changeDirection(change: unknown): ChangeDirection | undefined {
   return parts.sign === "-" ? "down" : "up";
 }
 
-/** A change as signed text, formatted as its metric's value (`"+12.5%"`). */
-export function changeText(change: unknown, format: unknown): string {
-  const text = scalarText(change).trim();
-  const direction = changeDirection(text);
-  if (direction === undefined || direction === "flat") {
-    return metricText(text, format);
+/** Adds one to a string of decimal digits (`"199"` → `"200"`). */
+function incrementDigits(digits: string): string {
+  const out = digits.split("");
+  for (let i = out.length - 1; i >= 0; i -= 1) {
+    if (out[i] !== "9") {
+      out[i] = String(Number(out[i]) + 1);
+      return out.join("");
+    }
+    out[i] = "0";
   }
-  const magnitude = text.replace(/^[+-]/, "");
-  return `${direction === "down" ? "-" : "+"}${metricText(magnitude, format)}`;
+  return `1${out.join("")}`;
+}
+
+/**
+ * A `Metric.change` as xlarge draws it, whatever the metric's `format`: the
+ * size of the change as a whole-number percent with grouped thousands,
+ * rounded half away from zero on the text, never through a float
+ * (`"12.5"` → `"13%"`, `"-2.4"` → `"2%"`, `"+1234"` → `"1,234%"`). The sign is
+ * the arrow's (`changeDirection`). `undefined` when it is not a plain decimal.
+ */
+export function changePercent(change: unknown): string | undefined {
+  const parts = splitDecimal(scalarText(change).trim().replace(/%$/, ""));
+  if (parts === undefined) {
+    return undefined;
+  }
+  const whole = parts.fraction !== "" && parts.fraction[0]! >= "5"
+    ? incrementDigits(parts.whole)
+    : parts.whole;
+  return `${groupThousands(whole.replace(/^0+(?=\d)/, ""))}%`;
 }
 
 /** How a change is coloured: good, bad, or neither. */
@@ -1143,21 +1197,45 @@ export function changeTone(direction: ChangeDirection | undefined, better: unkno
   return direction === wanted ? "good" : "bad";
 }
 
-/** One state row of a cheque or promissory note's leaf. */
-export interface ChequeLeafRow {
-  readonly key: string;
-  /** The translated state word (`statePrefix + state`). */
-  readonly state: string;
+/** The fields a cheque leaf and its stub both carry, as text. */
+export interface ChequeLeafStub {
+  readonly number: string;
   readonly date: string;
+  readonly payee: string;
+  /** Formatted from its text by `formatAmount`, never through a float. */
   readonly amount: string;
-  readonly party: string;
-  readonly note: string;
+  readonly memo: string;
+}
+
+/** One physical leaf of a prenumbered cheque book. */
+export interface ChequeLeafRow extends ChequeLeafStub {
+  readonly key: string;
+  /** The leaf's state code as it came (`"printed"`, `"void"`, ...). */
+  readonly state: string;
+  /** The translated `statePrefix + state` when the leaf is void, else `""`. */
+  readonly voidWord: string;
+  readonly amountWords: string;
+  /** The stub kept in the book, when the leaf has one. */
+  readonly stub: ChequeLeafStub | undefined;
+}
+
+function leafStub(raw: Record<string, unknown>): ChequeLeafStub {
+  const amount = scalarText(raw["amount"]).trim();
+  return {
+    number: scalarText(raw["number"]),
+    date: scalarText(raw["date"]),
+    payee: scalarText(raw["payee"]),
+    amount: amount === "" ? "" : formatAmount(amount),
+    memo: scalarText(raw["memo"]),
+  };
 }
 
 /**
- * The rows of a `ChequeLeaf`: each row's `state` translated as
- * `statePrefix + state`, its `date` (or `at`) as a date, its `amount` as
- * `formatAmount`, and its `party` (or `partner`) and `note` as they came.
+ * The leaves of a `ChequeLeaf`, one per row of `rows`: its `number`, `date`,
+ * `payee`, `amount` (`formatAmount`), `memo` and `amountWords` as text, its
+ * `state`, the translated `statePrefix + state` beside the number only when
+ * the state is `void`, and its `stub` when it has one. The rows' `layout`
+ * (millimetre positions on the printed leaf) is not read here.
  */
 export function chequeLeafRows(
   rows: unknown,
@@ -1167,15 +1245,21 @@ export function chequeLeafRows(
   const prefix = typeof statePrefix === "string" ? statePrefix : "";
   return tableRows(rows).map((row, index) => {
     const id = row["id"];
+    const number = row["number"];
     const state = scalarText(row["state"]);
-    const amount = scalarText(row["amount"]);
+    const stub = row["stub"];
     return {
-      key: typeof id === "string" || typeof id === "number" ? `id:${id}` : `at:${index}`,
-      state: state === "" ? "" : translate(`${prefix}${state}`),
-      date: scalarText(row["date"] ?? row["at"]).slice(0, 10),
-      amount: amount === "" ? "" : formatAmount(amount),
-      party: scalarText(row["party"] ?? row["partner"]),
-      note: scalarText(row["note"]),
+      ...leafStub(row),
+      key:
+        typeof id === "string" || typeof id === "number"
+          ? `id:${id}`
+          : (typeof number === "string" || typeof number === "number") && String(number) !== ""
+            ? `no:${number}`
+            : `at:${index}`,
+      state,
+      voidWord: state === "void" ? translate(`${prefix}${state}`) : "",
+      amountWords: scalarText(row["amountWords"]),
+      stub: isRecord(stub) ? leafStub(stub) : undefined,
     };
   });
 }

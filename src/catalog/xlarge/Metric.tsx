@@ -3,10 +3,13 @@
  *
  * One number with its change: the translated `label`, the bound `value`
  * formatted by `format` from its text (never through a float), and the bound
- * `change` with an arrow, coloured by `better` (`up` or `down`): the better way
- * is drawn in the primary colour, the other in the destructive one, a flat
- * change muted. `accent` colours the card's edge (`Text.tone` words) and
- * `hint` (a code) shows under it.
+ * `change` as xlarge draws it whatever `format` is: ▲ or ▼ and a whole-number
+ * percent (rounded half away from zero on the text), then the host's
+ * `againstBeforeLabel` ("vs before"). It is coloured by `better` (`up` or
+ * `down`): the better way in the primary colour, the other in the destructive
+ * one, a flat change muted. A change that is not a number draws nothing.
+ * `accent` colours the card's edge (`Text.tone` words) and `hint` (a code)
+ * shows under it.
  */
 
 import { Text, View, computed, type JSX } from "nsh";
@@ -19,7 +22,7 @@ import type { A2uiComponentRenderer } from "../../renderer/registry";
 import type { ResolvedXlargeOptions } from "./context";
 import {
   changeDirection,
-  changeText,
+  changePercent,
   changeTone,
   metricText,
   textTone,
@@ -63,15 +66,20 @@ export function createXlargeMetric(
     const value = computed(() => metricText(unwrapBinding(valueProp()), format()));
     const change = computed(() => {
       const raw = unwrapBinding(changeProp());
-      if (raw === undefined || raw === null || String(raw).trim() === "") {
+      const percent = changePercent(raw);
+      if (percent === undefined) {
         return undefined;
       }
       const direction = changeDirection(raw);
       const arrow = direction === "up" ? "▲ " : direction === "down" ? "▼ " : "";
       return {
-        text: `${arrow}${changeText(raw, format())}`,
+        text: `${arrow}${percent}`,
         tone: changeTone(direction, unwrapBinding(betterProp())),
       };
+    });
+    const changeLabel = computed(() => {
+      const shown = change();
+      return shown !== undefined ? `${shown.text} ${options.againstBeforeLabel}` : undefined;
     });
     const frame = computed(
       () =>
@@ -82,7 +90,7 @@ export function createXlargeMetric(
       <View
         testID={props.testId}
         class={frame()}
-        accessibilityLabel={[label(), value(), change()?.text].filter((part) => part).join(", ")}
+        accessibilityLabel={[label(), value(), changeLabel()].filter((part) => part).join(", ")}
       >
         <If when={label() !== undefined}>
           <Text testID={`${props.testId}:label`} class="text-sm text-muted-foreground">
@@ -93,9 +101,18 @@ export function createXlargeMetric(
           {value()}
         </Text>
         <If when={change() !== undefined}>
-          <Text testID={`${props.testId}:change`} class={CHANGE_CLASS[change()?.tone ?? "neutral"]}>
-            {change()?.text ?? ""}
-          </Text>
+          <View
+            testID={`${props.testId}:change`}
+            class="flex-row flex-wrap items-center gap-1"
+            accessibilityLabel={changeLabel() ?? ""}
+          >
+            <Text testID={`${props.testId}:change:percent`} class={CHANGE_CLASS[change()?.tone ?? "neutral"]}>
+              {change()?.text ?? ""}
+            </Text>
+            <Text testID={`${props.testId}:change:against`} class="text-xs text-muted-foreground">
+              {options.againstBeforeLabel}
+            </Text>
+          </View>
         </If>
         <If when={hint() !== undefined}>
           <Text testID={`${props.testId}:hint`} class="text-xs text-muted-foreground">

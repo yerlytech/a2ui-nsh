@@ -19,7 +19,7 @@ import {
   draftLines,
   literalContext,
   changeDirection,
-  changeText,
+  changePercent,
   changeTone,
   chequeLeafRows,
   columnWeights,
@@ -33,6 +33,7 @@ import {
   fillParams,
   formatAmount,
   formatCell,
+  formatKurus,
   heldValues,
   messageText,
   missingRequired,
@@ -191,6 +192,28 @@ describe("xlarge catalog model", () => {
     expect(formatCell("crm.stage.new", { enumPrefix: "" }, upper)).toBe("CRM.STAGE.NEW");
     expect(formatCell(null, { format: "date" }, upper)).toBe("");
     expect(formatCell(3, {}, upper)).toBe("3");
+    expect(formatCell("2026-11-20", { format: "month_day" }, upper)).toBe("11-20");
+    expect(formatCell("1987-02-03T00:00:00Z", { format: "month_day" }, upper)).toBe("02-03");
+    expect(formatCell("soon", { format: "month_day" }, upper)).toBe("soon");
+    expect(formatCell("1234567.5", { format: "number" }, upper)).toBe("1,234,567.5");
+    expect(formatCell(1204, { format: "number" }, upper)).toBe("1,204");
+    expect(formatCell("1250", { format: "kurus" }, upper)).toBe("12.50");
+    expect(formatCell(7, { format: "rating" }, upper)).toBe("7");
+  });
+
+  test("kurus are whole minor units drawn as major units, from the text", () => {
+    expect(formatKurus("1250")).toBe("12.50");
+    expect(formatKurus("-5")).toBe("-0.05");
+    expect(formatKurus("0")).toBe("0.00");
+    expect(formatKurus("-0")).toBe("0.00");
+    expect(formatKurus("7")).toBe("0.07");
+    expect(formatKurus("100")).toBe("1.00");
+    expect(formatKurus("123456789")).toBe("1,234,567.89");
+    expect(formatKurus("00042")).toBe("0.42");
+    expect(formatKurus("12345678901234567890123")).toBe("123,456,789,012,345,678,901.23");
+    expect(formatKurus(1250)).toBe("12.50");
+    expect(formatKurus("12.5")).toBe("12.5");
+    expect(formatKurus("n/a")).toBe("n/a");
   });
 
   test("columns drop entries without a field", () => {
@@ -446,7 +469,7 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf helpers", () => {
     expect(metricText(null, "money")).toBe("");
   });
 
-  test("changeDirection, changeText and changeTone follow `better`", () => {
+  test("changeDirection, changePercent and changeTone follow `better`", () => {
     expect(changeDirection("12.5")).toBe("up");
     expect(changeDirection("+4")).toBe("up");
     expect(changeDirection("-3")).toBe("down");
@@ -454,10 +477,21 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf helpers", () => {
     expect(changeDirection("4%")).toBe("up");
     expect(changeDirection("soon")).toBe(undefined);
 
-    expect(changeText("12.5", "percent")).toBe("+12.5%");
-    expect(changeText("-2500.5", "money")).toBe("-2,500.50");
-    expect(changeText("+4", "count")).toBe("+4");
-    expect(changeText("0", undefined)).toBe("0");
+    // A whole-number percent, rounded half away from zero on the text.
+    expect(changePercent("12.5")).toBe("13%");
+    expect(changePercent("12.49")).toBe("12%");
+    expect(changePercent("-12.5")).toBe("13%");
+    expect(changePercent("-2.4")).toBe("2%");
+    expect(changePercent("+4")).toBe("4%");
+    expect(changePercent("99.5%")).toBe("100%");
+    expect(changePercent("0.4")).toBe("0%");
+    expect(changePercent("0")).toBe("0%");
+    expect(changePercent("001234.7")).toBe("1,235%");
+    expect(changePercent("99999999999999999999.5")).toBe("100,000,000,000,000,000,000%");
+    expect(changePercent(7)).toBe("7%");
+    expect(changePercent("soon")).toBe(undefined);
+    expect(changePercent(null)).toBe(undefined);
+    expect(changePercent("")).toBe(undefined);
 
     expect(changeTone("up", "up")).toBe("good");
     expect(changeTone("down", "up")).toBe("bad");
@@ -468,19 +502,65 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf helpers", () => {
     expect(changeTone(undefined, "up")).toBe("neutral");
   });
 
-  test("chequeLeafRows translates states and formats dates and amounts", () => {
+  test("chequeLeafRows reads one leaf per row, the state word only when void", () => {
     const rows = [
-      { id: 1, state: "portfolio", date: "2026-10-01T09:00:00Z", amount: "15000", party: "Acme" },
-      { state: "endorsed", at: "2026-10-15", partner: "Bolt", note: "to supplier" },
+      {
+        id: "leaf-1",
+        number: "CHK-2026-0001",
+        state: "printed",
+        date: "2026-11-20",
+        payee: "Acme Logistics",
+        amount: "15000",
+        amountWords: "Fifteen thousand",
+        memo: "Invoice 42",
+        layout: { date: { top: 12, left: 160 }, amount: { top: 30, left: 160 } },
+        stub: { number: "CHK-2026-0001", date: "2026-11-20", payee: "Acme Logistics", amount: "15000.5", memo: "Invoice 42" },
+      },
+      { number: "CHK-2026-0002", state: "void", stub: null },
       "not a row",
-      { id: "c", state: "" },
+      { state: "blank" },
     ];
-    expect(chequeLeafRows(rows, "fin.cheque.state.", upper)).toEqual([
-      { key: "id:1", state: "FIN.CHEQUE.STATE.PORTFOLIO", date: "2026-10-01", amount: "15,000.00", party: "Acme", note: "" },
-      { key: "at:1", state: "FIN.CHEQUE.STATE.ENDORSED", date: "2026-10-15", amount: "", party: "Bolt", note: "to supplier" },
-      { key: "id:c", state: "", date: "", amount: "", party: "", note: "" },
+    expect(chequeLeafRows(rows, "bank.cheque_leaf_state.", upper)).toEqual([
+      {
+        key: "id:leaf-1",
+        number: "CHK-2026-0001",
+        state: "printed",
+        voidWord: "",
+        date: "2026-11-20",
+        payee: "Acme Logistics",
+        amount: "15,000.00",
+        amountWords: "Fifteen thousand",
+        memo: "Invoice 42",
+        stub: { number: "CHK-2026-0001", date: "2026-11-20", payee: "Acme Logistics", amount: "15,000.50", memo: "Invoice 42" },
+      },
+      {
+        key: "no:CHK-2026-0002",
+        number: "CHK-2026-0002",
+        state: "void",
+        voidWord: "BANK.CHEQUE_LEAF_STATE.VOID",
+        date: "",
+        payee: "",
+        amount: "",
+        amountWords: "",
+        memo: "",
+        stub: undefined,
+      },
+      {
+        key: "at:2",
+        number: "",
+        state: "blank",
+        voidWord: "",
+        date: "",
+        payee: "",
+        amount: "",
+        amountWords: "",
+        memo: "",
+        stub: undefined,
+      },
     ]);
-    expect(chequeLeafRows([{ state: "bounced" }], undefined, upper)[0]!.state).toBe("BOUNCED");
+    // An amount that is not a plain decimal is shown as it came.
+    expect(chequeLeafRows([{ amount: "1.250,00" }], undefined, upper)[0]!.amount).toBe("1.250,00");
+    expect(chequeLeafRows([{ state: "void" }], undefined, upper)[0]!.voidWord).toBe("VOID");
     expect(chequeLeafRows(undefined, "x.", upper)).toEqual([]);
   });
 
