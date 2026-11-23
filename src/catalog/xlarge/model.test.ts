@@ -16,9 +16,13 @@ import {
   stepsAnswer,
   wizardStep,
   calendarMonth,
+  calendarPeriod,
+  chartHeadline,
   chartKind,
   chartPoints,
-  conversationRows,
+  conversationAround,
+  conversationMessages,
+  lastOfMonth,
   pieShares,
   sumDecimals,
   draftLines,
@@ -590,34 +594,75 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf helpers", () => {
     expect(chequeLeafRows(undefined, "x.", upper)).toEqual([]);
   });
 
-  test("chartKind reads bar, line and pie with their synonyms", () => {
+  test("chartKind reads xlarge's sparkline, line and bars; anything else is a donut", () => {
+    expect(chartKind("sparkline")).toBe("sparkline");
     expect(chartKind("line")).toBe("line");
-    expect(chartKind("area")).toBe("line");
-    expect(chartKind("pie")).toBe("pie");
-    expect(chartKind("donut")).toBe("pie");
-    expect(chartKind("bar")).toBe("bar");
-    expect(chartKind("radar")).toBe("bar");
-    expect(chartKind(undefined)).toBe("bar");
+    expect(chartKind("bars")).toBe("bars");
+    expect(chartKind("donut")).toBe("donut");
+    // xlarge's client draws a donut for every other word, `bar` and `pie` too.
+    expect(chartKind("bar")).toBe("donut");
+    expect(chartKind("pie")).toBe("donut");
+    expect(chartKind(undefined)).toBe("donut");
   });
 
-  test("chartPoints formats labels and values from text and reads tones", () => {
-    const rows = [
-      { id: 1, label: "won", value: "125000.1" },
-      { name: "open", amount: 40000 },
-      { key: "lost", count: "n/a" },
-      "not a row",
+  test("chartPoints reads lab_samples.figures' byState with its prefix and tones", () => {
+    // figures.toml: label_prefix = "lab_samples.sample_state.", tones by state.
+    const byState = [
+      { label: "received", value: 7 },
+      { label: "completed", value: 12 },
+      { label: "disposed", value: 0 },
+      { label: "rejected", value: 1 },
     ];
-    expect(
-      chartPoints(rows, { format: "money", labelPrefix: "crm.stage.", tones: { won: "good", open: "nope" } }, upper),
-    ).toEqual([
-      { key: "id:1", label: "CRM.STAGE.WON", raw: "125000.1", value: "125,000.10", size: 125000.1, tone: "accent" },
-      { key: "at:1:open", label: "CRM.STAGE.OPEN", raw: "40000", value: "40,000.00", size: 40000 },
-      { key: "at:2:lost", label: "CRM.STAGE.LOST", raw: "n/a", value: "n/a", size: 0 },
+    const tones = { received: "info", completed: "success", disposed: "neutral", rejected: "danger" };
+    expect(chartPoints(byState, { labelPrefix: "lab_samples.sample_state.", tones }, upper)).toEqual([
+      { key: "at:0:received", label: "LAB_SAMPLES.SAMPLE_STATE.RECEIVED", raw: "7", value: "7", size: 7, tone: "info" },
+      { key: "at:1:completed", label: "LAB_SAMPLES.SAMPLE_STATE.COMPLETED", raw: "12", value: "12", size: 12, tone: "success" },
+      { key: "at:2:disposed", label: "LAB_SAMPLES.SAMPLE_STATE.DISPOSED", raw: "0", value: "0", size: 0, tone: "neutral" },
+      { key: "at:3:rejected", label: "LAB_SAMPLES.SAMPLE_STATE.REJECTED", raw: "1", value: "1", size: 1, tone: "danger" },
     ]);
-    expect(chartPoints({ "2026-10-01T00:00:00Z": "3" }, { labelFormat: "date" }, upper)).toEqual([
-      { key: "at:0:2026-10-01T00:00:00Z", label: "2026-10-01", raw: "3", value: "3", size: 3 },
+  });
+
+  test("chartPoints reads receivedByDay by its date format, numbers grouped", () => {
+    // figures.toml: label_format = "date"; no format, so `number`.
+    expect(
+      chartPoints([{ label: "2026-11-23", value: 1250 }, { label: "2026-11-24", value: "3" }], { labelFormat: "date" }, upper),
+    ).toEqual([
+      { key: "at:0:2026-11-23", label: "2026-11-23", raw: "1250", value: "1,250", size: 1250 },
+      { key: "at:1:2026-11-24", label: "2026-11-24", raw: "3", value: "3", size: 3 },
+    ]);
+  });
+
+  test("chartPoints shows a money caption as it came and drops points with no number", () => {
+    // The dashboard's money points: the caption is major units as text.
+    const points = chartPoints(
+      [
+        { label: "2026-10", value: 12345678901234567, caption: "123456789012345.67" },
+        { label: "2026-11", value: "n/a" },
+        { label: "unknown tone", value: "5" },
+        "not a row",
+      ],
+      { format: "money", tones: { "unknown tone": "good" } },
+      upper,
+    );
+    expect(points.map((point) => [point.label, point.raw, point.value, point.tone])).toEqual([
+      ["2026-10", "123456789012345.67", "123,456,789,012,345.67", undefined],
+      ["unknown tone", "5", "5.00", undefined],
     ]);
     expect(chartPoints(undefined, {}, upper)).toEqual([]);
+    // An object of label → value is not a shape xlarge sends.
+    expect(chartPoints({ won: "3" }, {}, upper)).toEqual([]);
+  });
+
+  test("chartHeadline is the exact total with sum, else the last value", () => {
+    const points = chartPoints(
+      [{ label: "a", value: "0.1" }, { label: "b", value: "0.2" }, { label: "c", value: "1250" }],
+      {},
+      upper,
+    );
+    expect(chartHeadline(points, true, undefined)).toBe("1,250.3");
+    expect(chartHeadline(points, undefined, undefined)).toBe("1,250");
+    expect(chartHeadline(points, true, "money")).toBe("1,250.30");
+    expect(chartHeadline([], true, undefined)).toBe("");
   });
 
   test("sumDecimals adds exactly, never through a float", () => {
@@ -634,40 +679,104 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf helpers", () => {
     expect(pieShares([{ size: 0 }])).toEqual([0]);
   });
 
-  test("calendarMonth lays out a month Monday first with its marks", () => {
-    const month = calendarMonth({ month: "2026-11", days: [{ date: "2026-11-24", count: 5 }, { date: "", count: 1 }] });
-    expect(month?.year).toBe(2026);
-    expect(month?.month).toBe(11);
+  // What calendar.month answers (xlarge src/platform/src/calendar.rs `Month`).
+  const NOVEMBER = {
+    month: "2026-11",
+    first: "2026-11-01",
+    last: "2026-11-30",
+    previous: "2026-10",
+    next: "2026-12",
+    items: [
+      { id: "wo1", day: "2026-11-24", start: "2026-11-24T06:30:00Z", end: null, time: "09:30", title: "Boiler service", screen: "screen:work_orders.order", tone: "info", module: "work_orders", label: "work_orders.calendar.job" },
+      { id: "ev1", day: "2026-11-24", start: null, end: null, time: null, title: "Audit", screen: "screen:events.event", tone: null, module: "events", label: "events.calendar.event" },
+      { id: "dl1", day: "2026-11-30", time: null, title: "VAT return", screen: "screen:deadlines.deadline", tone: "danger", module: "deadlines", label: "deadlines.calendar.deadline" },
+    ],
+    sources: [
+      { module: "work_orders", label: "work_orders.calendar.job", count: 1 },
+      { module: "events", label: "events.calendar.event", count: 1 },
+    ],
+    missing: [{ module: "calibration", label: "calibration.calendar.due", code: "calendar.timed_out" }],
+    incomplete: true,
+  };
+
+  test("calendarMonth lays out calendar.month's answer Monday first with its items", () => {
+    const month = calendarMonth(NOVEMBER);
+    expect(month?.month).toBe("2026-11");
+    expect([month?.year, month?.monthNumber, month?.previous, month?.next]).toEqual([2026, 11, "2026-10", "2026-12"]);
     // 1 November 2026 is a Sunday: six blanks lead, five weeks after.
     expect(month?.weeks.length).toBe(6);
     expect(month?.weeks[0]!.map((day) => day.day)).toEqual([0, 0, 0, 0, 0, 0, 1]);
     expect(month?.weeks[5]!.map((day) => day.day)).toEqual([30, 0, 0, 0, 0, 0, 0]);
-    const marked = month?.weeks.flat().find((day) => day.date === "2026-11-24");
-    expect(marked).toEqual({ key: "2026-11-24", date: "2026-11-24", day: 24, mark: "5" });
+    const day = month?.weeks.flat().find((cell) => cell.date === "2026-11-24");
+    expect(day?.items).toEqual([
+      { key: "0:wo1", id: "wo1", day: "2026-11-24", time: "09:30", title: "Boiler service", screen: "screen:work_orders.order", tone: "info", module: "work_orders", label: "work_orders.calendar.job" },
+      { key: "1:ev1", id: "ev1", day: "2026-11-24", time: "", title: "Audit", screen: "screen:events.event", tone: "neutral", module: "events", label: "events.calendar.event" },
+    ]);
+    expect(month?.sources).toEqual([
+      { module: "work_orders", label: "work_orders.calendar.job", count: "1" },
+      { module: "events", label: "events.calendar.event", count: "1" },
+    ]);
+    expect(month?.missing).toEqual([{ module: "calibration", label: "calibration.calendar.due" }]);
+    expect(month?.shown).toBe(3);
+  });
 
+  test("calendarMonth filters by module and needs a whole month", () => {
+    const events = calendarMonth(NOVEMBER, "events");
+    expect(events?.shown).toBe(1);
+    expect(events?.weeks.flat().flatMap((cell) => cell.items.map((item) => item.id))).toEqual(["ev1"]);
     // February 2027 starts on a Monday: four full weeks, no blanks.
-    const february = calendarMonth("2027-02-14");
+    const february = calendarMonth({ month: "2027-02", first: "2027-02-01", last: "2027-02-28", items: [] });
     expect(february?.weeks.length).toBe(4);
     expect(february?.weeks[0]![0]!.date).toBe("2027-02-01");
-    expect(calendarMonth({ start: "2028-02", days: { "2028-02-29": "Stock count" } })?.weeks.flat().find((day) => day.day === 29)?.mark).toBe("Stock count");
-    expect(calendarMonth("2026-13")).toBe(undefined);
+    expect([february?.previous, february?.next, february?.shown]).toEqual(["", "", 0]);
+    expect(calendarMonth("2026-11")).toBe(undefined);
+    expect(calendarMonth({ month: "2026-11" })).toBe(undefined);
     expect(calendarMonth(undefined)).toBe(undefined);
   });
 
-  test("conversationRows reads messages, their side, and the other party", () => {
+  test("calendarPeriod asks a month again as xlarge's client does", () => {
+    expect(calendarPeriod("2026-10")).toEqual({ period: "between", from: "2026-10-01", to: "2026-10-31" });
+    expect(calendarPeriod("2028-02")).toEqual({ period: "between", from: "2028-02-01", to: "2028-02-29" });
+    expect(lastOfMonth("2026-02")).toBe("2026-02-28");
+    expect(calendarPeriod("")).toBe(undefined);
+    expect(calendarPeriod(undefined)).toBe(undefined);
+  });
+
+  test("conversationMessages reads talk.on's rows newest first, drawn oldest first", () => {
     const rows = [
-      { id: "m1", text: "Hello", at: "2026-11-20T09:15:00Z" },
-      { id: "m2", body: "Hi", from: "Deniz", direction: "out" },
-      { message: "Ok", mine: true },
-      { text: "Bye", author: "Ece", date: "2026-11-21" },
+      { id: "m3", by: { id: "u1", name: "Deniz" }, text: null, takenBack: true, at: "2026-11-20T10:02:00Z", mine: true, reactions: [], myReaction: [] },
+      { id: "m2", by: null, text: "Ready at noon.", takenBack: false, at: "2026-11-20T09:40:00Z", mine: false, reactions: [{ emoji: "👍", count: 2 }, { emoji: "🎉", count: 1 }], myReaction: ["👍"] },
+      { id: "m1", by: { id: "u2", name: "Ece" }, text: "Is S-0012 in?", takenBack: false, at: "2026-11-20T09:15:00Z", mine: false },
     ];
-    expect(conversationRows(rows, "Acme")).toEqual([
-      { key: "id:m1", id: "m1", author: "Acme", text: "Hello", at: "2026-11-20 09:15", mine: false },
-      { key: "id:m2", id: "m2", author: "Deniz", text: "Hi", at: "", mine: true },
-      { key: "at:2", id: undefined, author: "", text: "Ok", at: "", mine: true },
-      { key: "at:3", id: undefined, author: "Ece", text: "Bye", at: "2026-11-21", mine: false },
+    const messages = conversationMessages(rows);
+    expect(messages.map((message) => [message.id, message.by, message.text, message.at, message.mine, message.takenBack])).toEqual([
+      ["m1", "Ece", "Is S-0012 in?", "2026-11-20 09:15", false, false],
+      ["m2", "", "Ready at noon.", "2026-11-20 09:40", false, false],
+      ["m3", "Deniz", "", "2026-11-20 10:02", true, true],
     ]);
-    expect(conversationRows(undefined, "Acme")).toEqual([]);
+    expect(messages[1]!.reactions).toEqual([
+      { emoji: "👍", count: 2, mine: true },
+      { emoji: "✅", count: 0, mine: false },
+      { emoji: "👀", count: 0, mine: false },
+      { emoji: "🎉", count: 1, mine: false },
+    ]);
+    expect(messages[0]!.reactions.map((reaction) => reaction.count)).toEqual([0, 0, 0]);
+    expect(conversationMessages(undefined)).toEqual([]);
+  });
+
+  test("conversationAround reads talk.about and the record's id from the talk id", () => {
+    expect(
+      conversationAround({
+        talk: "r_sample_01JABCDEF",
+        people: [{ id: "u2", name: "Ece" }, { id: "", name: "nobody" }],
+        unread: true,
+        follow: { record: "talk:r_sample_01JABCDEF", read: "talk.one" },
+      }),
+    ).toEqual({ talk: "r_sample_01JABCDEF", record: "01JABCDEF", people: [{ id: "u2", name: "Ece" }], unread: true });
+    // A kind with an underscore: the id is after the last one.
+    expect(conversationAround({ talk: "r_work_order_01K" }).record).toBe("01K");
+    expect(conversationAround({ talk: "p_a_b" }).record).toBe("");
+    expect(conversationAround(undefined)).toEqual({ talk: "", record: "", people: [], unread: false });
   });
 });
 

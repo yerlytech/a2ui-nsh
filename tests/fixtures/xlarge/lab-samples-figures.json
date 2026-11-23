@@ -1,0 +1,75 @@
+{
+  "source": "built from xlarge's src/modules/lab_samples/surfaces/figures.toml (surface lab_samples.figures_card, spec 038) as its server sends a screen on the A2UI 1.0 wire (spec 208); the data is in the shape lab_samples.figures answers, rows of { label, value }; not captured from a running server",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "lab_samples.figures_card", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "lab_samples.figures_card",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["received", "by_state"],
+            "pageTitle": "lab_samples.title.figures",
+            "plain": true
+          },
+          {
+            "id": "received",
+            "component": "Chart",
+            "data": { "@path": "/samples/receivedByDay" },
+            "kind": "sparkline",
+            "label": "lab_samples.metric.received_14_days",
+            "labelFormat": "date",
+            "sum": true
+          },
+          {
+            "id": "by_state",
+            "component": "Chart",
+            "data": { "@path": "/samples/byState" },
+            "kind": "donut",
+            "label": "lab_samples.title.by_state_14_days",
+            "labelPrefix": "lab_samples.sample_state.",
+            "tones": { "received": "info", "completed": "success", "disposed": "neutral", "rejected": "danger" }
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "lab_samples.figures_card",
+        "path": "/",
+        "value": {
+          "samples": {
+            "receivedByDay": [
+              { "label": "2026-11-11", "value": 4 },
+              { "label": "2026-11-12", "value": 6 },
+              { "label": "2026-11-13", "value": 3 },
+              { "label": "2026-11-14", "value": 0 },
+              { "label": "2026-11-15", "value": 0 },
+              { "label": "2026-11-16", "value": 5 },
+              { "label": "2026-11-17", "value": 8 },
+              { "label": "2026-11-18", "value": 7 },
+              { "label": "2026-11-19", "value": 9 },
+              { "label": "2026-11-20", "value": 4 },
+              { "label": "2026-11-21", "value": 0 },
+              { "label": "2026-11-22", "value": 0 },
+              { "label": "2026-11-23", "value": 6 },
+              { "label": "2026-11-24", "value": 1250 }
+            ],
+            "byState": [
+              { "label": "received", "value": 21 },
+              { "label": "completed", "value": 1278 },
+              { "label": "disposed", "value": 3 },
+              { "label": "rejected", "value": 0 }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

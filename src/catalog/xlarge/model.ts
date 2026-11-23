@@ -1375,43 +1375,43 @@ function stepOutcome(value: unknown): StepOutcome | undefined {
 }
 
 /** How a `Chart` is drawn. */
-export type ChartKind = "bar" | "line" | "pie";
+export type ChartKind = "sparkline" | "line" | "bars" | "donut";
 
 /**
- * The drawing a `Chart.kind` asks for: `line` (and `area`, `trend`), `pie`
- * (and `donut`, `doughnut`); anything else, or none, is `bar`.
+ * The drawing a `Chart.kind` asks for, as xlarge's web client reads it:
+ * `sparkline`, `line` and `bars` by name; anything else, or none, is a donut
+ * (xlarge's screens send `sparkline`, `donut`, and `bars` on its dashboard).
  */
 export function chartKind(kind: unknown): ChartKind {
-  switch (kind) {
-    case "line":
-    case "area":
-    case "trend":
-      return "line";
-    case "pie":
-    case "donut":
-    case "doughnut":
-      return "pie";
-    default:
-      return "bar";
-  }
+  return kind === "sparkline" || kind === "line" || kind === "bars" ? kind : "donut";
+}
+
+/** A tone xlarge gives a state (`Card.tones`, `Chart.tones`). */
+export type StateTone = "neutral" | "info" | "success" | "warning" | "danger";
+
+/** xlarge's tone word, or `undefined` for one it does not know. */
+export function stateTone(tone: unknown): StateTone | undefined {
+  return tone === "neutral" || tone === "info" || tone === "success" || tone === "warning" || tone === "danger"
+    ? tone
+    : undefined;
 }
 
 /** One point of a `Chart`: its label and value as text, and its size to draw. */
 export interface ChartPoint {
   readonly key: string;
-  /** The label as shown (`labelFormat`, `labelPrefix`). */
+  /** The label as shown (`labelPrefix`, else `labelFormat`). */
   readonly label: string;
-  /** The value as typed (a plain decimal, or text that is not one). */
+  /** The value as it came: `caption` when given, else `value` (a plain decimal). */
   readonly raw: string;
-  /** The value as shown (`format`, as `metricText`). */
+  /** The value as shown (`format`, default `number`, as `metricText`). */
   readonly value: string;
   /**
    * The value's size for the drawing only (a bar's height, a slice's angle):
-   * never shown and never summed; `0` when the value is not a plain decimal.
+   * never shown and never summed.
    */
   readonly size: number;
   /** The tone `tones` gives this point's label, if any. */
-  readonly tone?: TextTone;
+  readonly tone?: StateTone;
 }
 
 /** What a `Chart` reads besides its `data`. */
@@ -1420,15 +1420,6 @@ export interface ChartFormat {
   readonly labelFormat?: unknown;
   readonly labelPrefix?: unknown;
   readonly tones?: unknown;
-}
-
-function firstPresent(row: Record<string, unknown>, keys: readonly string[]): unknown {
-  for (const key of keys) {
-    if (row[key] !== undefined && row[key] !== null) {
-      return row[key];
-    }
-  }
-  return undefined;
 }
 
 /**
@@ -1653,53 +1644,63 @@ export function arrangeMoved(template: string, name: string, at: number, count: 
 }
 
 /**
- * The points of a `Chart`'s `data`: a list of rows (`label`, or `name`, `key`,
- * `x`; `value`, or `amount`, `count`, `total`, `y`) or an object of label →
- * value. Each label is shown by `labelFormat` (a `Table` column format) and
- * `labelPrefix` (an i18n prefix, as `enumPrefix`); each value by `format`
- * from its text (as `metricText`). `tones` maps a label, as it came, to a
- * `Text.tone` word.
+ * The points of a `Chart`'s `data`, as xlarge's server sends them: a list of
+ * `{ label, value, caption? }` rows (`lab_samples.figures` answers its days
+ * and states this way). `caption`, when it is text, is what is shown (money
+ * the server already wrote out); otherwise `value`. A row whose value is not
+ * a plain decimal is left out, as xlarge leaves it out. Each label is
+ * translated with `labelPrefix`, else shown by `labelFormat` (a `Table`
+ * column format); each value by `format` (default `number`, as `metricText`)
+ * from its text, never through a float. `tones` maps a label, as it came, to
+ * xlarge's tone word.
  */
 export function chartPoints(
   data: unknown,
   format: ChartFormat,
   translate: Translate,
 ): readonly ChartPoint[] {
-  const pairs: { label: unknown; value: unknown; id: unknown }[] = [];
-  if (Array.isArray(data)) {
-    for (const row of tableRows(data)) {
-      pairs.push({
-        label: firstPresent(row, ["label", "name", "key", "x"]),
-        value: firstPresent(row, ["value", "amount", "count", "total", "y"]),
-        id: row["id"],
-      });
-    }
-  } else if (isRecord(data)) {
-    for (const [label, value] of Object.entries(data)) {
-      pairs.push({ label, value, id: undefined });
-    }
-  }
   const tones = isRecord(format.tones) ? format.tones : {};
   const column = {
     format: typeof format.labelFormat === "string" ? format.labelFormat : undefined,
     enumPrefix: typeof format.labelPrefix === "string" ? format.labelPrefix : undefined,
   };
-  return pairs.map((pair, index) => {
-    const rawLabel = scalarText(pair.label);
-    const raw = scalarText(pair.value).trim();
+  const shownAs = typeof format.format === "string" ? format.format : "number";
+  const points: ChartPoint[] = [];
+  tableRows(data).forEach((row, index) => {
+    const caption = row["caption"];
+    const raw = (typeof caption === "string" ? caption : scalarText(row["value"])).trim();
+    if (splitDecimal(raw) === undefined) {
+      return;
+    }
+    const rawLabel = scalarText(row["label"]);
+    const tone = stateTone(tones[rawLabel]);
     // Only the drawing's geometry reads a number; text and sums never do.
-    const size = splitDecimal(raw) === undefined ? 0 : Number(raw);
-    const tone = tones[rawLabel] !== undefined ? textTone(tones[rawLabel]) : undefined;
-    const id = pair.id;
-    return {
-      key: typeof id === "string" || typeof id === "number" ? `id:${id}` : `at:${index}:${rawLabel}`,
+    const size = Number(raw);
+    points.push({
+      key: `at:${index}:${rawLabel}`,
       label: rawLabel === "" ? "" : formatCell(rawLabel, column, translate),
       raw,
-      value: metricText(raw, format.format),
+      value: metricText(raw, shownAs),
       size: Number.isFinite(size) ? size : 0,
-      ...(tone !== undefined && tone !== "plain" ? { tone } : {}),
-    };
+      ...(tone !== undefined ? { tone } : {}),
+    });
   });
+  return points;
+}
+
+/**
+ * The big figure of a sparkline: with `sum` the exact total of every point,
+ * else the last point's value, shown by `format` (default `number`); `""`
+ * with no points.
+ */
+export function chartHeadline(points: readonly ChartPoint[], sum: unknown, format: unknown): string {
+  if (points.length === 0) {
+    return "";
+  }
+  const shownAs = typeof format === "string" ? format : "number";
+  return sum === true
+    ? metricText(sumDecimals(points.map((point) => point.raw)), shownAs)
+    : (points[points.length - 1]?.value ?? "");
 }
 
 /**
@@ -1737,124 +1738,251 @@ export function pieShares(points: readonly Pick<ChartPoint, "size">[]): readonly
   return points.map((point) => (total > 0 && point.size > 0 ? point.size / total : 0));
 }
 
-/** One day cell of a `Calendar` month grid; outside the month, `date` is empty. */
+/** One dated item on a `Calendar` (xlarge's `calendar::Shown`). */
+export interface CalendarItem {
+  readonly key: string;
+  readonly id: string;
+  /** `YYYY-MM-DD`, where the workspace is. */
+  readonly day: string;
+  /** `HH:MM` it starts, or `""`. */
+  readonly time: string;
+  readonly title: string;
+  /** The action it opens with `{ id }`: `screen:work_orders.order`. */
+  readonly screen: string;
+  readonly tone: StateTone;
+  readonly module: string;
+  /** What it is, a code. */
+  readonly label: string;
+}
+
+/** One cell of a `Calendar` grid; outside the month, `date` is empty. */
 export interface CalendarDay {
   readonly key: string;
   /** `YYYY-MM-DD`, or `""` for a blank cell before or after the month. */
   readonly date: string;
   /** The day of the month, `0` for a blank cell. */
   readonly day: number;
-  /** What the day holds (its `count` or `label`), as text; `""` for nothing. */
-  readonly mark: string;
+  readonly items: readonly CalendarItem[];
 }
 
-/** A `Calendar`'s month: its year and month and its weeks, Monday first. */
+/** What put items on the month, for the filter (xlarge's `calendar::Source`). */
+export interface CalendarSource {
+  readonly module: string;
+  readonly label: string;
+  readonly count: string;
+}
+
+/** A module that could not be read for this month (`calendar::Missing`). */
+export interface CalendarMissing {
+  readonly module: string;
+  readonly label: string;
+}
+
+/** A `Calendar`'s month as xlarge's `calendar.month` answers it, laid out. */
 export interface CalendarMonth {
+  /** `YYYY-MM`. */
+  readonly month: string;
   readonly year: number;
   /** 1 to 12. */
-  readonly month: number;
+  readonly monthNumber: number;
+  /** `YYYY-MM` before and after, or `""`. */
+  readonly previous: string;
+  readonly next: string;
+  /** Monday first, the items filtered by module. */
   readonly weeks: readonly (readonly CalendarDay[])[];
+  readonly sources: readonly CalendarSource[];
+  readonly missing: readonly CalendarMissing[];
+  /** How many items the filter left. */
+  readonly shown: number;
 }
 
 function pad2(value: number): string {
   return value < 10 ? `0${value}` : String(value);
 }
 
-function calendarMarks(days: unknown): Map<string, string> {
-  const marks = new Map<string, string>();
-  if (Array.isArray(days)) {
-    for (const row of tableRows(days)) {
-      const date = scalarText(row["date"]).slice(0, 10);
-      const mark = scalarText(firstPresent(row, ["count", "label", "title"]));
-      if (date !== "" && mark !== "") {
-        marks.set(date, mark);
-      }
-    }
-  } else if (isRecord(days)) {
-    for (const [date, mark] of Object.entries(days)) {
-      const text = scalarText(mark);
-      if (text !== "") {
-        marks.set(date.slice(0, 10), text);
-      }
-    }
+const MONTH = /^(\d{4})-(\d{2})$/;
+const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** The last day of a month, `"2026-02"` → `"2026-02-28"`; `""` for no month. */
+export function lastOfMonth(month: unknown): string {
+  const match = MONTH.exec(scalarText(month));
+  if (!match) {
+    return "";
   }
-  return marks;
+  const days = new Date(Date.UTC(Number(match[1]), Number(match[2]), 0)).getUTCDate();
+  return `${match[1]}-${match[2]}-${pad2(days)}`;
 }
 
 /**
- * The month grid a `Calendar.month` binding holds: `"YYYY-MM"` (or a date in
- * it), or an object with that `month` (or `start`) and its `days`: a list of
- * `{ date, count | label }` rows or an object of date → count. Weeks start on
- * Monday; the cells before the first and after the last day are blank.
- * `undefined` when no month can be read.
+ * The month a `Calendar.month` binding holds, as xlarge's `calendar.month`
+ * answers it: `{ month, first, last, previous, next, items, sources,
+ * missing }`, each item `{ id, day, time?, title, screen, tone?, module,
+ * label }`. Laid out in weeks Monday first from `first` to `last`, each day
+ * with its items, only those of module `only` when it is not `""`.
+ * `undefined` when there is no month to show.
  */
-export function calendarMonth(value: unknown): CalendarMonth | undefined {
-  const head = isRecord(value) ? (value["month"] ?? value["start"]) : value;
-  const match = /^(\d{4})-(\d{2})/.exec(scalarText(head).trim());
-  if (!match) {
+export function calendarMonth(value: unknown, only = ""): CalendarMonth | undefined {
+  if (!isRecord(value)) {
     return undefined;
   }
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  if (month < 1 || month > 12) {
+  const month = MONTH.exec(scalarText(value["month"]));
+  const first = DAY.exec(scalarText(value["first"]));
+  const last = DAY.exec(scalarText(value["last"]));
+  if (!month || !first || !last) {
     return undefined;
   }
-  const marks = calendarMarks(isRecord(value) ? value["days"] : undefined);
-  const length = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  // Monday 0 … Sunday 6.
-  const lead = (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7;
+  const year = Number(first[1]);
+  const monthNumber = Number(first[2]);
+  const items: CalendarItem[] = [];
+  tableRows(value["items"]).forEach((row, index) => {
+    const id = scalarText(row["id"]);
+    const day = scalarText(row["day"]);
+    const module = scalarText(row["module"]);
+    if (only !== "" && module !== only) {
+      return;
+    }
+    items.push({
+      key: `${index}:${id}`,
+      id,
+      day,
+      time: scalarText(row["time"]),
+      title: scalarText(row["title"]),
+      screen: scalarText(row["screen"]),
+      tone: stateTone(row["tone"]) ?? "neutral",
+      module,
+      label: scalarText(row["label"]),
+    });
+  });
+  const lead = (new Date(Date.UTC(year, monthNumber - 1, Number(first[3]))).getUTCDay() + 6) % 7;
   const cells: CalendarDay[] = [];
   for (let blank = 0; blank < lead; blank += 1) {
-    cells.push({ key: `lead:${blank}`, date: "", day: 0, mark: "" });
+    cells.push({ key: `lead:${blank}`, date: "", day: 0, items: [] });
   }
-  for (let day = 1; day <= length; day += 1) {
-    const date = `${match[1]}-${match[2]}-${pad2(day)}`;
-    cells.push({ key: date, date, day, mark: marks.get(date) ?? "" });
+  for (let day = 1; day <= Number(last[3]); day += 1) {
+    const date = `${month[1]}-${month[2]}-${pad2(day)}`;
+    cells.push({ key: date, date, day, items: items.filter((item) => item.day === date) });
   }
   for (let blank = 0; cells.length % 7 !== 0; blank += 1) {
-    cells.push({ key: `trail:${blank}`, date: "", day: 0, mark: "" });
+    cells.push({ key: `trail:${blank}`, date: "", day: 0, items: [] });
   }
   const weeks: CalendarDay[][] = [];
   for (let start = 0; start < cells.length; start += 7) {
     weeks.push(cells.slice(start, start + 7));
   }
-  return { year, month, weeks };
-}
-
-/** One message of a `Conversation` thread. */
-export interface ConversationRow {
-  readonly key: string;
-  /** The row's `id`, sent when it is pressed; `undefined` without one. */
-  readonly id: unknown;
-  readonly author: string;
-  readonly text: string;
-  /** `YYYY-MM-DD HH:MM`, or a date as it came. */
-  readonly at: string;
-  /** Sent from this side (drawn at the end). */
-  readonly mine: boolean;
+  const near = (key: string): string => (MONTH.test(scalarText(value[key])) ? scalarText(value[key]) : "");
+  return {
+    month: `${month[1]}-${month[2]}`,
+    year,
+    monthNumber,
+    previous: near("previous"),
+    next: near("next"),
+    weeks,
+    sources: tableRows(value["sources"]).map((row) => ({
+      module: scalarText(row["module"]),
+      label: scalarText(row["label"]),
+      count: scalarText(row["count"]),
+    })),
+    missing: tableRows(value["missing"]).map((row) => ({
+      module: scalarText(row["module"]),
+      label: scalarText(row["label"]),
+    })),
+    shown: items.length,
+  };
 }
 
 /**
- * The messages of a `Conversation.rows`, oldest first: `text` (or `body`,
- * `message`), `from` (or `author`, `by`; a message from the other side
- * without one is from `called`), `at` (or `date`, `sentAt`), and whether it
- * is `mine` (`mine` or `out` true, or `direction` `out`/`outgoing`).
+ * The context a `Calendar` sends to read its screen again for the month `to`
+ * (`YYYY-MM`), as xlarge's client does: `{ period: "between", from, to }`,
+ * the month's first and last day. `undefined` for no month.
  */
-export function conversationRows(rows: unknown, called: unknown): readonly ConversationRow[] {
-  const other = scalarText(called);
-  return tableRows(rows).map((row, index) => {
-    const id = row["id"];
-    const direction = row["direction"];
-    const mine =
-      row["mine"] === true || row["out"] === true || direction === "out" || direction === "outgoing";
-    const author = scalarText(firstPresent(row, ["from", "author", "by"]));
-    return {
-      key: typeof id === "string" || typeof id === "number" ? `id:${id}` : `at:${index}`,
-      id,
-      author: author !== "" || mine ? author : other,
-      text: scalarText(firstPresent(row, ["text", "body", "message"])),
-      at: formatCell(firstPresent(row, ["at", "date", "sentAt"]), { format: "datetime" }, SHOW_CODES),
-      mine,
-    };
-  });
+export function calendarPeriod(to: unknown): Record<string, unknown> | undefined {
+  const last = lastOfMonth(to);
+  return last === "" ? undefined : { period: "between", from: `${scalarText(to)}-01`, to: last };
+}
+
+/** The emojis a person can always put under a record's message, each once. */
+export const RECORD_EMOJI: readonly string[] = ["👍", "✅", "👀"];
+
+/** One emoji under a message: how many put it, and whether this person did. */
+export interface ConversationReaction {
+  readonly emoji: string;
+  readonly count: number;
+  readonly mine: boolean;
+}
+
+/** One message of a record's `Conversation` (xlarge's `talk.on` row). */
+export interface ConversationMessage {
+  readonly key: string;
+  readonly id: string;
+  /** The writer's name, `""` when the account is gone (`mine` aside). */
+  readonly by: string;
+  readonly text: string;
+  /** `YYYY-MM-DD HH:MM`. */
+  readonly at: string;
+  readonly mine: boolean;
+  readonly takenBack: boolean;
+  /** `RECORD_EMOJI` first, then any other emoji somebody put. */
+  readonly reactions: readonly ConversationReaction[];
+}
+
+/**
+ * The messages of a `Conversation.rows` binding, oldest first. xlarge's
+ * `talk.on` answers them newest first, each `{ id, by: { id, name }?, text?,
+ * takenBack, at, mine, reactions: [{ emoji, count }], myReaction: [emoji] }`.
+ */
+export function conversationMessages(rows: unknown): readonly ConversationMessage[] {
+  return tableRows(rows)
+    .slice()
+    .reverse()
+    .map((row, index) => {
+      const id = scalarText(row["id"]);
+      const by = isRecord(row["by"]) ? scalarText(row["by"]["name"]) : "";
+      const counts = new Map<string, number>();
+      for (const entry of tableRows(row["reactions"])) {
+        const count = Number(entry["count"]);
+        counts.set(scalarText(entry["emoji"]), Number.isFinite(count) ? count : 0);
+      }
+      const mine = new Set(Array.isArray(row["myReaction"]) ? row["myReaction"].map(scalarText) : []);
+      const offered = [...RECORD_EMOJI, ...[...counts.keys()].filter((emoji) => emoji !== "" && !RECORD_EMOJI.includes(emoji))];
+      return {
+        key: id !== "" ? `id:${id}` : `at:${index}`,
+        id,
+        by,
+        text: scalarText(row["text"]),
+        at: formatCell(row["at"], { format: "datetime" }, SHOW_CODES),
+        mine: row["mine"] === true,
+        takenBack: row["takenBack"] === true,
+        reactions: offered.map((emoji) => ({ emoji, count: counts.get(emoji) ?? 0, mine: mine.has(emoji) })),
+      };
+    });
+}
+
+/** Around a record's conversation, as xlarge's `talk.about` answers it. */
+export interface ConversationAround {
+  /** The conversation's id, `r_<kind>_<id>`, or `""`. */
+  readonly talk: string;
+  /** The record's id the conversation's id names, or `""`. */
+  readonly record: string;
+  /** The colleagues a writer may tell. */
+  readonly people: readonly { readonly id: string; readonly name: string }[];
+  readonly unread: boolean;
+}
+
+/**
+ * What a `Conversation.around` binding holds: `{ talk, people, unread }`.
+ * The record's id is read from the conversation's id (`r_<kind>_<id>`, the
+ * id being letters and digits), which is how xlarge's server names it.
+ */
+export function conversationAround(value: unknown): ConversationAround {
+  const held = isRecord(value) ? value : {};
+  const talk = scalarText(held["talk"]);
+  const match = /^r_[a-z_]+_([A-Za-z0-9]+)$/.exec(talk);
+  return {
+    talk,
+    record: match?.[1] ?? "",
+    people: tableRows(held["people"])
+      .map((row) => ({ id: scalarText(row["id"]), name: scalarText(row["name"]) }))
+      .filter((person) => person.id !== ""),
+    unread: held["unread"] === true,
+  };
 }

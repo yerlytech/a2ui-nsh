@@ -1,0 +1,93 @@
+{
+  "source": "built from xlarge's src/platform/surfaces/calendar.toml (surface calendar.month, spec 111) as its server sends a screen on the A2UI 1.0 wire (spec 208); the data is in the shape calendar.month answers (src/platform/src/calendar.rs Month); not captured from a running server",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "calendar.month", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "calendar.month",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["month"],
+            "pageTitle": "calendar.title.month",
+            "title": "calendar.title.month"
+          },
+          {
+            "id": "month",
+            "component": "Calendar",
+            "month": { "@path": "/calendar" },
+            "screen": "calendar.month"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "calendar.month",
+        "path": "/",
+        "value": {
+          "calendar": {
+            "month": "2026-11",
+            "first": "2026-11-01",
+            "last": "2026-11-30",
+            "previous": "2026-10",
+            "next": "2026-12",
+            "items": [
+              {
+                "id": "01JWO1",
+                "day": "2026-11-24",
+                "start": "2026-11-24T06:30:00Z",
+                "end": "2026-11-24T08:00:00Z",
+                "time": "09:30",
+                "title": "Boiler service",
+                "screen": "screen:work_orders.order",
+                "tone": "info",
+                "module": "work_orders",
+                "label": "work_orders.calendar.job"
+              },
+              {
+                "id": "01JEV1",
+                "day": "2026-11-24",
+                "start": null,
+                "end": null,
+                "time": null,
+                "title": "Quality audit",
+                "screen": "screen:events.event",
+                "tone": null,
+                "module": "events",
+                "label": "events.calendar.event"
+              },
+              {
+                "id": "01JDL1",
+                "day": "2026-11-30",
+                "start": null,
+                "end": null,
+                "time": null,
+                "title": "VAT return",
+                "screen": "screen:deadlines.deadline",
+                "tone": "danger",
+                "module": "deadlines",
+                "label": "deadlines.calendar.deadline"
+              }
+            ],
+            "sources": [
+              { "module": "work_orders", "label": "work_orders.calendar.job", "count": 1 },
+              { "module": "events", "label": "events.calendar.event", "count": 1 },
+              { "module": "deadlines", "label": "deadlines.calendar.deadline", "count": 1 }
+            ],
+            "missing": [
+              { "module": "calibration", "label": "calibration.calendar.due", "code": "calendar.timed_out" }
+            ],
+            "incomplete": true
+          }
+        }
+      }
+    }
+  ]
+}

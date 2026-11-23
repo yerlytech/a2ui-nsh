@@ -120,8 +120,6 @@ export interface XlargeRendererOptions {
    * in milliseconds. Default: `600`, as xlarge's client.
    */
   readonly previewPauseMs?: number;
-  /** The words over a `Chart`'s total (`sum`). Default: `"Total"`. */
-  readonly totalLabel?: string;
   /**
    * The host draws in a terminal: a `Chart` shows its table instead of a
    * drawing. Default: `platform.idiom === "terminal"`.
@@ -191,7 +189,6 @@ export interface ResolvedXlargeOptions {
   readonly answer: (() => Readonly<Record<string, unknown>> | null | undefined) | undefined;
   readonly preview: ((action: string, body: PreviewBody) => Promise<string | undefined>) | undefined;
   readonly previewPauseMs: number;
-  readonly totalLabel: string;
   readonly terminal: boolean;
   readonly weekdayLabels: readonly string[];
   readonly monthLabels: readonly string[];
@@ -237,7 +234,6 @@ export function resolveXlargeOptions(
       options.previewPauseMs >= 0
         ? options.previewPauseMs
         : 600,
-    totalLabel: options.totalLabel ?? "Total",
     terminal: options.terminal ?? platform.idiom === "terminal",
     weekdayLabels: options.weekdayLabels?.length === 7 ? options.weekdayLabels : WEEKDAYS,
     monthLabels: options.monthLabels?.length === 12 ? options.monthLabels : MONTHS,

@@ -1,19 +1,22 @@
 /**
  * xlarge catalog `Chart` (`tech.yerly.xlarge/v1`) on Native Shell.
  *
- * Draws the bound `data` (rows of label and value, or an object of label →
- * value) as `kind` says: bars (the default), a line, or a pie, on a `Canvas`;
- * Native Shell 0.6.1 has no chart primitive, so the shapes are drawn with its
- * canvas, and no chart library is added. Values are formatted by `format`
- * from the text they came as (never through a float); only the drawing's
- * geometry reads them as numbers. Labels follow `labelFormat` and
- * `labelPrefix`; `tones` colours a label's bar or slice with a `Text.tone`
- * word; `sum` adds the values exactly and shows the total; `label` (a code)
+ * Draws the bound `data` (rows of `{ label, value, caption? }`, as
+ * `lab_samples.figures` answers them) as `kind` says, the way xlarge's web
+ * client does: a `sparkline` (a small line beside its big figure, the last
+ * value or, with `sum`, the exact total), a `line`, `bars`, or anything else
+ * a donut. Native Shell 0.6.1 has no chart primitive, so the shapes are drawn
+ * on its `Canvas`, and no chart library is added. Values are formatted by
+ * `format` (default `number`) from the text they came as, never through a
+ * float; only the drawing's geometry reads them as numbers. Labels are
+ * translated with `labelPrefix`, else formatted by `labelFormat`; `tones`
+ * colours a label's bar or slice with xlarge's tone word; `label` (a code)
  * names the chart.
  *
- * Under the drawing a legend lists every label with its value. In a terminal
- * (`terminal` option) there is no drawing: the same points show as a table,
- * which is what screen readers and the TUI target read.
+ * Every chart but a sparkline lists its points with their values under the
+ * drawing, so nothing it says is said only in colour or shape. In a terminal
+ * (`terminal` option) there is no drawing: the same points show as a table.
+ * No points says `chart.nothing`, translated.
  */
 
 import {
@@ -34,33 +37,32 @@ import {
 import type { A2uiComponentRenderer } from "../../renderer/registry";
 import type { ResolvedXlargeOptions } from "./context";
 import {
+  chartHeadline,
   chartKind,
   chartPoints,
-  metricText,
   pieShares,
-  sumDecimals,
   type ChartPoint,
-  type TextTone,
+  type StateTone,
 } from "./model";
 
 /** The drawing's height, in points. */
 const CHART_HEIGHT = 200;
+const SPARKLINE_WIDTH = 112;
+const SPARKLINE_HEIGHT = 32;
 const PALETTE = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"] as const;
+/** The theme has no success or warning colour; two chart colours stand in. */
+const TONE_TOKEN: Readonly<Record<StateTone, Parameters<typeof token>[0]>> = {
+  neutral: "muted-foreground",
+  info: "primary",
+  success: "chart-2",
+  warning: "chart-4",
+  danger: "destructive",
+};
 
 function pointColor(point: ChartPoint, index: number): string {
-  const tone: TextTone | undefined = point.tone;
-  switch (tone) {
-    case "accent":
-      return token("primary");
-    case "danger":
-      return token("destructive");
-    case "muted":
-      return token("muted-foreground");
-    case "strong":
-      return token("foreground");
-    default:
-      return token(PALETTE[index % PALETTE.length] ?? "chart-1");
-  }
+  return point.tone !== undefined
+    ? String(token(TONE_TOKEN[point.tone]))
+    : String(token(PALETTE[index % PALETTE.length] ?? "chart-1"));
 }
 
 function drawBars(
@@ -69,10 +71,7 @@ function drawBars(
   width: number,
   height: number,
 ): void {
-  const top = Math.max(...points.map((point) => point.size), 0);
-  if (top <= 0) {
-    return;
-  }
+  const top = Math.max(1, ...points.map((point) => point.size));
   const slot = width / points.length;
   const bar = Math.max(1, slot * 0.7);
   points.forEach((point, index) => {
@@ -82,27 +81,22 @@ function drawBars(
   });
 }
 
+/** A line from zero to the highest value, as xlarge draws its line and sparkline. */
 function drawLine(
   cx: CanvasRenderingContext2D,
   points: readonly ChartPoint[],
   width: number,
   height: number,
+  pad: number,
 ): void {
-  const sizes = points.map((point) => point.size);
-  const top = Math.max(...sizes);
-  const bottom = Math.min(...sizes, 0);
-  const span = top - bottom > 0 ? top - bottom : 1;
-  const pad = 6;
+  const top = Math.max(1, ...points.map((point) => point.size));
   const step = points.length > 1 ? (width - pad * 2) / (points.length - 1) : 0;
-  const at = (index: number): [number, number] => [
-    points.length > 1 ? pad + index * step : width / 2,
-    pad + (1 - (sizes[index]! - bottom) / span) * (height - pad * 2),
-  ];
-  cx.strokeStyle = token("chart-1");
+  cx.strokeStyle = token("primary");
   cx.lineWidth = 2;
   cx.beginPath();
-  points.forEach((_, index) => {
-    const [x, y] = at(index);
+  points.forEach((point, index) => {
+    const x = pad + index * step;
+    const y = height - pad - (Math.max(0, point.size) / top) * (height - pad * 2);
     if (index === 0) {
       cx.moveTo(x, y);
     } else {
@@ -110,16 +104,9 @@ function drawLine(
     }
   });
   cx.stroke();
-  points.forEach((point, index) => {
-    const [x, y] = at(index);
-    cx.fillStyle = pointColor(point, 0);
-    cx.beginPath();
-    cx.arc(x, y, 3, 0, Math.PI * 2);
-    cx.fill();
-  });
 }
 
-function drawPie(
+function drawDonut(
   cx: CanvasRenderingContext2D,
   points: readonly ChartPoint[],
   width: number,
@@ -146,6 +133,11 @@ function drawPie(
     cx.fill();
     start = end;
   });
+  // The hole that makes it a donut, in the card's colour.
+  cx.fillStyle = token("card");
+  cx.beginPath();
+  cx.arc(centerX, centerY, radius * 0.6, 0, Math.PI * 2);
+  cx.fill();
 }
 
 export function createXlargeChart(
@@ -177,59 +169,77 @@ export function createXlargeChart(
     );
     const title = computed(() => {
       const code = unwrapOptionalString(labelProp());
-      return code !== undefined ? options.translate(code) : undefined;
+      return code !== undefined ? options.translate(code) : "";
     });
-    const total = computed(() =>
-      unwrapBinding(sumProp()) === true
-        ? metricText(sumDecimals(points().map((point) => point.raw)), format())
-        : undefined,
-    );
+    const sparkline = computed(() => kind() === "sparkline");
+    const headline = computed(() => chartHeadline(points(), unwrapBinding(sumProp()), format()));
     // A line is one colour; bars and slices take the palette in turn.
     const legend = computed(() =>
       points().map((point, index) => ({
         point,
-        color: pointColor(point, kind() === "line" ? 0 : index),
+        color: kind() === "line" ? token("primary") : pointColor(point, index),
       })),
     );
-    const summary = computed(() =>
-      [
-        title(),
-        ...points().map((point) => `${point.label}: ${point.value}`),
-        total() !== undefined ? `${options.totalLabel}: ${total()}` : undefined,
-      ]
-        .filter((part) => part)
-        .join(", "),
-    );
+    const said = computed(() => points().map((point) => `${point.label}: ${point.value}`).join(", "));
+    const drawn = computed(() => !options.terminal && points().length > 0);
 
     return (
       <View testID={`${props.testId}:container`} class="gap-2">
-        <If when={title() !== undefined}>
-          <Text testID={`${props.testId}:title`} role="header" class="text-base font-semibold text-foreground">
-            {title() ?? ""}
+        <If when={sparkline()}>
+          <View class="flex-row items-end justify-between gap-4">
+            <View class="flex-1 gap-1">
+              <Text testID={`${props.testId}:headline`} class="text-3xl font-bold text-foreground">
+                {headline() !== "" ? headline() : "—"}
+              </Text>
+              <Text testID={`${props.testId}:title`} class="text-sm text-muted-foreground">
+                {title()}
+              </Text>
+            </View>
+            <If when={drawn()}>
+              <Canvas
+                testID={props.testId}
+                role="image"
+                accessibilityLabel={said()}
+                style={{ width: SPARKLINE_WIDTH, height: SPARKLINE_HEIGHT }}
+                draw={(cx, size) => {
+                  const width = size.width > 0 ? size.width : SPARKLINE_WIDTH;
+                  const height = size.height > 0 ? size.height : SPARKLINE_HEIGHT;
+                  cx.clearRect(0, 0, width, height);
+                  if (points().length > 0) {
+                    drawLine(cx, points(), width, height, 2);
+                  }
+                }}
+              />
+            </If>
+          </View>
+        </If>
+        <If when={!sparkline() && title() !== ""}>
+          <Text testID={`${props.testId}:title`} role="header" class="text-sm font-semibold text-foreground">
+            {title()}
           </Text>
         </If>
-        <If when={!options.terminal && points().length > 0}>
+        <If when={!sparkline() && drawn()}>
           <Canvas
             testID={props.testId}
             role="image"
-            accessibilityLabel={summary()}
+            accessibilityLabel={said()}
             class="w-full"
             style={{ height: CHART_HEIGHT }}
             draw={(cx, size) => {
-              const drawn = points();
+              const shown = points();
               const width = size.width > 0 ? size.width : 320;
               const height = size.height > 0 ? size.height : CHART_HEIGHT;
               cx.clearRect(0, 0, width, height);
-              if (drawn.length === 0) {
+              if (shown.length === 0) {
                 return;
               }
               const shape = kind();
-              if (shape === "pie") {
-                drawPie(cx, drawn, width, height);
-              } else if (shape === "line") {
-                drawLine(cx, drawn, width, height);
+              if (shape === "line") {
+                drawLine(cx, shown, width, height, 24);
+              } else if (shape === "bars") {
+                drawBars(cx, shown, width, height);
               } else {
-                drawBars(cx, drawn, width, height);
+                drawDonut(cx, shown, width, height);
               }
             }}
           />
@@ -249,8 +259,8 @@ export function createXlargeChart(
             </Each>
           </View>
         </If>
-        <If when={options.terminal && points().length > 0}>
-          <Table testID={props.testId} accessibilityLabel={title() ?? summary()} class="border border-border">
+        <If when={!sparkline() && options.terminal && points().length > 0}>
+          <Table testID={props.testId} accessibilityLabel={title() !== "" ? title() : said()} class="border border-border">
             <TableBody>
               <Each of={points()} key={(point) => point.key}>
                 {(point) => (
@@ -275,14 +285,8 @@ export function createXlargeChart(
         </If>
         <If when={points().length === 0}>
           <Text testID={`${props.testId}:empty`} class="text-sm text-muted-foreground">
-            {options.emptyMessage}
+            {options.translate("chart.nothing")}
           </Text>
-        </If>
-        <If when={total() !== undefined}>
-          <View testID={`${props.testId}:total`} class="flex-row gap-2" accessibilityLabel={`${options.totalLabel}: ${total() ?? ""}`}>
-            <Text class="text-sm text-muted-foreground">{options.totalLabel}</Text>
-            <Text class="text-sm font-semibold text-foreground">{total() ?? ""}</Text>
-          </View>
         </If>
       </View>
     );

@@ -1,0 +1,101 @@
+{
+  "source": "built from xlarge's src/modules/lab_samples/surfaces/sample.toml (surface lab_samples.sample, spec 077): the root and its talk card only, the other cards left out, as its server sends a screen on the A2UI 1.0 wire (spec 208); /talk is talk.on's rows (newest first) and /talk_about talk.about's answer (src/apps/server/src/talk.rs); not captured from a running server",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": { "surfaceId": "lab_samples.sample", "catalogId": "tech.yerly.xlarge/v1" }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "lab_samples.sample",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["talk_card"],
+            "pageTitle": "lab_samples.title.sample",
+            "title": "lab_samples.title.sample",
+            "heading": { "@path": "/sample/code" }
+          },
+          {
+            "id": "talk_card",
+            "component": "Card",
+            "children": ["talk"],
+            "title": "talk.title"
+          },
+          {
+            "id": "talk",
+            "component": "Conversation",
+            "rows": { "@path": "/talk" },
+            "around": { "@path": "/talk_about" },
+            "kind": "sample",
+            "screen": "lab_samples.sample",
+            "called": { "@path": "/sample/code" }
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "lab_samples.sample",
+        "path": "/",
+        "value": {
+          "sample": { "id": "01JSAMPLE7", "code": "S-0012" },
+          "talk": [
+            {
+              "id": "01JM3",
+              "by": { "id": "01JUSER1", "name": "Deniz Kaya" },
+              "text": null,
+              "takenBack": true,
+              "at": "2026-11-20T10:02:00Z",
+              "mine": true,
+              "reactions": [],
+              "myReaction": []
+            },
+            {
+              "id": "01JM2",
+              "by": { "id": "01JUSER1", "name": "Deniz Kaya" },
+              "text": "Yes, the pH run starts at noon.",
+              "takenBack": false,
+              "at": "2026-11-20T09:40:00Z",
+              "mine": true,
+              "reactions": [{ "emoji": "👍", "count": 1 }],
+              "myReaction": []
+            },
+            {
+              "id": "01JM1",
+              "by": { "id": "01JUSER2", "name": "Ece Yılmaz" },
+              "text": "Is S-0012 in the fridge?",
+              "takenBack": false,
+              "at": "2026-11-20T09:15:00Z",
+              "mine": false,
+              "reactions": [{ "emoji": "✅", "count": 2 }, { "emoji": "🎉", "count": 1 }],
+              "myReaction": ["✅"]
+            },
+            {
+              "id": "01JM0",
+              "by": null,
+              "text": "Received at the front desk.",
+              "takenBack": false,
+              "at": "2026-11-19T16:05:00Z",
+              "mine": false,
+              "reactions": [],
+              "myReaction": []
+            }
+          ],
+          "talk_about": {
+            "talk": "r_sample_01JSAMPLE7",
+            "people": [
+              { "id": "01JUSER2", "name": "Ece Yılmaz" },
+              { "id": "01JUSER3", "name": "Mert Demir" }
+            ],
+            "unread": true,
+            "follow": { "record": "talk:r_sample_01JSAMPLE7", "read": "talk.one" }
+          }
+        }
+      }
+    }
+  ]
+}

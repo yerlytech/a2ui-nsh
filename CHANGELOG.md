@@ -19,12 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (its `update` sends the edit action), `Metric` (value and change formatted
   from text, coloured by `better`), and `ChequeLeaf` (states through
   `translate`) (spec 003, round 2), with the renderer option `editLabel`.
-- xlarge's `Chart` (bar, line, or pie on a `Canvas`, values and an exact
-  `sum` from text; a table in a terminal), `Calendar` (a Monday-first month
-  grid; a day press opens `screen` with its date), and `Conversation` (a
-  message thread; a message press opens `screen` with its id) (spec 003,
-  round 2), with the renderer options `terminal`, `totalLabel`,
-  `weekdayLabels`, and `monthLabels`.
+- xlarge's `Chart` (a sparkline, line, bars, or donut on a `Canvas`, values
+  and an exact `sum` from text; a table in a terminal), `Calendar` (the month
+  `calendar.month` answers, its items opening their own screens), and
+  `Conversation` (a record's talk: write, tell, react, take back) (spec 003,
+  round 2), read as xlarge's screens and server send them, with the renderer
+  options `terminal`, `weekdayLabels`, and `monthLabels`.
 - `NodeResolver.dispatchNodeAction` to send an action payload on behalf of a
   node (spec 003).
 - `docs/catalog-parity.md`: components drawn per catalog.

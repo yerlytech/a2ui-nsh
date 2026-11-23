@@ -245,28 +245,49 @@ surface (`lab_reports/surfaces/layout.toml`). Synthetic fixtures again, walked
 by `src/catalog/xlarge/flows_walk.test.tsx`.
 A further commit of round 2 draws three richer components:
 
-- **`Chart`**: the bound `data` (rows of label and value, or an object of
-  label → value) as `kind` says: bars (default), a line, or a pie. Native
-  Shell 0.6.1 has no chart primitive, so the shapes are drawn on its
-  `Canvas`; no chart library is added. Values are formatted by `format`
-  from their text; only the geometry reads them as numbers. `labelFormat`
-  and `labelPrefix` shape the labels, `tones` colours a label's bar or
-  slice, and `sum` adds the values exactly as decimal text (`sumDecimals`).
-  A legend lists every point; in a terminal (the host's `terminal` option,
-  default `platform.idiom === "terminal"`) the points show as a table
-  instead, which is also what screen readers read.
-- **`Calendar`**: the bound `month` as a Monday-first grid, days marked by
-  their count or label; a day press sends `{ event: { name:
-  "screen:<screen>", context: { date } } }`. The heading and weekday words
-  are the host's (`monthLabels`, `weekdayLabels`).
-- **`Conversation`**: the bound `rows` as a message thread, this side's
-  messages at the end; the heading is the translated `kind` and the bound
-  `called`; the message whose `id` is the bound `around` is marked; a
-  message press sends `{ event: { name: "screen:<screen>", context: { id }
-  } }`.
+These three were first written from the catalog schema's field names alone.
+A review against xlarge's web renderer (`src/apps/web/src/renderer.tsx`,
+`calendar.tsx`, `figures.ts`), its server (`src/platform/src/calendar.rs`,
+`src/apps/server/src/talk.rs`), and the screens that use them changed them
+to read what xlarge sends:
 
-New host options: `terminal`, `totalLabel`, `weekdayLabels`, `monthLabels`,
-and `againstBeforeLabel` (the words after a `Metric`'s change).
-The data keys these three read are this renderer's reading; no real xlarge
-capture was readable, so the fixtures are synthetic, walked by
-`src/catalog/xlarge/rich_walk.test.tsx`.
+- **`Chart`** (`lab_samples/surfaces/figures.toml`): the bound `data` is a
+  list of `{ label, value, caption? }` rows; `caption`, when it is text, is
+  what is shown (money the server already wrote out), and a row whose value
+  is not a plain decimal is left out. `kind` is `sparkline` (a small line
+  beside a big figure: the last value, or with `sum` the exact total),
+  `line`, `bars`, or anything else a donut, as xlarge's client draws it.
+  `format` defaults to `number`. `labelPrefix` wins over `labelFormat`.
+  `tones` take xlarge's tone words (`neutral`, `info`, `success`,
+  `warning`, `danger`). Native Shell 0.6.1 has no chart primitive, so the
+  shapes are drawn on its `Canvas`; no chart library is added. Only the
+  geometry reads values as numbers; text and sums never do. Every chart but
+  a sparkline lists its points with their values; in a terminal (the host's
+  `terminal` option, default `platform.idiom === "terminal"`) the points
+  show as a table instead. No points says `chart.nothing`.
+- **`Calendar`** (`platform/surfaces/calendar.toml`): the bound `month` is
+  what `calendar.month` answers, `{ month, first, last, previous, next,
+  items, sources, missing }`. Weeks Monday first, each day with its items;
+  an item press sends its own `screen` (`screen:work_orders.order`) with
+  `{ id }`. Previous and next send `screen:<screen>` with `{ period:
+  "between", from, to }`, the month's first and last day. A filter by
+  `sources` (the client's own; nothing is sent), and a line per `missing`
+  module (`calendar.could_not_read`).
+- **`Conversation`** (`lab_samples/surfaces/sample.toml`): a record's
+  conversation. `rows` is what `talk.on` answers, newest first (drawn
+  oldest first): `{ id, by: { id, name }, text, takenBack, at, mine,
+  reactions, myReaction }`. `around` is what `talk.about` answers, `{ talk,
+  people, unread }`; the record's id is read from `talk` (`r_<kind>_<id>`).
+  It sends `talk.write` `{ kind, id, screen, label, text, tell }`,
+  `talk.react_on` `{ kind, id, message, emoji }`, `talk.take_back` `{ id }`
+  after a yes, and `talk.seen` `{ id }` once when unread; after a write, a
+  reaction or a take-back, `screen:<screen>` `{ id }` reads the screen
+  again, as xlarge's client does. Its earlier page (`talk.earlier`) and mail
+  templates (`mail.templates`) are not drawn: both need xlarge's paging and
+  ask channels, which A2UI 1.0 does not carry.
+
+Words are xlarge's own codes (`chart.*`, `calendar.*`, `talk.*`), translated.
+Host options: `terminal`, `weekdayLabels`, `monthLabels`, and
+`againstBeforeLabel` (the words after a `Metric`'s change). The fixtures are
+built from those screens and the shapes their reads answer (not captured from
+a running server), walked by `src/catalog/xlarge/rich_walk.test.tsx`.
