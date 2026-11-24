@@ -8,8 +8,8 @@
  * `againstBeforeLabel` ("vs before"). It is coloured by `better` (`up` or
  * `down`): the better way in the primary colour, the other in the destructive
  * one, a flat change muted. A change that is not a number draws nothing.
- * `accent` colours the card's edge (`Text.tone` words) and `hint` (a code)
- * shows under it.
+ * `accent` colours the card's edge (xlarge's colour name `rose`/`red`, or a
+ * `Text.tone` word: `metricAccent`) and `hint` (a code) shows under it.
  */
 
 import { Text, View, computed, type JSX } from "nsh";
@@ -24,8 +24,8 @@ import {
   changeDirection,
   changePercent,
   changeTone,
+  metricAccent,
   metricText,
-  textTone,
   type ChangeTone,
   type TextTone,
 } from "./model";
@@ -83,7 +83,7 @@ export function createXlargeMetric(
     });
     const frame = computed(
       () =>
-        `gap-1 rounded-(--radius) border border-l-4 bg-card p-4 ${ACCENT_CLASS[textTone(unwrapBinding(accentProp()))]}`,
+        `gap-1 rounded-(--radius) border border-l-4 bg-card p-4 ${ACCENT_CLASS[metricAccent(unwrapBinding(accentProp()))]}`,
     );
 
     return (

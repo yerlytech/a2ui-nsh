@@ -1,0 +1,602 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:lab_samples.sample, a0939a12, 2026-11-24",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "lab_samples.sample",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "lab_samples.sample",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": [
+              "print_label",
+              "hand_over",
+              "complete",
+              "tests_card",
+              "sides",
+              "chain",
+              "talk_card",
+              "history_card",
+              "own_fields",
+              "record_activities"
+            ],
+            "pageTitle": "lab_samples.title.sample",
+            "enumPrefix": "lab_samples.sample_state.",
+            "heading": { "@path": "/sample/code" },
+            "state": { "@path": "/sample/state" },
+            "subtitle": { "@path": "/sample/description" },
+            "title": "lab_samples.title.sample",
+            "tones": {
+              "completed": "success",
+              "disposed": "neutral",
+              "received": "info",
+              "rejected": "danger"
+            }
+          },
+          {
+            "id": "print_label",
+            "component": "Button",
+            "action": "export:lab_samples.label?shape=label",
+            "icon": "printer",
+            "label": "lab_samples.action.print_label"
+          },
+          {
+            "id": "hand_over",
+            "component": "Form",
+            "children": ["place", "note"],
+            "after": "screen:lab_samples.list",
+            "dialog": true,
+            "icon": "move",
+            "submit": "lab_samples.hand_over",
+            "submitLabel": "lab_samples.action.hand_over"
+          },
+          {
+            "id": "place",
+            "component": "Field",
+            "checks": ["required"],
+            "example": "lab_samples.example.place",
+            "field": "place",
+            "input": "text",
+            "label": "lab_samples.field.place"
+          },
+          {
+            "id": "note",
+            "component": "Field",
+            "field": "note",
+            "input": "text",
+            "label": "lab_samples.field.note"
+          },
+          {
+            "id": "complete",
+            "component": "Button",
+            "action": "lab_samples.complete",
+            "after": "screen:lab_samples.list",
+            "icon": "check",
+            "label": "lab_samples.action.complete",
+            "variant": "primary"
+          },
+          {
+            "id": "tests_card",
+            "component": "Card",
+            "children": ["tests", "lab_results_sample_results__root"],
+            "slot": "tests",
+            "title": "lab_samples.title.tests_booked"
+          },
+          {
+            "id": "tests",
+            "component": "Button",
+            "action": "screen:lab_samples.tests",
+            "icon": "plus",
+            "label": "lab_samples.action.tests"
+          },
+          {
+            "id": "sides",
+            "component": "Columns",
+            "children": ["details_card", "beside"],
+            "widths": [7, 5]
+          },
+          {
+            "id": "details_card",
+            "component": "Card",
+            "children": ["details"],
+            "title": "lab_samples.title.details"
+          },
+          {
+            "id": "details",
+            "component": "Detail",
+            "record": { "@path": "/sample" },
+            "rows": [
+              { "field": "partnerName", "label": "lab_samples.field.partner" },
+              { "field": "requestCode", "label": "lab_samples.field.request" },
+              { "enumPrefix": "lab_samples.source.", "field": "source", "label": "lab_samples.field.source" },
+              { "enumPrefix": "lab_samples.sampled_by.", "field": "sampledBy", "label": "lab_samples.field.sampled_by" },
+              { "field": "matrix", "label": "lab_samples.field.matrix" },
+              { "enumPrefix": "lab_samples.portion.", "field": "portion", "label": "lab_samples.field.portion" },
+              { "field": "parentCode", "label": "lab_samples.field.parent" },
+              { "field": "productSku", "label": "lab_samples.field.product" },
+              { "field": "lotCode", "label": "lab_samples.field.lot" },
+              { "field": "quantity", "format": "decimal", "label": "lab_samples.field.quantity", "unitField": "quantityUnit" },
+              { "field": "receivedAt", "format": "datetime", "label": "lab_samples.field.received_at" },
+              { "enumPrefix": "lab_samples.arrived_by.", "field": "arrivedBy", "label": "lab_samples.field.arrived_by" },
+              { "field": "storedAt", "label": "lab_samples.field.stored_at" },
+              { "field": "storageCondition", "label": "lab_samples.field.storage_condition" },
+              {
+                "enumPrefix": "lab_samples.priority.",
+                "field": "priority",
+                "label": "lab_samples.field.priority",
+                "tones": { "high": "warning", "urgent": "danger" }
+              },
+              { "field": "dueOn", "format": "date", "label": "lab_samples.field.due_on" },
+              { "field": "rejectionReason", "label": "lab_samples.field.rejection_reason" },
+              { "field": "disposalMethod", "label": "lab_samples.field.disposal_method" }
+            ],
+            "skipEmpty": true
+          },
+          {
+            "id": "beside",
+            "component": "Card",
+            "children": ["notes_card", "seldom"],
+            "plain": true
+          },
+          {
+            "id": "notes_card",
+            "component": "Card",
+            "children": ["notes", "notes_read"],
+            "title": "lab_samples.title.notes"
+          },
+          {
+            "id": "notes",
+            "component": "Form",
+            "children": ["test_conditions", "opinion", "opinion_basis"],
+            "after": "screen:lab_samples.sample",
+            "dialog": true,
+            "icon": "notebook",
+            "submit": "lab_samples.write_notes",
+            "submitLabel": "action.save",
+            "title": "lab_samples.action.write_notes"
+          },
+          {
+            "id": "test_conditions",
+            "component": "Field",
+            "example": "lab_samples.example.test_conditions",
+            "field": "testConditions",
+            "input": "text",
+            "label": "lab_samples.field.test_conditions"
+          },
+          {
+            "id": "opinion",
+            "component": "Field",
+            "example": "lab_samples.example.opinion",
+            "field": "opinion",
+            "input": "note",
+            "label": "lab_samples.field.opinion"
+          },
+          {
+            "id": "opinion_basis",
+            "component": "Field",
+            "example": "lab_samples.example.opinion_basis",
+            "field": "opinionBasis",
+            "input": "note",
+            "label": "lab_samples.field.opinion_basis"
+          },
+          {
+            "id": "notes_read",
+            "component": "Detail",
+            "record": { "@path": "/sample" },
+            "rows": [
+              { "field": "testConditions", "label": "lab_samples.field.test_conditions" },
+              { "field": "opinion", "label": "lab_samples.field.opinion" },
+              { "field": "opinionBasis", "label": "lab_samples.field.opinion_basis" }
+            ]
+          },
+          {
+            "id": "seldom",
+            "component": "Card",
+            "children": ["portion", "reject", "dispose"]
+          },
+          {
+            "id": "portion",
+            "component": "Form",
+            "children": ["portion_kind", "portion_stored_at"],
+            "after": "screen:lab_samples.list",
+            "dialog": true,
+            "icon": "scissors",
+            "submit": "lab_samples.take_portion",
+            "submitLabel": "lab_samples.action.take_portion"
+          },
+          {
+            "id": "portion_kind",
+            "component": "Field",
+            "checks": ["required"],
+            "default": "aliquot",
+            "field": "portion",
+            "input": "choice",
+            "label": "lab_samples.field.portion",
+            "optionPrefix": "lab_samples.portion.",
+            "options": ["aliquot", "retained"]
+          },
+          {
+            "id": "portion_stored_at",
+            "component": "Field",
+            "example": "lab_samples.example.retained_at",
+            "field": "storedAt",
+            "input": "text",
+            "label": "lab_samples.field.stored_at"
+          },
+          {
+            "id": "reject",
+            "component": "Form",
+            "children": ["rejection_reason"],
+            "after": "screen:lab_samples.list",
+            "confirm": true,
+            "dialog": true,
+            "icon": "ban",
+            "submit": "lab_samples.reject",
+            "submitLabel": "lab_samples.action.reject"
+          },
+          {
+            "id": "rejection_reason",
+            "component": "Field",
+            "checks": ["required"],
+            "example": "lab_samples.example.rejection_reason",
+            "field": "rejectionReason",
+            "input": "text",
+            "label": "lab_samples.field.rejection_reason"
+          },
+          {
+            "id": "dispose",
+            "component": "Form",
+            "children": ["disposal_method"],
+            "after": "screen:lab_samples.list",
+            "confirm": true,
+            "dialog": true,
+            "icon": "trash",
+            "submit": "lab_samples.dispose",
+            "submitLabel": "lab_samples.action.dispose",
+            "title": "lab_samples.title.dispose"
+          },
+          {
+            "id": "disposal_method",
+            "component": "Field",
+            "checks": ["required"],
+            "example": "lab_samples.example.disposal_method",
+            "field": "disposalMethod",
+            "input": "text",
+            "label": "lab_samples.field.disposal_method"
+          },
+          {
+            "id": "chain",
+            "component": "Card",
+            "children": ["table"],
+            "title": "lab_samples.title.chain"
+          },
+          {
+            "id": "table",
+            "component": "Table",
+            "columns": [
+              { "field": "at", "format": "datetime", "label": "lab_samples.field.at" },
+              {
+                "enumPrefix": "lab_samples.custody.",
+                "field": "kind",
+                "label": "lab_samples.field.kind",
+                "tones": {
+                  "completed": "success",
+                  "disposed": "neutral",
+                  "portion_taken": "neutral",
+                  "received": "info",
+                  "rejected": "danger",
+                  "transferred": "neutral"
+                }
+              },
+              { "field": "place", "grow": true, "label": "lab_samples.field.place" },
+              { "field": "by", "label": "lab_samples.field.by" },
+              { "field": "note", "label": "lab_samples.field.note" }
+            ],
+            "listAction": "lab_samples.custody",
+            "listInput": { "limit": 50, "sample": "01M86HRWQY61YTDH6PBJGSWNH6" },
+            "rows": { "@path": "/custody" }
+          },
+          {
+            "id": "talk_card",
+            "component": "Card",
+            "children": ["talk"],
+            "title": "talk.title"
+          },
+          {
+            "id": "talk",
+            "component": "Conversation",
+            "around": { "@path": "/talk_about" },
+            "called": { "@path": "/sample/code" },
+            "kind": "sample",
+            "rows": { "@path": "/talk" },
+            "screen": "lab_samples.sample"
+          },
+          {
+            "id": "history_card",
+            "component": "Card",
+            "children": ["history"],
+            "title": "audit.title.history"
+          },
+          {
+            "id": "history",
+            "component": "Table",
+            "columns": [
+              { "field": "at", "format": "datetime", "label": "audit.field.at" },
+              { "enumPrefix": "", "field": "actor", "label": "audit.field.actor" },
+              { "enumPrefix": "", "field": "what", "label": "audit.field.what" },
+              { "enumPrefix": "", "field": "changed", "format": "list", "grow": true, "label": "audit.field.changed" }
+            ],
+            "listAction": "audit.history",
+            "listInput": { "id": "01M86HRWQY61YTDH6PBJGSWNH6", "kind": "sample", "limit": 20 },
+            "rows": { "@path": "/history" }
+          },
+          {
+            "id": "lab_results_sample_results__root",
+            "component": "Table",
+            "columns": [
+              { "below": "methodCode", "field": "parameter", "grow": true, "label": "lab_results.field.parameter" },
+              { "field": "value", "format": "decimal", "label": "lab_results.field.value", "unitField": "unit" },
+              {
+                "field": "minValue",
+                "format": "range",
+                "label": "lab_results.field.limits",
+                "unitField": "unit",
+                "until": "maxValue"
+              },
+              {
+                "enumPrefix": "lab_results.verdict.",
+                "field": "verdict",
+                "label": "lab_results.field.verdict",
+                "tones": { "in_spec": "success", "no_spec": "neutral", "out_of_spec": "danger", "warning": "warning" }
+              },
+              {
+                "enumPrefix": "lab_results.state.",
+                "field": "state",
+                "label": "lab_results.field.state",
+                "tones": {
+                  "approved": "success",
+                  "cancelled": "neutral",
+                  "entered": "info",
+                  "verified": "info",
+                  "waiting": "warning"
+                }
+              }
+            ],
+            "group": "state",
+            "groupOptions": ["approved", "cancelled", "entered", "verified", "waiting"],
+            "groupPrefix": "lab_results.state.",
+            "listAction": "lab_results.of_sample",
+            "listInput": { "sample": "01M86HRWQY61YTDH6PBJGSWNH6" },
+            "rowAction": "screen:lab_results.entry",
+            "rows": { "@path": "/results" }
+          },
+          {
+            "id": "own_fields",
+            "component": "Card",
+            "children": ["own_fields_detail"],
+            "title": "fields.title.own",
+            "when": { "@path": "/custom/any" }
+          },
+          {
+            "id": "own_fields_detail",
+            "component": "Detail",
+            "record": { "@path": "/custom/record" },
+            "rows": { "@path": "/custom/rows" },
+            "update": "fields.set"
+          },
+          {
+            "id": "record_activities",
+            "component": "Card",
+            "children": ["record_activities_list"],
+            "title": "activities.title.on_record"
+          },
+          {
+            "id": "record_activities_list",
+            "component": "Table",
+            "columns": [
+              { "enumPrefix": "", "field": "summary", "grow": true, "label": "activities.field.summary" },
+              { "field": "typeName", "label": "activities.field.type" },
+              { "field": "dueOn", "format": "date", "label": "activities.field.due_on" },
+              { "enumPrefix": "activities.state.", "field": "state", "label": "activities.field.state" }
+            ],
+            "group": "state",
+            "groupPrefix": "activities.state.",
+            "listAction": "activities.of",
+            "listInput": { "id": "01M86HRWQY61YTDH6PBJGSWNH6", "table": "sample" },
+            "rowAction": "screen:activities.one",
+            "rows": { "@path": "/recordActivities" }
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "lab_samples.sample",
+        "path": "/",
+        "value": {
+          "custody": [
+            {
+              "id": "01M86HRWQY61YTDH6PBJGSWNH7",
+              "sample": "01M86HRWQY61YTDH6PBJGSWNH6",
+              "sampleCode": "S-000002",
+              "kind": "received",
+              "place": "Fridge 2",
+              "note": null,
+              "at": "2026-11-24T10:31:37.985849Z",
+              "by": "owner@example.com"
+            }
+          ],
+          "talk": [
+            {
+              "id": "01M86HRZDNMDGBJXXJ7QD1DQ7V",
+              "by": { "id": "01M86HRM90ZFN9S3WKKAZJAFHT", "name": "Owner" },
+              "text": "Sealed, in fridge 2.",
+              "takenBack": false,
+              "at": "2026-11-24T10:31:40.727568Z",
+              "mine": true,
+              "reactions": [],
+              "myReaction": []
+            },
+            {
+              "id": "01M86HRZ62R2EKHC41KAW5AZB8",
+              "by": { "id": "01M86HRM90ZFN9S3WKKAZJAFHT", "name": "Owner" },
+              "text": "Is the bottle sealed?",
+              "takenBack": false,
+              "at": "2026-11-24T10:31:40.483115Z",
+              "mine": true,
+              "reactions": [],
+              "myReaction": []
+            }
+          ],
+          "_follow": {
+            "record": "talk:r_sample_01M86HRWQY61YTDH6PBJGSWNH6",
+            "read": "talk.one",
+            "seen": "0000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "talk_about": {
+            "talk": "r_sample_01M86HRWQY61YTDH6PBJGSWNH6",
+            "people": [
+              { "id": "01M86HRVJW00DAQ6J4GGB972DF", "name": "manager" },
+              { "id": "01M86HRX58BZ39JPM0A8ZNAKRH", "name": "manager" },
+              { "id": "01M86HRXH34QBNTB0177GY3H0S", "name": "operator" }
+            ],
+            "unread": false,
+            "follow": {
+              "record": "talk:r_sample_01M86HRWQY61YTDH6PBJGSWNH6",
+              "read": "talk.one"
+            }
+          },
+          "sample": {
+            "id": "01M86HRWQY61YTDH6PBJGSWNH6",
+            "company": "the",
+            "code": "S-000002",
+            "request": "01M86HRWEJKZPRB310SN7RGQ8K",
+            "requestCode": "REQ-000002",
+            "slot": 1,
+            "partner": "01M86HRTK8C5GW932QCRQX6FT9",
+            "partnerName": "Acme Kimya",
+            "product": null,
+            "productSku": null,
+            "description": "Well water",
+            "source": "customer",
+            "sampledBy": "customer",
+            "matrix": null,
+            "quantity": null,
+            "quantityUnit": null,
+            "storedAt": "Fridge 2",
+            "arrivedBy": null,
+            "storageCondition": null,
+            "disposalMethod": null,
+            "rejectionReason": null,
+            "testConditions": null,
+            "opinion": null,
+            "opinionBasis": null,
+            "lot": null,
+            "lotCode": null,
+            "portion": "primary",
+            "parent": null,
+            "parentCode": null,
+            "priority": "normal",
+            "dueOn": null,
+            "state": "received",
+            "receivedAt": "2026-11-24T10:31:37.984618Z",
+            "version": 1
+          },
+          "history": [
+            {
+              "id": "01M86HRYMAPND6FQGX06NNSC5M",
+              "seq": 30,
+              "at": "2026-11-24T10:31:39.913992Z",
+              "actor": "operator@example.com",
+              "kind": "person",
+              "action": "lab_results.approve",
+              "subjectKind": "sample",
+              "subjectId": "01M86HRWQY61YTDH6PBJGSWNH6",
+              "changed": [],
+              "what": "audit.action.lab_results.approve"
+            },
+            {
+              "id": "01M86HRYEYCTTG0FQ789RMWZ1J",
+              "seq": 29,
+              "at": "2026-11-24T10:31:39.742913Z",
+              "actor": "manager@example.com",
+              "kind": "person",
+              "action": "lab_results.verify",
+              "subjectKind": "sample",
+              "subjectId": "01M86HRWQY61YTDH6PBJGSWNH6",
+              "changed": [],
+              "what": "audit.action.lab_results.verify"
+            },
+            {
+              "id": "01M86HRWZC5G6S62CVKVA010A5",
+              "seq": 20,
+              "at": "2026-11-24T10:31:38.220672Z",
+              "actor": "owner@example.com",
+              "kind": "person",
+              "action": "lab_results.enter",
+              "subjectKind": "sample",
+              "subjectId": "01M86HRWQY61YTDH6PBJGSWNH6",
+              "changed": [],
+              "what": "audit.action.lab_results.enter"
+            },
+            {
+              "id": "01M86HRWVA7J0XXH69W884EE9H",
+              "seq": 19,
+              "at": "2026-11-24T10:31:38.090795Z",
+              "actor": "owner@example.com",
+              "kind": "person",
+              "action": "lab_samples.book",
+              "subjectKind": "sample",
+              "subjectId": "01M86HRWQY61YTDH6PBJGSWNH6",
+              "changed": [],
+              "what": "audit.action.lab_samples.book"
+            },
+            {
+              "id": "01M86HRWR7FAP2TETBHHFAC9S7",
+              "seq": 18,
+              "at": "2026-11-24T10:31:37.991624Z",
+              "actor": "owner@example.com",
+              "kind": "person",
+              "action": "lab_samples.receive",
+              "subjectKind": "sample",
+              "subjectId": "01M86HRWQY61YTDH6PBJGSWNH6",
+              "changed": [],
+              "what": "audit.action.lab_samples.receive"
+            }
+          ],
+          "results": [
+            {
+              "id": "01M86HRWV36G08QJ68QVQH5SMM",
+              "sampleCode": "S-000002",
+              "methodCode": "COND",
+              "parameter": "Conductivity",
+              "unit": "kg",
+              "minValue": null,
+              "maxValue": null,
+              "state": "approved",
+              "value": "7.2",
+              "passed": true,
+              "verdict": "no_spec",
+              "assigneeName": null,
+              "priority": "normal",
+              "dueOn": null,
+              "overdue": false,
+              "bookedAt": "2026-11-24T10:31:38.085524Z"
+            }
+          ],
+          "custom": [],
+          "recordActivities": []
+        }
+      }
+    }
+  ]
+}

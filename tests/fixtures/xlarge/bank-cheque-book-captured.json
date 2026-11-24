@@ -1,0 +1,152 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:bank.cheque_book, a0939a12, 2026-11-24",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "bank.cheque_book",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "bank.cheque_book",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["print", "void", "leaves", "record_activities"],
+            "pageTitle": "bank.title.cheque_book",
+            "heading": { "@path": "/account/name" },
+            "subtitle": { "@path": "/account/bank" },
+            "title": "bank.title.cheque_book"
+          },
+          {
+            "id": "print",
+            "component": "Form",
+            "children": ["first_number"],
+            "after": "screen:bank.cheque_book",
+            "confirm": true,
+            "dialog": true,
+            "submit": "bank.print_prenumbered",
+            "submitLabel": "bank.action.print_prenumbered",
+            "title": "bank.action.print_prenumbered"
+          },
+          {
+            "id": "first_number",
+            "component": "Field",
+            "checks": ["required"],
+            "default": { "@path": "/account/nextChequeNumber" },
+            "field": "firstNumber",
+            "input": "number",
+            "label": "bank.field.first_cheque_number"
+          },
+          {
+            "id": "void",
+            "component": "Form",
+            "children": ["void_number"],
+            "after": "screen:bank.cheque_book",
+            "confirm": true,
+            "dialog": true,
+            "submit": "bank.void_cheque_leaf",
+            "submitLabel": "bank.action.void_cheque_leaf",
+            "title": "bank.action.void_cheque_leaf"
+          },
+          {
+            "id": "void_number",
+            "component": "Field",
+            "checks": ["required"],
+            "field": "number",
+            "input": "number",
+            "label": "bank.field.number"
+          },
+          {
+            "id": "leaves",
+            "component": "ChequeLeaf",
+            "rows": { "@path": "/leaves" },
+            "statePrefix": "bank.cheque_leaf_state."
+          },
+          {
+            "id": "record_activities",
+            "component": "Card",
+            "children": ["record_activities_list"],
+            "title": "activities.title.on_record"
+          },
+          {
+            "id": "record_activities_list",
+            "component": "Table",
+            "columns": [
+              { "enumPrefix": "", "field": "summary", "grow": true, "label": "activities.field.summary" },
+              { "field": "typeName", "label": "activities.field.type" },
+              { "field": "dueOn", "format": "date", "label": "activities.field.due_on" },
+              { "enumPrefix": "activities.state.", "field": "state", "label": "activities.field.state" }
+            ],
+            "group": "state",
+            "groupPrefix": "activities.state.",
+            "listAction": "activities.of",
+            "listInput": { "id": "01M86HRZGQVX215BF1J2X37BKZ", "table": "bank.cheque_book" },
+            "rowAction": "screen:activities.one",
+            "rows": { "@path": "/recordActivities" }
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "bank.cheque_book",
+        "path": "/",
+        "value": {
+          "account": {
+            "id": "01M86HRZGQVX215BF1J2X37BKZ",
+            "company": "the",
+            "name": "Main",
+            "bank": "Ziraat",
+            "iban": "TR000000000000000000000000",
+            "currency": "TRY",
+            "ledgerAccount": "102",
+            "prenumberedCheques": true,
+            "nextChequeNumber": 101,
+            "chequeDateTop": 10,
+            "chequeDateLeft": 140,
+            "chequePayeeTop": 30,
+            "chequePayeeLeft": 20,
+            "chequeAmountTop": 30,
+            "chequeAmountLeft": 140,
+            "chequeWordsTop": 50,
+            "chequeWordsLeft": 20,
+            "chequeMemoTop": 70,
+            "chequeMemoLeft": 20,
+            "chequePrintStub": false,
+            "archived": false,
+            "version": 3
+          },
+          "leaves": [
+            {
+              "id": "01M86HRZWDRNHR3R9W94DSX6GP",
+              "number": "100",
+              "state": "printed",
+              "cheque": "01M86HRZRSSRSD3AZ4NZ5Y1F5M",
+              "date": "2026-11-24",
+              "payee": "",
+              "amount": "100 TRY",
+              "amountWords": "one hundred lira and zero kuruş",
+              "memo": "",
+              "layout": {
+                "date": { "top": 10, "left": 140 },
+                "payee": { "top": 30, "left": 20 },
+                "amount": { "top": 30, "left": 140 },
+                "words": { "top": 50, "left": 20 },
+                "memo": { "top": 70, "left": 20 },
+                "printStub": false
+              },
+              "stub": null
+            }
+          ],
+          "recordActivities": []
+        }
+      }
+    }
+  ]
+}

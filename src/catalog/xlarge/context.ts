@@ -9,8 +9,14 @@
 
 import { context, platform, signal, type Signal } from "nsh";
 import type { TimerSeam } from "../../core/rpc";
+import { unwrapBinding } from "../../renderer/A2uiSurface";
 import { announce } from "../../renderer/accessibility";
-import { SHOW_CODES, type PreviewBody, type Translate } from "./model";
+import { SHOW_CODES, type Guard, type PreviewBody, type Translate } from "./model";
+
+/** A `when`/`unless` property as `guardShown` reads it: unset, or its bound value. */
+export function readGuard(raw: unknown): Guard {
+  return raw === undefined ? undefined : { value: unwrapBinding(raw) };
+}
 
 /** The draft a `Form` holds for the fields drawn inside it. */
 export interface FormDraft {

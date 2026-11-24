@@ -79,6 +79,7 @@ five more components of `tech.yerly.xlarge/v1`, drawn in this commit:
   from `params` as typed text or, without `code`, `text` (data, shown as it
   is); `code` wins when both are set, as in xlarge's web client. `tone`
   picks colour and weight, unknown tones draw plain.
+  Confirmed by capture 2026-11-24 (`lab-results-performance-captured.json`): `code` matches; xlarge binds `when` (`/performance/cut`), so `Text` and `Card` now read `when`/`unless` (`guardShown`).
 - **`Toast`**: the translated `code` + `params`, shown once. It passes after
   the host's `toastMs` (default 5000 ms, `0` keeps it), on swipe, or on its
   close button; the same message does not return.
@@ -189,6 +190,7 @@ text: `"1250"` → `"12.50"`), `number` (grouped thousands) and `month_day`
 (`MM-DD`). An unknown format shows the value as it came.
 `when`/`unless` stay not read. These too have synthetic fixtures (no real
 capture was readable), walked by `src/catalog/xlarge/display_walk.test.tsx`.
+Confirmed by capture 2026-11-24 (`lab-samples-sample-captured.json`, `lab-results-performance-captured.json`, `bank-cheque-book-captured.json`, walked by `captured_display_walk.test.tsx`): Columns and Detail match; Metric's `accent` is a colour name (`rose`, now the destructive edge) and the capture sends no `change`; ChequeLeaf matches, its `amount` arriving written out (`"100 TRY"`, shown as it came; the synthetic fixture now has that shape); a `list` cell under `enumPrefix` is translated entry by entry; Detail and Table `unitField`, `tones`, `below` and `range` stay not read.
 
 A fourth commit of round 2 draws three flow components:
 
@@ -291,3 +293,4 @@ Host options: `terminal`, `weekdayLabels`, `monthLabels`, and
 `againstBeforeLabel` (the words after a `Metric`'s change). The fixtures are
 built from those screens and the shapes their reads answer (not captured from
 a running server), walked by `src/catalog/xlarge/rich_walk.test.tsx`.
+Confirmed by capture 2026-11-24 (`lab-results-performance-captured.json`, `calendar-month-captured.json`, `lab-samples-sample-captured.json`, walked by `captured_display_walk.test.tsx`): Chart (`line`, `labelFormat = "date"`), Calendar and Conversation match.

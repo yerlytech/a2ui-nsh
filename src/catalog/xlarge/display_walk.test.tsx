@@ -87,8 +87,10 @@ describe("xlarge Columns, Detail, Metric and ChequeLeaf fixtures", () => {
     for (const words of ["Revenue", "1,250,000.50", "▲ 13%", "vs before", "This month", "Complaints", "1,204", "▲ 4%"]) {
       expect(app.texts()).toContain(words);
     }
-    // ChequeLeaf: one leaf per row, the void one marked through translate.
-    for (const words of ["Cheque book", "CHK-2026-0001", "15,000.00", "Fifteen thousand lira", "CHK-2026-0002", "VOID"]) {
+    // ChequeLeaf: one leaf per row, the amount as xlarge's server wrote it
+    // (`"100 TRY"` in the real `bank.cheque_book`), the void one marked
+    // through translate.
+    for (const words of ["Cheque book", "1001", "15000 TRY", "Fifteen thousand lira", "1002", "VOID"]) {
       expect(app.texts()).toContain(words);
     }
 

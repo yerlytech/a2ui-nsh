@@ -1,0 +1,99 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:calendar.month, a0939a12, 2026-11-24",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "calendar.month",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "calendar.month",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["month"],
+            "pageTitle": "calendar.title.month",
+            "title": "calendar.title.month"
+          },
+          {
+            "id": "month",
+            "component": "Calendar",
+            "month": { "@path": "/calendar" },
+            "screen": "calendar.month"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "calendar.month",
+        "path": "/",
+        "value": {
+          "_period": {
+            "preset": "this_month",
+            "from": "2026-11-01",
+            "to": "2026-11-24",
+            "beforeFrom": "2026-10-08",
+            "beforeTo": "2026-10-31"
+          },
+          "calendar": {
+            "month": "2026-11",
+            "first": "2026-11-01",
+            "last": "2026-11-30",
+            "previous": "2026-10",
+            "next": "2026-12",
+            "items": [
+              {
+                "id": "01M86HRZZ6R4XN2VN2QZ3ST13P",
+                "day": "2026-11-24",
+                "start": "2026-11-24T06:00:00Z",
+                "end": "2026-11-24T07:00:00Z",
+                "time": "09:00",
+                "title": "Fire drill",
+                "screen": "screen:company_events.event",
+                "tone": "info",
+                "module": "company_events",
+                "label": "company_events.calendar.event"
+              },
+              {
+                "id": "01M86HS03A02MZ0M3T3DHY9XY0",
+                "day": "2026-11-24",
+                "start": "2026-11-24T11:00:00Z",
+                "end": "2026-11-24T12:00:00Z",
+                "time": "14:00",
+                "title": "Open day",
+                "screen": "screen:company_events.event",
+                "tone": "info",
+                "module": "company_events",
+                "label": "company_events.calendar.event"
+              }
+            ],
+            "sources": [
+              { "module": "attendance", "label": "attendance.calendar.leave", "count": 0 },
+              { "module": "attendance", "label": "attendance.calendar.shift", "count": 0 },
+              { "module": "calibration", "label": "calibration.calendar.due", "count": 0 },
+              { "module": "project", "label": "project.calendar.deadline", "count": 0 },
+              { "module": "project", "label": "project.calendar.task", "count": 0 },
+              { "module": "service", "label": "service.calendar.planned", "count": 0 },
+              { "module": "work_orders", "label": "work_orders.calendar.due", "count": 0 },
+              { "module": "company_events", "label": "company_events.calendar.event", "count": 2 },
+              { "module": "vehicles", "label": "vehicles.calendar.inspection", "count": 0 },
+              { "module": "recruitment", "label": "recruitment.calendar.interview", "count": 0 },
+              { "module": "meetings", "label": "meetings.calendar.meeting", "count": 0 },
+              { "module": "appointment", "label": "appointment.calendar.appointment", "count": 0 },
+              { "module": "emergency", "label": "emergency.calendar.drill_due", "count": 0 }
+            ],
+            "missing": [],
+            "incomplete": false
+          }
+        }
+      }
+    }
+  ]
+}

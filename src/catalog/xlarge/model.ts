@@ -153,6 +153,21 @@ export function isBlank(value: unknown): boolean {
   );
 }
 
+/** A `when`/`unless` guard as the renderer read it: unset, or bound to `value`. */
+export type Guard = { readonly value: unknown } | undefined;
+
+/**
+ * Whether a component guarded by `when` and `unless` (data bindings) is drawn.
+ * An unset guard does not guard. `when` draws only while its value holds
+ * something (not `false`, `0`, or `isBlank`: a missing path, `null`, `""`,
+ * `[]`); `unless` hides while its value holds something. xlarge binds them to
+ * flags of the screen's data (`when = "/performance/cut"`).
+ */
+export function guardShown(when: Guard, unless: Guard): boolean {
+  const holds = (value: unknown): boolean => value !== false && value !== 0 && !isBlank(value);
+  return (when === undefined || holds(when.value)) && (unless === undefined || !holds(unless.value));
+}
+
 /**
  * What a form sends: each field's typed value, or its default when nothing was
  * typed. Blank values are left out, as xlarge's own client leaves them out.
@@ -273,7 +288,11 @@ export function formatCell(
     return "";
   }
   if (column.enumPrefix !== undefined) {
-    return translate(`${column.enumPrefix}${scalarText(value)}`);
+    // A list of codes (xlarge's audit `changed`: `format = "list"`,
+    // `enumPrefix = ""`) is translated entry by entry.
+    return Array.isArray(value)
+      ? value.map((entry) => translate(`${column.enumPrefix}${scalarText(entry)}`)).join(", ")
+      : translate(`${column.enumPrefix}${scalarText(value)}`);
   }
   switch (column.format) {
     case "date":
@@ -356,6 +375,15 @@ export function textTone(tone: unknown): TextTone {
     default:
       return "plain";
   }
+}
+
+/**
+ * A `Metric.accent`: xlarge sends a colour name (`lab_results.performance`
+ * marks its overdue count `accent = "rose"`); `rose` and `red` are the
+ * destructive edge. A `Text.tone` word is read as `textTone`.
+ */
+export function metricAccent(accent: unknown): TextTone {
+  return accent === "rose" || accent === "red" ? "danger" : textTone(accent);
 }
 
 /**

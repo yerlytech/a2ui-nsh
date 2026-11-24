@@ -60,6 +60,30 @@ describe("xlarge catalog Table", () => {
     expect(app.shows("id:s_tbl:root:empty")).toBe(true);
   });
 
+  test("a list of codes under `enumPrefix` is translated entry by entry", async () => {
+    // As xlarge's audit history sends it: `changed`, `format = "list"`, `enumPrefix = ""`.
+    const app = await open(
+      HARNESS,
+      harnessOptions(
+        surfaceMessages(
+          "s_tbl_list",
+          [
+            {
+              id: "root",
+              component: "Table",
+              columns: [{ enumPrefix: "", field: "changed", format: "list", grow: true, label: "audit.field.changed" }],
+              rows: { "@path": "/history" },
+            },
+          ],
+          { history: [{ id: "h1", changed: ["field.amount", "field.stage"] }, { id: "h2", changed: [] }] },
+        ),
+        { "audit.field.changed": "Changed", "field.amount": "Amount", "field.stage": "Stage" },
+      ),
+    );
+    expect(reportedErrors(app)).toEqual([]);
+    expect(app.texts()).toEqual(["Changed", "Amount, Stage", ""]);
+  });
+
   test("a row press sends rowAction (or rowOpens) with the row id", async () => {
     const app = await open(
       HARNESS,

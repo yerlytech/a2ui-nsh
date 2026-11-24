@@ -1,0 +1,344 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:lab_results.performance, a0939a12, 2026-11-24",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "lab_results.performance",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "lab_results.performance",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": [
+              "download",
+              "when",
+              "cut",
+              "reported",
+              "average",
+              "median",
+              "p90",
+              "on_time",
+              "overdue",
+              "trend",
+              "analysts_card",
+              "instruments_card",
+              "methods_card",
+              "weeks_card"
+            ],
+            "pageTitle": "lab_results.title.performance",
+            "title": "lab_results.title.performance"
+          },
+          {
+            "id": "download",
+            "component": "Button",
+            "action": "export:lab_results.performance?shape=xlsx",
+            "icon": "download",
+            "label": "lab_results.action.download_xlsx"
+          },
+          {
+            "id": "when",
+            "component": "Form",
+            "children": ["period", "from", "to"],
+            "row": true,
+            "submit": "screen:lab_results.performance",
+            "submitLabel": "period.action.show"
+          },
+          {
+            "id": "period",
+            "component": "Field",
+            "default": { "@path": "/_period/preset" },
+            "field": "period",
+            "input": "choice",
+            "label": "period.field.period",
+            "optionPrefix": "period.preset.",
+            "options": [
+              "today",
+              "this_week",
+              "this_month",
+              "last_month",
+              "this_quarter",
+              "this_year",
+              "last_7_days",
+              "last_30_days",
+              "between"
+            ]
+          },
+          {
+            "id": "from",
+            "component": "Field",
+            "default": { "@path": "/_period/from" },
+            "field": "from",
+            "input": "date",
+            "label": "period.field.from"
+          },
+          {
+            "id": "to",
+            "component": "Field",
+            "default": { "@path": "/_period/to" },
+            "field": "to",
+            "input": "date",
+            "label": "period.field.to"
+          },
+          {
+            "id": "cut",
+            "component": "Text",
+            "code": "lab_results.text.performance_cut",
+            "when": { "@path": "/performance/cut" }
+          },
+          {
+            "id": "reported",
+            "component": "Metric",
+            "format": "number",
+            "icon": "check-circle",
+            "label": "lab_results.metric.reported",
+            "value": { "@path": "/performance/turnaround/reported" }
+          },
+          {
+            "id": "average",
+            "component": "Metric",
+            "format": "decimal",
+            "icon": "alarm-clock",
+            "label": "lab_results.metric.average_hours",
+            "value": { "@path": "/performance/turnaround/averageHours" }
+          },
+          {
+            "id": "median",
+            "component": "Metric",
+            "format": "decimal",
+            "icon": "alarm-clock",
+            "label": "lab_results.metric.median_hours",
+            "value": { "@path": "/performance/turnaround/medianHours" }
+          },
+          {
+            "id": "p90",
+            "component": "Metric",
+            "format": "decimal",
+            "icon": "alarm-clock",
+            "label": "lab_results.metric.p90_hours",
+            "value": { "@path": "/performance/turnaround/p90Hours" }
+          },
+          {
+            "id": "on_time",
+            "component": "Metric",
+            "format": "decimal",
+            "hint": "lab_results.metric.on_time_share_hint",
+            "icon": "calendar-clock",
+            "label": "lab_results.metric.on_time_share",
+            "value": { "@path": "/performance/turnaround/onTimeShare" }
+          },
+          {
+            "id": "overdue",
+            "component": "Metric",
+            "accent": "rose",
+            "format": "number",
+            "icon": "alarm-clock",
+            "label": "lab_results.metric.overdue_now",
+            "value": { "@path": "/performance/turnaround/overdueNow" }
+          },
+          {
+            "id": "trend",
+            "component": "Chart",
+            "data": { "@path": "/performance/byWeek" },
+            "format": "decimal",
+            "kind": "line",
+            "label": "lab_results.title.turnaround_by_week",
+            "labelFormat": "date"
+          },
+          {
+            "id": "analysts_card",
+            "component": "Card",
+            "children": ["analysts_csv", "analysts"],
+            "title": "lab_results.title.analysts"
+          },
+          {
+            "id": "analysts_csv",
+            "component": "Button",
+            "action": "export:lab_results.performance?shape=csv&table=analysts",
+            "icon": "download",
+            "label": "lab_results.action.download_csv"
+          },
+          {
+            "id": "analysts",
+            "component": "Table",
+            "columns": [
+              { "field": "name", "grow": true, "label": "lab_results.field.analyst_name" },
+              { "field": "entered", "format": "number", "label": "lab_results.field.entered_count" },
+              { "field": "verified", "format": "number", "label": "lab_results.field.verified_count" },
+              { "field": "approved", "format": "number", "label": "lab_results.field.approved_count" },
+              { "field": "passed", "format": "number", "label": "lab_results.field.passed_count" },
+              { "field": "failed", "format": "number", "label": "lab_results.field.failed_count" },
+              { "field": "returned", "format": "number", "label": "lab_results.field.returned_count" },
+              { "field": "pending", "format": "number", "label": "lab_results.field.pending_count" }
+            ],
+            "rows": { "@path": "/performance/analysts" }
+          },
+          {
+            "id": "instruments_card",
+            "component": "Card",
+            "children": ["instruments_csv", "instruments"],
+            "title": "lab_results.title.instruments"
+          },
+          {
+            "id": "instruments_csv",
+            "component": "Button",
+            "action": "export:lab_results.performance?shape=csv&table=instruments",
+            "icon": "download",
+            "label": "lab_results.action.download_csv"
+          },
+          {
+            "id": "instruments",
+            "component": "Table",
+            "columns": [
+              { "field": "code", "grow": true, "label": "lab_results.field.instrument" },
+              { "field": "results", "format": "number", "label": "lab_results.field.results" },
+              {
+                "enumPrefix": "calibration.status.",
+                "field": "calibration",
+                "label": "lab_results.field.calibration",
+                "tones": {
+                  "archived": "neutral",
+                  "failed": "danger",
+                  "in_date": "success",
+                  "missing": "warning",
+                  "no_such_equipment": "neutral",
+                  "not_yet_valid": "warning",
+                  "overdue": "danger",
+                  "parent_not_usable": "danger",
+                  "retired": "neutral"
+                }
+              },
+              { "field": "dueOn", "format": "date", "label": "lab_results.field.calibration_due_on" }
+            ],
+            "rows": { "@path": "/performance/instruments" }
+          },
+          {
+            "id": "methods_card",
+            "component": "Card",
+            "children": ["methods_csv", "methods"],
+            "title": "lab_results.title.methods"
+          },
+          {
+            "id": "methods_csv",
+            "component": "Button",
+            "action": "export:lab_results.performance?shape=csv&table=methods",
+            "icon": "download",
+            "label": "lab_results.action.download_csv"
+          },
+          {
+            "id": "methods",
+            "component": "Table",
+            "columns": [
+              { "field": "code", "label": "lab_results.field.method" },
+              { "field": "parameter", "grow": true, "label": "lab_results.field.parameter" },
+              { "field": "entered", "format": "number", "label": "lab_results.field.entered_count" },
+              { "field": "approved", "format": "number", "label": "lab_results.field.approved_count" },
+              { "field": "averageHours", "format": "decimal", "label": "lab_results.field.average_hours" }
+            ],
+            "rows": { "@path": "/performance/methods" }
+          },
+          {
+            "id": "weeks_card",
+            "component": "Card",
+            "children": ["weeks_csv", "weeks"],
+            "title": "lab_results.title.weeks"
+          },
+          {
+            "id": "weeks_csv",
+            "component": "Button",
+            "action": "export:lab_results.performance?shape=csv&table=weeks",
+            "icon": "download",
+            "label": "lab_results.action.download_csv"
+          },
+          {
+            "id": "weeks",
+            "component": "Table",
+            "columns": [
+              { "field": "week", "format": "date", "label": "lab_results.field.week" },
+              { "field": "reported", "format": "number", "label": "lab_results.field.reported_count" },
+              { "field": "averageHours", "format": "decimal", "label": "lab_results.field.average_hours" }
+            ],
+            "rows": { "@path": "/performance/weeks" }
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "lab_results.performance",
+        "path": "/",
+        "value": {
+          "_period": {
+            "preset": "this_month",
+            "from": "2026-11-01",
+            "to": "2026-11-24",
+            "beforeFrom": "2026-10-08",
+            "beforeTo": "2026-10-31"
+          },
+          "performance": {
+            "analysts": [
+              {
+                "name": "owner@example.com",
+                "entered": 2,
+                "verified": 2,
+                "approved": 2,
+                "passed": 2,
+                "failed": 0,
+                "returned": 0,
+                "pending": 0
+              }
+            ],
+            "instruments": [],
+            "methods": [
+              {
+                "code": "COND",
+                "parameter": "Conductivity",
+                "entered": 2,
+                "approved": 2,
+                "averageHours": "0.0"
+              }
+            ],
+            "weeks": [
+              {
+                "week": "2026-11-23",
+                "reported": 2,
+                "averageHours": "0.0"
+              }
+            ],
+            "turnaround": {
+              "reported": 2,
+              "averageHours": "0.0",
+              "medianHours": "0.0",
+              "p90Hours": "0.0",
+              "withDueDay": 0,
+              "onTime": 0,
+              "onTimeShare": null,
+              "overdueNow": 0
+            },
+            "byWeek": [
+              {
+                "label": "2026-11-23",
+                "value": "0.0"
+              }
+            ],
+            "cut": false,
+            "period": {
+              "preset": "this_month",
+              "from": "2026-11-01",
+              "to": "2026-11-24",
+              "beforeFrom": "2026-10-08",
+              "beforeTo": "2026-10-31"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

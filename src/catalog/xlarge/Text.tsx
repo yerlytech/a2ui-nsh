@@ -5,6 +5,7 @@
  * `params` or, without `code`, `text` (a dynamic string: data, shown as it is).
  * `code` wins when both are set, as in xlarge's web client.
  * `tone` picks the colour and weight; an unknown tone draws plain.
+ * `when` and `unless` (data bindings) hide it as `guardShown` says.
  */
 
 import { Text, computed, type JSX } from "nsh";
@@ -13,8 +14,8 @@ import {
   type A2uiComponentProps,
 } from "../../renderer/A2uiSurface";
 import type { A2uiComponentRenderer } from "../../renderer/registry";
-import type { ResolvedXlargeOptions } from "./context";
-import { messageText, textTone, type TextTone } from "./model";
+import { readGuard, type ResolvedXlargeOptions } from "./context";
+import { guardShown, messageText, textTone, type TextTone } from "./model";
 
 const TONE_CLASS: Readonly<Record<TextTone, string>> = {
   plain: "text-sm text-foreground",
@@ -32,6 +33,9 @@ export function createXlargeText(
     const codeProp = props.bridge.prop("code");
     const paramsProp = props.bridge.prop("params");
     const toneProp = props.bridge.prop("tone");
+    const whenProp = props.bridge.prop("when");
+    const unlessProp = props.bridge.prop("unless");
+    const shown = computed(() => guardShown(readGuard(whenProp()), readGuard(unlessProp())));
 
     // `code` wins over `text`, as in xlarge's web client.
     const content = computed(() => {
@@ -44,9 +48,11 @@ export function createXlargeText(
     const tone = computed(() => textTone(toneProp()));
 
     return (
-      <Text testID={props.testId} class={TONE_CLASS[tone()]}>
-        {content()}
-      </Text>
+      <If when={shown()}>
+        <Text testID={props.testId} class={TONE_CLASS[tone()]}>
+          {content()}
+        </Text>
+      </If>
     );
   };
 }

@@ -29,11 +29,11 @@
           "leaves": [
             {
               "id": "leaf-1",
-              "number": "CHK-2026-0001",
+              "number": "1001",
               "state": "printed",
               "date": "2026-11-20",
               "payee": "Acme Logistics",
-              "amount": "15000.00",
+              "amount": "15000 TRY",
               "amountWords": "Fifteen thousand lira",
               "memo": "Invoice 42",
               "layout": {
@@ -44,14 +44,14 @@
                 "memo": { "top": 60, "left": 30 }
               },
               "stub": {
-                "number": "CHK-2026-0001",
+                "number": "1001",
                 "date": "2026-11-20",
                 "payee": "Acme Logistics",
-                "amount": "15000.00",
+                "amount": "15000 TRY",
                 "memo": "Invoice 42"
               }
             },
-            { "id": "leaf-2", "number": "CHK-2026-0002", "state": "void", "stub": null }
+            { "id": "leaf-2", "number": "1002", "state": "void", "stub": null }
           ]
         }
       }

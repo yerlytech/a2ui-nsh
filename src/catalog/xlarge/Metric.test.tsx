@@ -1,4 +1,5 @@
 import { describe, expect, open, test } from "nsh/test";
+import { metricAccent } from "./model";
 import {
   HARNESS,
   harnessOptions,
@@ -120,5 +121,33 @@ describe("xlarge catalog Metric", () => {
     const good = app.spanStyle("id:s_metric_down:down >> text:▼ 3%").color;
     const bad = app.spanStyle("id:s_metric_down:worse >> text:▼ 3%").color;
     expect(good === bad).toBe(false);
+  });
+
+  test("xlarge's accent colour name `rose` draws the destructive edge", async () => {
+    // As xlarge's `lab_results.performance` marks its overdue count.
+    const app = await open(
+      HARNESS,
+      harnessOptions(
+        surfaceMessages(
+          "s_metric_accent",
+          [
+            { id: "root", component: "Card", plain: true, children: ["rose", "danger", "none"] },
+            { id: "rose", component: "Metric", value: { "@path": "/v" }, format: "number", accent: "rose" },
+            { id: "danger", component: "Metric", value: { "@path": "/v" }, format: "number", accent: "danger" },
+            { id: "none", component: "Metric", value: { "@path": "/v" }, format: "number" },
+          ],
+          { v: 0 },
+        ),
+      ),
+    );
+    expect(reportedErrors(app)).toEqual([]);
+    expect(app.shows("id:s_metric_accent:rose")).toBe(true);
+    // The headless host reports no border colour, so the edge is checked
+    // where the renderer picks it.
+    expect(metricAccent("rose")).toBe("danger");
+    expect(metricAccent("red")).toBe("danger");
+    expect(metricAccent("danger")).toBe("danger");
+    expect(metricAccent("accent")).toBe("accent");
+    expect(metricAccent(undefined)).toBe("plain");
   });
 });

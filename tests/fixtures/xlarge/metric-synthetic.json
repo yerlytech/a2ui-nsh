@@ -31,7 +31,7 @@
             "format": "count",
             "change": { "@path": "/kpi/complaintsChange" },
             "better": "down",
-            "accent": "danger"
+            "accent": "rose"
           }
         ]
       }

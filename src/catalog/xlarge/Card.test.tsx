@@ -46,4 +46,34 @@ describe("xlarge catalog Card", () => {
     expect(app.shows("id:s_card_bare:root:title")).toBe(false);
     expect(app.texts()).toEqual([]);
   });
+
+  test("a card whose `when` holds nothing is not drawn, children and all", async () => {
+    // As xlarge's `lab_samples.sample` sends it: `when = "/custom/any"`, with
+    // `custom` an empty list when the record has no own fields.
+    const app = await open(
+      HARNESS,
+      harnessOptions(
+        surfaceMessages(
+          "s_card_when",
+          [
+            { id: "root", component: "Card", plain: true, children: ["own", "other"] },
+            { id: "own", component: "Card", title: "fields.title.own", when: { "@path": "/custom/any" }, children: ["inner"] },
+            { id: "inner", component: "Text", text: "Inside" },
+            { id: "other", component: "Card", title: "other.title", unless: { "@path": "/custom/any" } },
+          ],
+          { custom: [] },
+        ),
+        { "fields.title.own": "Own fields", "other.title": "Other" },
+      ),
+    );
+    expect(reportedErrors(app)).toEqual([]);
+    expect(app.shows("id:s_card_when:own")).toBe(false);
+    expect(app.texts()).toEqual(["Other"]);
+
+    await app.host.send("a2ui.message", {
+      version: "1.0",
+      updateDataModel: { surfaceId: "s_card_when", path: "/custom", value: { any: true } },
+    });
+    expect(app.texts()).toEqual(["Own fields", "Inside"]);
+  });
 });
