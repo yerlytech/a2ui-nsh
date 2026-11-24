@@ -1,0 +1,219 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:lab_reports.layout, a0939a12, 2026-11-24",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "lab_reports.layout",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "lab_reports.layout",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["both_words", "both", "sides", "languages"],
+            "pageTitle": "lab_reports.title.layout",
+            "title": "lab_reports.title.layout"
+          },
+          {
+            "id": "both_words",
+            "component": "Text",
+            "code": "lab_reports.text.bilingual"
+          },
+          {
+            "id": "both",
+            "component": "Form",
+            "children": ["bilingual"],
+            "after": "screen:lab_reports.layout",
+            "icon": "book-open",
+            "submit": "lab_reports.set_bilingual",
+            "submitLabel": "action.save",
+            "title": "lab_reports.action.bilingual",
+            "version": { "@path": "/layout/version" }
+          },
+          {
+            "id": "bilingual",
+            "component": "Field",
+            "field": "bilingual",
+            "input": "flag",
+            "label": "lab_reports.field.bilingual"
+          },
+          {
+            "id": "sides",
+            "component": "Columns",
+            "children": ["arranged", "drawn"],
+            "widths": [5, 7]
+          },
+          {
+            "id": "arranged",
+            "component": "Card",
+            "children": ["blocks"],
+            "title": "lab_reports.title.blocks"
+          },
+          {
+            "id": "blocks",
+            "component": "Arrange",
+            "add": "text",
+            "addItem": "lab_reports.block.text",
+            "addLabel": "lab_reports.action.add_text",
+            "after": "screen:lab_reports.layout",
+            "field": "blocks",
+            "items": { "@path": "/layout/blocks" },
+            "reset": "lab_reports.reset_layout",
+            "save": "lab_reports.arrange",
+            "version": { "@path": "/layout/version" }
+          },
+          {
+            "id": "drawn",
+            "component": "Card",
+            "children": ["sample", "preview"],
+            "sticky": true,
+            "title": "lab_reports.title.preview"
+          },
+          {
+            "id": "sample",
+            "component": "Field",
+            "field": "sample",
+            "from": "lab_reports.samples",
+            "input": "record",
+            "label": "lab_reports.field.preview_sample",
+            "show": "code",
+            "value": "id"
+          },
+          {
+            "id": "preview",
+            "component": "Preview",
+            "about": "sample",
+            "action": "export:lab_reports.report?shape=pdf",
+            "draft": ["blocks"],
+            "label": "lab_reports.title.preview"
+          },
+          {
+            "id": "languages",
+            "component": "Table",
+            "columns": [
+              { "enumPrefix": "lab_reports.language.", "field": "id", "grow": true, "label": "lab_reports.field.layout_language" },
+              { "field": "own", "format": "flag", "label": "lab_reports.field.layout_own" }
+            ],
+            "rowAction": "screen:lab_reports.layout_for",
+            "rows": { "@path": "/layout/languages" }
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "lab_reports.layout",
+        "path": "/",
+        "value": {
+          "layout": {
+            "id": "current",
+            "blocks": [
+              {
+                "kind": "header",
+                "label": "lab_reports.block.header",
+                "shown": true,
+                "kept": false,
+                "removable": false,
+                "fields": [
+                  { "key": "reportNo", "label": "lab_reports.field.report_no", "shown": true },
+                  { "key": "customer", "label": "lab_reports.field.partner", "shown": true },
+                  { "key": "customerAddress", "label": "lab_reports.field.partner_address", "shown": true },
+                  { "key": "product", "label": "lab_reports.field.product", "shown": true },
+                  { "key": "lot", "label": "lab_reports.field.batch", "shown": true },
+                  { "key": "sampleCode", "label": "lab_reports.field.sample", "shown": true },
+                  { "key": "description", "label": "lab_reports.field.sample_description", "shown": true },
+                  { "key": "receivedOn", "label": "lab_reports.field.received_on", "shown": true },
+                  { "key": "analysedOn", "label": "lab_reports.field.analysed_on", "shown": true },
+                  { "key": "reportedOn", "label": "lab_reports.field.reported_on", "shown": true },
+                  { "key": "standards", "label": "lab_reports.field.standards", "shown": true }
+                ]
+              },
+              {
+                "kind": "table",
+                "label": "lab_reports.block.table",
+                "shown": true,
+                "kept": true,
+                "removable": false,
+                "fields": [
+                  { "key": "method", "label": "lab_reports.field.method", "shown": true },
+                  { "key": "parameter", "label": "lab_reports.field.parameter", "shown": true },
+                  { "key": "value", "label": "lab_reports.field.value", "shown": true },
+                  { "key": "unit", "label": "lab_reports.field.unit", "shown": true },
+                  { "key": "minValue", "label": "lab_reports.field.min_value", "shown": true },
+                  { "key": "maxValue", "label": "lab_reports.field.max_value", "shown": true },
+                  { "key": "verdict", "label": "lab_reports.field.verdict", "shown": true },
+                  { "key": "scope", "label": "lab_reports.field.scope", "shown": true },
+                  { "key": "reportNo", "label": "lab_reports.field.report_no", "shown": false },
+                  { "key": "sampleCode", "label": "lab_reports.field.sample", "shown": false }
+                ]
+              },
+              { "kind": "sampling", "label": "lab_reports.block.sampling", "shown": true, "kept": false, "removable": false },
+              { "kind": "statement", "label": "lab_reports.block.statement", "shown": true, "kept": false, "removable": false },
+              { "kind": "conditions", "label": "lab_reports.block.conditions", "shown": true, "kept": false, "removable": false },
+              { "kind": "opinion", "label": "lab_reports.block.opinion", "shown": true, "kept": false, "removable": false },
+              {
+                "kind": "signatures",
+                "label": "lab_reports.block.signatures",
+                "shown": true,
+                "kept": false,
+                "removable": false,
+                "fields": [
+                  { "key": "measuredBy", "label": "lab_reports.field.measured_by", "shown": true },
+                  { "key": "approvedBy", "label": "lab_reports.field.approved_by", "shown": true }
+                ]
+              }
+            ],
+            "version": 0,
+            "isDefault": true,
+            "own": false,
+            "languages": [
+              { "id": "en", "own": false },
+              { "id": "tr", "own": false },
+              { "id": "de", "own": false }
+            ],
+            "bilingual": false
+          },
+          "lab_reports.samples": [
+            {
+              "id": "01M86HRWQY61YTDH6PBJGSWNH6",
+              "code": "S-000002",
+              "description": "Well water",
+              "partner_name": "Acme Kimya",
+              "lot_code": null,
+              "partner_address": "",
+              "test_conditions": null,
+              "opinion": null,
+              "opinion_basis": null,
+              "received_at": "2026-11-24T10:31:37.984618Z",
+              "product_name": null,
+              "sampled_by": "customer",
+              "matrix": null
+            },
+            {
+              "id": "01M86HRW5RJ7JM8XAXC5075KCE",
+              "code": "S-000001",
+              "description": "River water",
+              "partner_name": "Acme Kimya",
+              "lot_code": null,
+              "partner_address": "",
+              "test_conditions": null,
+              "opinion": null,
+              "opinion_basis": null,
+              "received_at": "2026-11-24T10:31:37.402250Z",
+              "product_name": null,
+              "sampled_by": "customer",
+              "matrix": null
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

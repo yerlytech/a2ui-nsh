@@ -1,0 +1,130 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:stock.adjust_form, a0939a12, 2026-11-24",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "stock.adjust_form",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "stock.adjust_form",
+        "components": [
+          {
+            "id": "root",
+            "component": "Wizard",
+            "children": ["difference", "asked"],
+            "pageTitle": "stock.title.adjust",
+            "after": "screen:stock.list",
+            "confirm": true,
+            "submit": "stock.ask_to_adjust",
+            "submitLabel": "stock.action.ask_to_adjust"
+          },
+          {
+            "id": "difference",
+            "component": "Card",
+            "children": ["sku", "from", "to", "qty"],
+            "title": "stock.step.difference"
+          },
+          {
+            "id": "sku",
+            "component": "Field",
+            "field": "sku",
+            "from": "products.list",
+            "input": "record",
+            "label": "stock.field.product",
+            "show": "sku",
+            "value": "sku"
+          },
+          {
+            "id": "from",
+            "component": "Field",
+            "field": "from",
+            "from": "stock.locations",
+            "input": "record",
+            "label": "stock.field.from",
+            "show": "code",
+            "value": "code"
+          },
+          {
+            "id": "to",
+            "component": "Field",
+            "field": "to",
+            "from": "stock.locations",
+            "input": "record",
+            "label": "stock.field.to",
+            "show": "code",
+            "value": "code"
+          },
+          {
+            "id": "qty",
+            "component": "Field",
+            "example": "2",
+            "field": "qty",
+            "input": "decimal",
+            "label": "stock.field.qty"
+          },
+          {
+            "id": "asked",
+            "component": "Card",
+            "children": ["explain"],
+            "title": "stock.step.asked_for"
+          },
+          {
+            "id": "explain",
+            "component": "Text",
+            "code": "stock.adjust.asked_for"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "stock.adjust_form",
+        "path": "/",
+        "value": {
+          "products.list": [
+            {
+              "id": "01M86HRKPGXJ50RMYAZAXDE5D7",
+              "sku": "FASON",
+              "name": "Fason işçilik",
+              "barcode": null,
+              "customsCode": null,
+              "kind": "service",
+              "unit": "PCS",
+              "conversion": null,
+              "archived": false,
+              "version": 1,
+              "category": null,
+              "weight": "0",
+              "volume": "0",
+              "incomeAccount": null,
+              "expenseAccount": null,
+              "tax": null,
+              "tags": [],
+              "variantLimit": 200,
+              "invoicePolicy": "ordered",
+              "websiteDescription": null,
+              "websiteImages": [],
+              "alternatives": [],
+              "accessories": []
+            }
+          ],
+          "stock.locations": [
+            { "id": "pww9qscbpyxi3xf3vb93", "code": "COUNT", "name": "Stocktake", "kind": "inventory", "issuesToWork": false, "archived": false, "version": 2, "parent": null, "path": "COUNT", "usage": "inventory", "warehouse": "ANA" },
+            { "id": "4nm8ab8fn5wf34dl97hn", "code": "CUSTOMER", "name": "Customers", "kind": "customer", "issuesToWork": true, "archived": false, "version": 2, "parent": null, "path": "CUSTOMER", "usage": "customer", "warehouse": "ANA" },
+            { "id": "8vxbrh3fwjpspp8ed7d9", "code": "PRODUCTION", "name": "Production", "kind": "production", "issuesToWork": true, "archived": false, "version": 2, "parent": null, "path": "PRODUCTION", "usage": "production", "warehouse": "ANA" },
+            { "id": "1u01lzmoqi58e8qgbbb4", "code": "SCRAP", "name": "Scrap", "kind": "scrap", "issuesToWork": false, "archived": false, "version": 2, "parent": null, "path": "SCRAP", "usage": "inventory", "warehouse": "ANA" },
+            { "id": "fc9gipn5wldajrwzqacv", "code": "STOCK", "name": "Warehouse", "kind": "internal", "issuesToWork": false, "archived": false, "version": 2, "parent": null, "path": "STOCK", "usage": "internal", "warehouse": "ANA" },
+            { "id": "gvnou8kubpn2sab5c8qt", "code": "SUPPLIER", "name": "Suppliers", "kind": "supplier", "issuesToWork": false, "archived": false, "version": 2, "parent": null, "path": "SUPPLIER", "usage": "supplier", "warehouse": "ANA" },
+            { "id": "9x9grwa7bafynne42e3f", "code": "TRANSIT", "name": "In transit", "kind": "transit", "issuesToWork": false, "archived": false, "version": 2, "parent": null, "path": "TRANSIT", "usage": "transit", "warehouse": "ANA" }
+          ]
+        }
+      }
+    }
+  ]
+}

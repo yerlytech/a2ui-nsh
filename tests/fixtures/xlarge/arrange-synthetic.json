@@ -20,7 +20,7 @@
             "addLabel": "lab.action.add_note",
             "save": "lab.layout.save",
             "reset": "lab.layout.reset",
-            "after": "lab.reports",
+            "after": "screen:lab.reports",
             "confirm": true,
             "version": { "@path": "/layout/version" }
           }

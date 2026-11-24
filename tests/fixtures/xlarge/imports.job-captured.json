@@ -1,0 +1,116 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:imports.job, a0939a12, 2026-11-24",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "imports.job",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "imports.job",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["load", "rejected", "give_up", "table", "record_activities"],
+            "pageTitle": "imports.title.job",
+            "title": "imports.title.job"
+          },
+          {
+            "id": "load",
+            "component": "Button",
+            "action": "imports.commit",
+            "after": "screen:imports.jobs",
+            "label": "imports.action.load",
+            "variant": "primary"
+          },
+          {
+            "id": "rejected",
+            "component": "Button",
+            "action": "export:imports.rejected?shape=file",
+            "icon": "download",
+            "label": "imports.action.rejected",
+            "when": { "@path": "/problems/rejectedFile" }
+          },
+          {
+            "id": "give_up",
+            "component": "Confirm",
+            "action": "imports.cancel",
+            "after": "screen:imports.jobs",
+            "cancel": "screen:imports.jobs",
+            "confirmLabel": "imports.action.give_up",
+            "question": "imports.question.give_up"
+          },
+          {
+            "id": "table",
+            "component": "Table",
+            "columns": [
+              { "field": "n", "format": "number", "label": "imports.field.row" },
+              {
+                "enumPrefix": "imports.state.",
+                "field": "state",
+                "label": "imports.field.state",
+                "tones": { "done": "success", "dropped": "neutral", "failed": "danger", "sent": "info", "unknown": "neutral", "waiting": "info" }
+              },
+              { "enumPrefix": "", "field": "code", "grow": true, "label": "imports.field.why" },
+              { "enumPrefix": "", "field": "fieldLabel", "label": "imports.field.which_box" }
+            ],
+            "group": "state",
+            "groupOptions": ["done", "dropped", "failed", "sent", "unknown", "waiting"],
+            "groupPrefix": "imports.state.",
+            "listAction": "imports.problems",
+            "listInput": { "job": "01M86HS0Q4FRV6Y4HZF50FHM5F", "limit": 50 },
+            "rows": { "@path": "/problems" }
+          },
+          {
+            "id": "record_activities",
+            "component": "Card",
+            "children": ["record_activities_list"],
+            "title": "activities.title.on_record"
+          },
+          {
+            "id": "record_activities_list",
+            "component": "Table",
+            "columns": [
+              { "enumPrefix": "", "field": "summary", "grow": true, "label": "activities.field.summary" },
+              { "field": "typeName", "label": "activities.field.type" },
+              { "field": "dueOn", "format": "date", "label": "activities.field.due_on" },
+              { "enumPrefix": "activities.state.", "field": "state", "label": "activities.field.state" }
+            ],
+            "group": "state",
+            "groupPrefix": "activities.state.",
+            "listAction": "activities.of",
+            "listInput": { "id": "01M86HS0Q4FRV6Y4HZF50FHM5F", "table": "imports.job" },
+            "rowAction": "screen:activities.one",
+            "rows": { "@path": "/recordActivities" }
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "imports.job",
+        "path": "/",
+        "value": {
+          "problems": [
+            {
+              "id": "01M86HS0Q4FRV6Y4HZF50FHM5F:3",
+              "job": "01M86HS0Q4FRV6Y4HZF50FHM5F",
+              "n": 3,
+              "state": "failed",
+              "code": "field.required",
+              "field": "name",
+              "fieldLabel": "name"
+            }
+          ],
+          "recordActivities": []
+        }
+      }
+    }
+  ]
+}

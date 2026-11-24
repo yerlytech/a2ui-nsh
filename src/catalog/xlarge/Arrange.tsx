@@ -15,6 +15,10 @@
  * With `add` (the new item's `kind`) an add button adds
  * `{ kind, label: addItem ?? addLabel, shown: true, removable: true, text: "" }`.
  *
+ * The list as it stands is also in the draft (the enclosing `Form`'s, else
+ * the screen's) under `field`, so a `Preview` whose `draft` names that field
+ * draws from it, as on xlarge's lab-report layout screen.
+ *
  * Save sends `save` with `{ [field]: items, version }`: every item in its new
  * order under `field` and the `version` its binding holds, so the server can
  * refuse a stale layout. Reset drops the local changes; with `reset` it also
@@ -33,9 +37,10 @@ import {
 } from "../../renderer/A2uiSurface";
 import type { A2uiComponentRenderer } from "../../renderer/registry";
 import { AskPanel, BUTTON_CLASS, BUTTON_TEXT_CLASS, sendXlargeAction } from "./ask";
-import type { ResolvedXlargeOptions } from "./context";
+import { FormDraftContext, type ResolvedXlargeOptions } from "./context";
 import {
   arrangeContext,
+  arrangeField,
   arrangeMoved,
   arrangeRows,
   askStep,
@@ -77,6 +82,17 @@ export function createXlargeArrange(
     });
     const items = computed(() => local() ?? source());
     const rows = computed(() => arrangeRows(items(), options.translate));
+
+    // The list, as it stands, is in the draft under `field`: a `Preview`
+    // naming that field draws from it (xlarge's lab-report layout).
+    const draft = FormDraftContext();
+    effect(() => {
+      const list = items();
+      const key = arrangeField(fieldProp());
+      if (draft !== undefined) {
+        draft.set(key, [...list]);
+      }
+    });
 
     const addKind = computed(() => unwrapOptionalString(addProp()));
     const addLabel = computed(() => {

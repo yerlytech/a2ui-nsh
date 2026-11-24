@@ -161,4 +161,34 @@ describe("xlarge catalog Arrange", () => {
       { name: "rows.order", sourceComponentId: "root", context: { blocks: [{ kind: "p" }, { kind: "q" }] } },
     ]);
   });
+
+  test("its list, as it stands, is in the draft under field (what a Preview naming it reads)", async () => {
+    const app = await open(
+      HARNESS,
+      harnessOptions(
+        surfaceMessages(
+          "s_ar_draft",
+          [
+            { id: "root", component: "Form", submit: "lab.keep", children: ["list", "page"] },
+            { id: "list", component: "Arrange", items: { "@path": "/rows" }, field: "blocks", save: "rows.order" },
+            { id: "page", component: "Preview", draft: ["blocks"], action: "export:lab.report?shape=pdf" },
+          ],
+          { rows: [{ kind: "x" }, { kind: "y" }] },
+        ),
+        {},
+        { previewBase: "https://example.test/preview/", previewPauseMs: 20 },
+      ),
+    );
+    await app.press("id:s_ar_draft:list:item:0:down");
+    await app.wait(80);
+    const asks = app.host.posts().filter((post) => post.name === "a2ui.preview").map((post) => post.data);
+    expect(asks.at(-1)).toEqual({
+      action: "export:lab.report?shape=pdf",
+      body: { draft: { blocks: [{ kind: "y" }, { kind: "x" }] } },
+    });
+    // The list is not a Field: the Form does not send it.
+    await app.press("id:s_ar_draft:root:submit");
+    expect(sentActions(app)).toEqual([{ name: "lab.keep", sourceComponentId: "root", context: {} }]);
+    expect(reportedErrors(app)).toEqual([]);
+  });
 });

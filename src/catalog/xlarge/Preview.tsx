@@ -2,7 +2,10 @@
  * xlarge catalog `Preview` (`tech.yerly.xlarge/v1`) on Native Shell.
  *
  * A page drawn from what is typed and not yet kept (xlarge spec 038). `draft`
- * lists draft field names, read from the enclosing `Form`'s draft; `about`
+ * lists draft field names, read from the enclosing `Form`'s draft, or the
+ * screen's (`screen_draft.tsx`) outside a `Form`, where an `Arrange` puts its
+ * list under its `field` (xlarge's lab-report layout: `draft = ["blocks"]`,
+ * `about = "sample"`, captured 2026-11-24); `about`
  * names the draft field holding the record the draft is about; `action` is
  * xlarge's export name (`export:<screen>?shape=...`). It is never sent as an
  * A2UI event: once every named field holds a value, and `previewPauseMs`

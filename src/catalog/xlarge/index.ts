@@ -33,6 +33,7 @@ import { createXlargeMetric } from "./Metric";
 import { createXlargePreview } from "./Preview";
 import { createXlargeQrCode } from "./QrCode";
 import { createXlargeRefusal } from "./Refusal";
+import { withScreenDraft } from "./screen_draft";
 import { createXlargeSteps } from "./Steps";
 import { createXlargeTable } from "./Table";
 import { createXlargeText } from "./Text";
@@ -56,6 +57,7 @@ export { createXlargeDetail } from "./Detail";
 export { createXlargeMetric } from "./Metric";
 export { createXlargeQrCode } from "./QrCode";
 export { createXlargeRefusal } from "./Refusal";
+export { screenDraft, withScreenDraft } from "./screen_draft";
 export { createXlargeSteps } from "./Steps";
 export { createXlargeText } from "./Text";
 export { createXlargeToast } from "./Toast";
@@ -75,6 +77,7 @@ export {
   SHOW_CODES,
   XLARGE_CATALOG_V1_ID,
   arrangeContext,
+  arrangeField,
   arrangeMoved,
   arrangeRows,
   arrangeText,
@@ -223,11 +226,20 @@ export function createXlargeRenderers(
   };
 }
 
-/** Registers the xlarge renderers on `registry` under `catalogId`. */
+/**
+ * Registers the xlarge renderers on `registry` under `catalogId`. Each
+ * surface gets one screen draft (`withScreenDraft`), as xlarge's client keeps
+ * one per screen: fields outside any `Form`, an `Arrange`'s list and a
+ * `Preview` outside a `Form` share it.
+ */
 export function registerXlargeCatalogComponents(
   registry: ComponentRegistry,
   options: XlargeRendererOptions = {},
   catalogId: string = XLARGE_CATALOG_V1_ID,
 ): ComponentRegistry {
-  return registry.registerCatalog(catalogId, createXlargeRenderers(options));
+  const renderers: Record<string, A2uiComponentRenderer> = {};
+  for (const [name, render] of Object.entries(createXlargeRenderers(options))) {
+    renderers[name] = withScreenDraft(render);
+  }
+  return registry.registerCatalog(catalogId, renderers);
 }

@@ -1,0 +1,49 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:lab_results.performance, a0939a12, 2026-11-24",
+  "cut": "only the root Card and its download Buttons are kept (the Button walk needs no more); the screen's Form, Metric, Chart and Table components and their data are left out",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "lab_results.performance",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "lab_results.performance",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["download", "analysts_csv", "weeks_csv"],
+            "pageTitle": "lab_results.title.performance",
+            "title": "lab_results.title.performance"
+          },
+          {
+            "id": "download",
+            "component": "Button",
+            "action": "export:lab_results.performance?shape=xlsx",
+            "icon": "download",
+            "label": "lab_results.action.download_xlsx"
+          },
+          {
+            "id": "analysts_csv",
+            "component": "Button",
+            "action": "export:lab_results.performance?shape=csv&table=analysts",
+            "icon": "download",
+            "label": "lab_results.action.download_csv"
+          },
+          {
+            "id": "weeks_csv",
+            "component": "Button",
+            "action": "export:lab_results.performance?shape=csv&table=weeks",
+            "icon": "download",
+            "label": "lab_results.action.download_csv"
+          }
+        ]
+      }
+    }
+  ]
+}

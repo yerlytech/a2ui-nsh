@@ -105,4 +105,56 @@ describe("xlarge catalog Preview", () => {
     expect(listed.texts()).toContain("—");
     expect(sentActions(listed)).toEqual([]);
   });
+
+  test("outside a Form it reads the screen's draft: a loose Field and an Arrange's list (captured layout)", async () => {
+    // As xlarge's lab_reports.layout (captured 2026-11-24): no Form holds
+    // the Preview; `draft` names the Arrange's `field`, `about` a loose Field.
+    const blocks = [
+      { kind: "header", label: "lab.block.header", shown: true },
+      { kind: "table", label: "lab.block.table", shown: true, kept: true },
+    ];
+    const app = await open(
+      HARNESS,
+      harnessOptions(
+        surfaceMessages(
+          "s_preview_screen",
+          [
+            { id: "root", component: "Card", children: ["blocks", "sample", "page"] },
+            { id: "blocks", component: "Arrange", items: { "@path": "/layout/blocks" }, field: "blocks", save: "lab.arrange" },
+            { id: "sample", component: "Field", field: "sample", label: "f.sample" },
+            { id: "page", component: "Preview", draft: ["blocks"], about: "sample", action: "export:lab.report?shape=pdf" },
+          ],
+          { layout: { blocks } },
+        ),
+        WORDS,
+        { previewBase: "https://example.test/preview/", previewPauseMs: 20 },
+      ),
+    );
+    await app.wait(80);
+    expect(previewAsks(app)).toEqual([{ action: "export:lab.report?shape=pdf", body: { draft: { blocks } } }]);
+    await app.type("id:s_preview_screen:sample", "s1");
+    await app.press("id:s_preview_screen:blocks:item:0:down");
+    await app.wait(80);
+    expect(previewAsks(app).at(-1)).toEqual({
+      action: "export:lab.report?shape=pdf",
+      body: { draft: { blocks: [blocks[1], blocks[0]] }, about: "s1" },
+    });
+    expect(sentActions(app)).toEqual([]);
+    expect(reportedErrors(app)).toEqual([]);
+  });
+
+  test("two surfaces keep two screen drafts", async () => {
+    const page = (surfaceId: string): unknown[] =>
+      surfaceMessages(surfaceId, [
+        { id: "root", component: "Card", children: ["note", "page"] },
+        { id: "note", component: "Field", field: "note", label: "f.note" },
+        { id: "page", component: "Preview", draft: ["note"] },
+      ]);
+    const app = await open(HARNESS, harnessOptions([...page("s_one"), ...page("s_two")], WORDS));
+    await app.type("id:s_one:note", "first");
+    expect(app.texts()).toContain("first");
+    expect(app.value("id:s_two:note")).toBe("");
+    expect(app.texts().filter((text) => text === "—")).toHaveLength(1);
+    expect(reportedErrors(app)).toEqual([]);
+  });
 });

@@ -1,0 +1,77 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:auth.own-second-step, a0939a12, 2026-11-24",
+  "scrubbed": "the TOTP secret is a fixed fake base32 value, the e-mail a fake one, and the QR SVG a stand-in of the same shape (456x456, 8px modules, three finder squares) that encodes nothing; the captured ones are not kept",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "auth.own-second-step",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "auth.own-second-step",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["what", "qr", "enter", "back"],
+            "pageTitle": "auth.title.own_second_step_on",
+            "title": "auth.title.own_second_step_on"
+          },
+          {
+            "id": "what",
+            "component": "Text",
+            "code": "auth.text.own_second_step_setup"
+          },
+          {
+            "id": "qr",
+            "component": "QrCode",
+            "label": "auth.field.second_step_qr",
+            "link": { "@path": "/setup/link" },
+            "src": { "@path": "/setup/qr" }
+          },
+          {
+            "id": "enter",
+            "component": "Form",
+            "children": ["app_code"],
+            "after": "screen:auth.account",
+            "submit": "auth.second_step_on",
+            "submitLabel": "auth.action.own_second_step_keep"
+          },
+          {
+            "id": "app_code",
+            "component": "Field",
+            "autofill": "one-time-code",
+            "checks": ["required"],
+            "example": "123456",
+            "field": "appCode",
+            "input": "text",
+            "label": "auth.field.second_step_first_code"
+          },
+          {
+            "id": "back",
+            "component": "Button",
+            "action": "screen:auth.account",
+            "label": "auth.title.account"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "auth.own-second-step",
+        "path": "/",
+        "value": {
+          "setup": {
+            "link": "otpauth://totp/Yerly%20XL:someone@example.test?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&issuer=Yerly%20XL&algorithm=SHA1&digits=6&period=30",
+            "qr": "<?xml version=\"1.0\" standalone=\"yes\"?><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"456\" height=\"456\" viewBox=\"0 0 456 456\" shape-rendering=\"crispEdges\"><rect x=\"0\" y=\"0\" width=\"456\" height=\"456\" fill=\"#fff\"/><path fill=\"#000\" d=\"M32 32h56v56H32V32M368 32h56v56H368V32M32 368h56v56H32V368\"/><path fill=\"#fff\" d=\"M40 40h40v40H40V40M376 40h40v40H376V40M40 376h40v40H40V376\"/><path fill=\"#000\" d=\"M48 48h24v24H48V48M384 48h24v24H384V48M48 384h24v24H48V384\"/></svg>"
+          }
+        }
+      }
+    }
+  ]
+}

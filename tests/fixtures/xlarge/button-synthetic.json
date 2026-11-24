@@ -42,7 +42,7 @@
             "variant": "primary",
             "context": { "id": { "path": "/deal/id" }, "source": "web" },
             "version": { "@path": "/deal/version" },
-            "after": "crm.deals"
+            "after": "screen:crm.deals"
           }
         ]
       }

@@ -1,0 +1,70 @@
+{
+  "source": "xlarge, one_real_screen_shows_each_component_of_the_catalog, screen:agents.assistant, a0939a12, 2026-11-24",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "agents.assistant",
+        "catalogId": "tech.yerly.xlarge/v1"
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "agents.assistant",
+        "components": [
+          {
+            "id": "root",
+            "component": "Card",
+            "children": ["ask", "steps"],
+            "pageTitle": "agents.title.assistant",
+            "title": "agents.title.assistant"
+          },
+          {
+            "id": "ask",
+            "component": "Form",
+            "children": ["rights", "words"],
+            "submit": "agents.ask",
+            "submitLabel": "agents.action.ask"
+          },
+          {
+            "id": "rights",
+            "component": "Field",
+            "checks": ["required"],
+            "field": "rights",
+            "from": "agents.lent",
+            "input": "record",
+            "label": "agents.field.rights",
+            "optionPrefix": "agents.rights.",
+            "show": "rights",
+            "value": "rights"
+          },
+          {
+            "id": "words",
+            "component": "Field",
+            "checks": ["required"],
+            "example": "agents.example.words",
+            "field": "words",
+            "input": "note",
+            "label": "agents.field.words"
+          },
+          {
+            "id": "steps",
+            "component": "Steps",
+            "answer": "steps"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0",
+      "updateDataModel": {
+        "surfaceId": "agents.assistant",
+        "path": "/",
+        "value": {
+          "agents.lent": []
+        }
+      }
+    }
+  ]
+}

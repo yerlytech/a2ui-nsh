@@ -17,7 +17,7 @@
             "submit": "crm.open_account",
             "submitLabel": "crm.action.open_account",
             "confirm": true,
-            "after": "crm.deals"
+            "after": "screen:crm.deals"
           },
           { "id": "company", "component": "Card", "title": "crm.title.company", "children": ["name", "city"] },
           { "id": "name", "component": "Field", "field": "name", "input": "text", "label": "crm.field.name", "checks": ["required"] },

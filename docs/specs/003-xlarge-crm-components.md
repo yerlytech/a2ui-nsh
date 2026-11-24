@@ -106,6 +106,9 @@ five more components of `tech.yerly.xlarge/v1`, drawn in this commit:
   host gives `openUrl`. Measured on nsh 0.6.1 by
   `tests/targets/svg.target.test.tsx`: Web loads the SVG data URI (232×232);
   headless and TUI report no load for any picture, PNG included.
+  Confirmed by capture 2026-11-24: matches (`auth.own-second-step` binds
+  `src` to an SVG that starts with an XML declaration and `link` to an
+  `otpauth:` link; the fixture's secret, e-mail and drawing are scrubbed).
 
 `when`/`unless` stay not read. No real xlarge capture of these components
 was available, so each has a synthetic fixture
@@ -128,6 +131,11 @@ A second commit of round 2 draws three components that send actions:
   literal `context` (or `{}`) and follows `after`. `cancel` is an action name
   (`cancel = "screen:imports.jobs"`), sent with `{}` on cancel when set.
   Either answer closes it.
+  Confirmed by capture 2026-11-24: matches (`lab_results.performance`'s
+  `export:` download Buttons and `imports.job`'s `load` with `after` and
+  `give_up` Confirm). Every captured `after` and `cancel` is already
+  `screen:<name>`; the synthetic fixtures now write it so. No captured
+  Button carries a `context` or `version`: those stay proven by fixture only.
 
 `after` and `back` follow one rule (`screenAction`): a value holding a `:`
 is an action name, sent as it came; a bare screen name is sent as
@@ -143,7 +151,13 @@ is an action name, sent as it came; a bare screen name is sent as
   last page staying until the next arrives, and a rejection says
   `preview.failed`. Without that option the named draft values are listed as
   typed. There is no accept button: xlarge's client has none. xlarge's draft
-  is the screen's; here a `Preview` reads the draft of the `Form` it sits in.
+  is the screen's: a `Preview` reads the draft of the `Form` it sits in, else
+  its surface's screen draft (`screen_draft.tsx`, given by the outermost
+  xlarge component), which fields outside any `Form` write and where an
+  `Arrange` puts its list under its `field`.
+  Confirmed by capture 2026-11-24: changed. `lab_reports.layout` draws its
+  `Preview` in no `Form`, with `draft = ["blocks"]` (the `Arrange`'s
+  `field`) and `about = "sample"` (a loose `Field`); before, it never asked.
 
 The first two share one ask (`ask.tsx`: `AskPanel`, `sendXlargeAction`; the
 pure step logic is `askStep` in `model.ts`). New host words:
@@ -234,6 +248,14 @@ A fourth commit of round 2 draws three flow components:
   both then follow `after` as `Button` does. `confirm` asks before a send;
   new items from the data model replace the local list. `fields` inside an
   item is not read (sent back as it came).
+  Confirmed by capture 2026-11-24 (`stock.adjust_form`, `agents.assistant`,
+  `lab_reports.layout`): Wizard's `after` is `screen:stock.list`, sent as it
+  came (no field of it is required, so the empty-page refusal stays proven by
+  fixture only); Steps' `answer` is `"steps"` (the screen holds no answer,
+  so its shape is still xlarge's `AgentStep`, not a capture); Arrange's
+  items match (`{ kind, label, shown, kept, removable, fields }`, `version`
+  0 sent). Changed: the list is also in the draft under `field`, for
+  `Preview`.
 
 New host words: `nextLabel`, `addLabel`, `resetLabel`, `moveUpLabel`,
 `moveDownLabel`, `shownLabel`, `removeLabel`, `movedText`, and the `announce`

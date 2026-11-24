@@ -22,7 +22,7 @@
             "question": "crm.ask.close_deal",
             "action": "crm.close_deal",
             "confirmLabel": "crm.action.close",
-            "after": "crm.deals"
+            "after": "screen:crm.deals"
           },
           {
             "id": "drop_job",

@@ -1642,6 +1642,14 @@ export function newArrangeItem(kind: unknown, label: unknown): Record<string, un
 }
 
 /**
+ * The key an `Arrange`'s list goes under, in the draft and when saved:
+ * `field` (xlarge's lab-report layout says `blocks`), else `items`.
+ */
+export function arrangeField(field: unknown): string {
+  return nonEmpty(field) ?? "items";
+}
+
+/**
  * The context an `Arrange` sends with `save`: the items in their new order
  * under `field` (xlarge's lab-report layout sends `blocks`; `items` when
  * `field` is missing) and `version` when it is set.
@@ -1651,7 +1659,7 @@ export function arrangeContext(
   items: readonly unknown[],
   version: unknown,
 ): Record<string, unknown> {
-  const key = nonEmpty(field) ?? "items";
+  const key = arrangeField(field);
   return version === undefined || version === null
     ? { [key]: [...items] }
     : { [key]: [...items], version };

@@ -3,6 +3,7 @@ import {
   actionContext,
   bindingPath,
   arrangeContext,
+  arrangeField,
   arrangeMoved,
   arrangeRows,
   arrangeText,
@@ -936,6 +937,13 @@ describe("Arrange helpers", () => {
     });
     expect(newArrangeItem(undefined, "lab.block.note")).toBe(undefined);
     expect(newArrangeItem("", "lab.block.note")).toBe(undefined);
+  });
+
+  test("arrangeField is the key the list goes under: field, else items", () => {
+    expect(arrangeField("blocks")).toBe("blocks");
+    expect(arrangeField("")).toBe("items");
+    expect(arrangeField(undefined)).toBe("items");
+    expect(arrangeField(3)).toBe("items");
   });
 
   test("arrangeContext sends the items under field, with version when set", () => {
