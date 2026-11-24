@@ -69,6 +69,38 @@ test:
       exit 1
     fi
 
+# Run one test file `times` times in a row and stop at the first failure (flake check).
+[group('test')]
+test-repeat file times="30":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p target
+    for i in $(seq 1 {{times}}); do
+      if ! nsh test "{{file}}" > target/test-repeat.log 2>&1; then
+        cat target/test-repeat.log
+        echo "run $i of {{times}} failed: {{file}}" >&2
+        exit 1
+      fi
+    done
+    tail -n 3 target/test-repeat.log
+    echo "{{times}} of {{times}} runs passed: {{file}}"
+
+# Run one test file `times` times while `just test` loads the machine in parallel.
+[group('test')]
+test-repeat-loaded file times="10":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p target
+    just test > target/test-load.log 2>&1 &
+    load=$!
+    status=0
+    just test-repeat "{{file}}" "{{times}}" || status=$?
+    load_status=0
+    wait "$load" || load_status=$?
+    tail -n 2 target/test-load.log
+    echo "background just test exit: $load_status"
+    exit "$status"
+
 # Run the native macOS AppKit walk test for examples/erp-customers and list saved PNG screenshots.
 [group('test')]
 walk-macos:

@@ -38,8 +38,8 @@ export function createXlargeToast(
       if (shown === undefined || !showing() || options.toastMs <= 0) {
         return;
       }
-      const timer = setTimeout(() => passed.set(shown), options.toastMs);
-      return () => clearTimeout(timer);
+      const timer = options.timers.setTimeout(() => passed.set(shown), options.toastMs);
+      return () => options.timers.clearTimeout(timer);
     });
 
     return (

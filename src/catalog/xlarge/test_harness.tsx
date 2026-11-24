@@ -7,6 +7,8 @@
  * - `translations`: optional i18n code → words map (missing codes show as-is);
  * - `strictMode`: optional, validates every message strictly;
  * - `toastMs`: optional, how long a `Toast` shows (the renderer option);
+ * - `manualTimers`: optional, a `Toast`'s timer runs on a manual clock (the
+ *   `timers` renderer option) that `a2ui.advance` (milliseconds) moves;
  * - `terminal`: optional, draws as a terminal host would (the renderer option);
  * - `fileBase`: optional, an `Image`'s attachment id is drawn from
  *   `fileBase + encodeURIComponent(id)` (the `fileUrl` renderer option);
@@ -28,6 +30,7 @@
 
 import { Scroll, host, mount, signal, type JSX } from "nsh";
 import { Catalog, buildV10BasicCatalogDocument } from "../../core/catalog";
+import type { TimerSeam } from "../../core/rpc";
 import { FunctionRegistry } from "../../core/functions";
 import { A2uiStore } from "../../store/surface_store";
 import { A2uiSurface } from "../../renderer/A2uiSurface";
@@ -43,6 +46,44 @@ function safePost(name: string, data: unknown): void {
   } catch {
     // The host may not list this channel.
   }
+}
+
+/** A timer seam whose time moves only when `advance` is called. */
+function manualTimers(): TimerSeam & { advance(ms: number): void } {
+  let now = 0;
+  let nextId = 1;
+  const pending = new Map<number, { at: number; run: () => void }>();
+  return {
+    setTimeout(run, ms) {
+      const id = nextId++;
+      pending.set(id, { at: now + Math.max(0, ms), run });
+      return id;
+    },
+    clearTimeout(handle) {
+      pending.delete(handle as number);
+    },
+    advance(ms) {
+      const until = now + Math.max(0, ms);
+      for (;;) {
+        let dueId: number | undefined;
+        let dueAt = Infinity;
+        for (const [id, timer] of pending) {
+          if (timer.at <= until && timer.at < dueAt) {
+            dueId = id;
+            dueAt = timer.at;
+          }
+        }
+        if (dueId === undefined) {
+          break;
+        }
+        const due = pending.get(dueId)!;
+        pending.delete(dueId);
+        now = due.at;
+        due.run();
+      }
+      now = until;
+    },
+  };
 }
 
 function XlargeHarnessApp(): JSX.Element {
@@ -64,6 +105,10 @@ function XlargeHarnessApp(): JSX.Element {
   const answer = signal<Record<string, unknown> | null>(asRecord(params["answer"]));
   host.on("a2ui.answer", (payload) => answer.set(asRecord(payload)));
   const previewBase = params["previewBase"];
+  const timers = params["manualTimers"] === true ? manualTimers() : undefined;
+  if (timers !== undefined) {
+    host.on("a2ui.advance", (payload) => timers.advance(typeof payload === "number" ? payload : 0));
+  }
 
   const registry = createBasicCatalogRegistry();
   registerXlargeCatalogComponents(registry, {
@@ -80,6 +125,7 @@ function XlargeHarnessApp(): JSX.Element {
     previewPauseMs: typeof params["previewPauseMs"] === "number" ? params["previewPauseMs"] : undefined,
     translate: (code) => translations[code] ?? code,
     toastMs: typeof params["toastMs"] === "number" ? params["toastMs"] : undefined,
+    timers,
     terminal: typeof params["terminal"] === "boolean" ? params["terminal"] : undefined,
     fileUrl:
       typeof params["fileBase"] === "string"

@@ -8,6 +8,7 @@
  */
 
 import { context, platform, signal, type Signal } from "nsh";
+import type { TimerSeam } from "../../core/rpc";
 import { announce } from "../../renderer/accessibility";
 import { SHOW_CODES, type PreviewBody, type Translate } from "./model";
 
@@ -71,6 +72,12 @@ export interface XlargeRendererOptions {
    * until it is dismissed. Default: `5000`.
    */
   readonly toastMs?: number;
+  /**
+   * Schedules a `Toast`'s passing after `toastMs` (the core `TimerSeam`), so
+   * a test can advance time instead of sleeping. Default: the global
+   * `setTimeout` / `clearTimeout`.
+   */
+  readonly timers?: TimerSeam;
   /** What a `Button` with `confirm` asks. Default: `"Are you sure?"`. */
   readonly confirmQuestion?: string;
   /** The yes button of a `Confirm` without `confirmLabel`. Default: `"Confirm"`. */
@@ -175,6 +182,7 @@ export interface ResolvedXlargeOptions {
   readonly backLabel: string;
   readonly dismissLabel: string;
   readonly toastMs: number;
+  readonly timers: TimerSeam;
   readonly confirmQuestion: string;
   readonly confirmLabel: string;
   readonly nextLabel: string;
@@ -199,6 +207,12 @@ export interface ResolvedXlargeOptions {
   readonly openInAppLabel: string;
 }
 
+const GLOBAL_TIMERS: TimerSeam = {
+  setTimeout: (callback, ms) => globalThis.setTimeout(callback, ms),
+  clearTimeout: (handle) =>
+    globalThis.clearTimeout(handle as ReturnType<typeof globalThis.setTimeout>),
+};
+
 /** Fills in the defaults of `XlargeRendererOptions`. */
 export function resolveXlargeOptions(
   options: XlargeRendererOptions = {},
@@ -215,6 +229,7 @@ export function resolveXlargeOptions(
       options.toastMs !== undefined && Number.isFinite(options.toastMs) && options.toastMs >= 0
         ? options.toastMs
         : 5000,
+    timers: options.timers ?? GLOBAL_TIMERS,
     confirmQuestion: options.confirmQuestion ?? "Are you sure?",
     confirmLabel: options.confirmLabel ?? "Confirm",
     nextLabel: options.nextLabel ?? "Next",
