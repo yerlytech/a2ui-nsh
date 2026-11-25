@@ -4,7 +4,7 @@ Thank you for contributing to a2ui-nsh. Please keep changes focused and include 
 
 ## Development setup
 
-Install the prerequisites listed in the [README](README.md#install): `nsh` 0.6.1, `just` 1.29.0 or newer, and Git. No Node.js or npm install is needed.
+Install the prerequisites listed in the [README](README.md#install): `nsh` 0.7.0, `just` 1.29.0 or newer, and Git. No Node.js or npm install is needed.
 
 Run the initial checks from the repository root:
 

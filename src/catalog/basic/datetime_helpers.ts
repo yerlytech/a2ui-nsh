@@ -137,8 +137,8 @@ function toMinutesOfDay(hhmm: string): number {
 /**
  * Clamps an `"HH:MM"` time within optional `[minTime, maxTime]` bounds.
  *
- * Used because `nsh 0.6.1` `TimeField` does not expose native `min`/`max`
- * props (Spec 001 §3 Gap #9).
+ * Used because `nsh 0.6.1` `TimeField` did not expose native `min`/`max`
+ * props (Spec 001 §3 Gap #9); `nsh 0.7.0` adds them, not adopted yet.
  */
 export function clampTimeToBounds(
   time: string,

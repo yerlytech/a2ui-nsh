@@ -289,7 +289,9 @@ export {
 export {
   buildAccessibilitySnapshot,
   buildViewAccessibilityProps,
+  liveRegionReadingFor,
   mapAndroidLiveRegion,
+  mapNativeLiveRegion,
   needsAccessibilityWrapper,
   normalizeAccessibility,
   resolveEffectiveHidden,
@@ -299,6 +301,8 @@ export {
   type AccessibilityOptions,
   type AccessibilitySnapshot,
   type LiveRegionMode,
+  type LiveRegionReading,
+  type NativeLiveRegion,
   type ResolvedAccessibility,
   type SnapshotAccessibilityRole,
   type ViewAccessibilityProps,

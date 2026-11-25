@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Runs on `nsh` 0.7.0 (was 0.6.1): every pin, the install line, and CI move
+  to 0.7.0, and the measured `nsh` gaps in `docs/architecture.md` are
+  re-measured.
+- Live regions use `nsh` 0.7's plain `accessibilityLiveRegion` prop, which
+  the screen reader reads on Android, macOS, Windows, Linux, and the web;
+  `useLiveRegionAnnouncement` announces only where the platform does not
+  (iOS, the terminal), so nothing is heard twice. New exports
+  `mapNativeLiveRegion`, `liveRegionReadingFor`, `NativeLiveRegion`, and
+  `LiveRegionReading`; `mapAndroidLiveRegion` is deprecated.
+- `just conformance` runs its suites one at a time (`nsh test --jobs 1`), so
+  the executed-case manifest keeps every suite's records.
+
 ### Added
 
 - Renderers for xlarge's own A2UI 1.0 catalog (`tech.yerly.xlarge/v1`):
@@ -29,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   node (spec 003).
 - `docs/catalog-parity.md`: components drawn per catalog.
 - `just test` also runs `tests/fixtures/`.
+- Tests for `nsh` 0.7: the deepest tree the validator allows stays under the
+  1024 view limit, Modal's backdrop closes on a press at its corner, and Card's
+  label and description read through `app.accessibility()`.
 
 ## [0.1.0] - 2026-11-23
 

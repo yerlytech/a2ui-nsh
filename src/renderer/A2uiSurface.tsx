@@ -1,5 +1,5 @@
 /**
- * Top-level Native Shell (`nsh 0.6.1`) renderer shell for A2UI v1.0 surfaces.
+ * Top-level Native Shell (`nsh 0.7.0`) renderer shell for A2UI v1.0 surfaces.
  *
  * Reads the T8 `SurfaceSignalStore` directly, dispatches each resolved
  * `ComponentNode` through `ComponentRegistry` keyed by `node.id` so scalar

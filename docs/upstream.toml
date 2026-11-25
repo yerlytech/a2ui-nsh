@@ -3,7 +3,7 @@
 [[watch]]
 name = "nsh"
 source = "github:longbridge/nsh"
-pin = "v0.6.1"
+pin = "v0.7.0"
 pinned_in = "docs/specs/001-a2ui-nsh-core-and-desktop.md"
 why = "Native Shell runtime, TSX bundler, nsh/base components, and headless test runner"
 check = "nsh/base prop changes, accessibility prop support, nsh.json capability schema, and QuickJS runtime changes; run just nsh-check-latest"

@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `DateTimeInput` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `DateTimeInput` component on Native Shell (`nsh 0.7.0`).
  *
  * Composes `nsh/base` `<DatePicker>` and `<TimeField>` across date-only,
  * time-only, and combined date+time modes with `min`/`max` bounds, ISO 8601
@@ -149,7 +149,7 @@ export function BasicDateTimeInput(props: A2uiComponentProps): JSX.Element {
       accessibilityDescribedBy={
         checkState().results.length > 0 ? feedbackRef() : null
       }
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     >
       <If when={labelText().length > 0}>
         <Text

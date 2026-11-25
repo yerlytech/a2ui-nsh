@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Card` container component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `Card` container component on Native Shell (`nsh 0.7.0`).
  *
  * Renders a themed card surface (`border`, `bg-card`, `rounded-(--radius)`,
  * padding) holding its single resolved `child` `ComponentNode`.
@@ -55,7 +55,7 @@ export function BasicCard(props: A2uiComponentProps): JSX.Element {
       accessibilityDescription={a11yProps().accessibilityDescription}
       accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
       importantForAccessibility={a11yProps().importantForAccessibility}
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     >
       <Each of={childNode() ? [childNode()!] : []} key={(child) => child.id}>
         {(child) => props.renderNode(child())}

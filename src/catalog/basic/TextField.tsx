@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `TextField` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `TextField` component on Native Shell (`nsh 0.7.0`).
  *
  * Uses `nsh/base` `<Input>` supporting `shortText`, `longText` (`multiline`),
  * `number` (`decimal-pad`), and `obscured` (`masked`), batched two-way `@path`
@@ -122,7 +122,7 @@ export function BasicTextField(props: A2uiComponentProps): JSX.Element {
       role={a11y().live === "assertive" ? "alert" : undefined}
       accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
       importantForAccessibility={a11yProps().importantForAccessibility}
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     >
       <If when={labelText().length > 0}>
         <Text

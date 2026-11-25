@@ -1,5 +1,5 @@
 /**
- * Native Shell (`nsh 0.6.1`) reactive signal bridge for A2UI v1.0 surfaces
+ * Native Shell (`nsh 0.7.0`) reactive signal bridge for A2UI v1.0 surfaces
  * and `ComponentNode` trees.
  *
  * Bridges pure TypeScript `src/core/` primitives (`MessageProcessor`,

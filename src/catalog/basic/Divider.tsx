@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Divider` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `Divider` component on Native Shell (`nsh 0.7.0`).
  *
  * Renders a 1 pt horizontal or vertical theme-colored border line, hidden from
  * screen readers by default unless explicit `@accessibility` attributes opt in.
@@ -68,7 +68,7 @@ export function BasicDivider(props: A2uiComponentProps): JSX.Element {
       accessibilityDescription={a11yProps().accessibilityDescription}
       accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
       importantForAccessibility={a11yProps().importantForAccessibility}
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     />
   );
 }

@@ -1,5 +1,5 @@
 /**
- * Headless Native Shell (`nsh 0.6.1`) A2UI v1.0 renderer host application for
+ * Headless Native Shell (`nsh 0.7.0`) A2UI v1.0 renderer host application for
  * Stage C6 conformance suites:
  * - `core/adapter_conformance.yaml`
  * - `core/accessibility.yaml`

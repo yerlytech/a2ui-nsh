@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `List` collection component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `List` collection component on Native Shell (`nsh 0.7.0`).
  *
  * Vertical lists render via `nsh`'s native virtualized `<List viewport="parent">`
  * with `keyExtractor={(child) => child.id}` so only cells near the viewport exist
@@ -93,7 +93,7 @@ export function BasicList(props: A2uiComponentProps): JSX.Element {
               accessibilityDescription={a11yProps().accessibilityDescription}
               accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
               importantForAccessibility={a11yProps().importantForAccessibility}
-              android={a11yProps().android}
+              accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
             >
               {(item) => (
                 <View style={itemAlignmentStyle()}>
@@ -116,7 +116,7 @@ export function BasicList(props: A2uiComponentProps): JSX.Element {
             accessibilityDescription={a11yProps().accessibilityDescription}
             accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
             importantForAccessibility={a11yProps().importantForAccessibility}
-            android={a11yProps().android}
+            accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
           >
             <Each of={children()} key={(child) => child.id}>
               {(child) => (
@@ -139,7 +139,7 @@ export function BasicList(props: A2uiComponentProps): JSX.Element {
         accessibilityDescription={a11yProps().accessibilityDescription}
         accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
         importantForAccessibility={a11yProps().importantForAccessibility}
-        android={a11yProps().android}
+        accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
       >
         <Each of={children()} key={(child) => child.id}>
           {(child) => props.renderNode(child())}

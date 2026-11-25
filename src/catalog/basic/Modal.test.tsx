@@ -59,9 +59,17 @@ describe("Basic Catalog Modal", () => {
     expect(app.shows("label:Confirm Deletion")).toBe(true);
     expect(app.shows("label:Close")).toBe(true);
     expect(app.shows("id:s_modal:root:backdrop")).toBe(true);
+    // The backdrop's center is under the dialog; nsh 0.7.0 `press` takes a
+    // `position`, so a press on its corner reaches the backdrop and closes.
     await expect(app.press("id:s_modal:root:backdrop")).rejects.toMatchObject({
       code: "ERR_NSH_TEST_COVERED",
     });
+    await app.press("id:s_modal:root:backdrop", { position: { x: 4, y: 4 } });
+    expect(
+      app.shows("text:Are you sure you want to delete this record?"),
+    ).toBe(false);
+    await app.press("id:s_modal:root:trigger");
+    await app.waitFor("text:Are you sure you want to delete this record?");
 
     await app.press("label:Close");
     expect(

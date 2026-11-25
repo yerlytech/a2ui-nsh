@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Button` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `Button` component on Native Shell (`nsh 0.7.0`).
  *
  * Wraps `nsh/base` `<Button>` with `default` / `primary` / `borderless`
  * variants, `@checks` disabled-on-error semantics (warnings and info stay
@@ -144,7 +144,7 @@ export function BasicButton(props: A2uiComponentProps): JSX.Element {
   };
 
   return (
-    // Outer View carries `description`, `hidden`, `android` live region, and
+    // Outer View carries `description`, `hidden`, the live region, and
     // `weight` that `nsh/base` `Button` omits from `ComponentHostProps` (Spec 001 §3 Gap #1).
     <View
       testID={`${props.testId}:container`}
@@ -153,7 +153,7 @@ export function BasicButton(props: A2uiComponentProps): JSX.Element {
       accessibilityDescription={a11yProps().accessibilityDescription}
       accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
       importantForAccessibility={a11yProps().importantForAccessibility}
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     >
       <Button
         testID={props.testId}

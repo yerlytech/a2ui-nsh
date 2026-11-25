@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `AudioPlayer` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `AudioPlayer` component on Native Shell (`nsh 0.7.0`).
  *
  * Composes an accessible control bar (`Button` Play/Pause, `Slider` scrub bar,
  * elapsed/duration `Text`, optional `description` title) over `nsh`'s
@@ -434,7 +434,7 @@ export function BasicAudioPlayer(props: A2uiComponentProps): JSX.Element {
         accessibilityDescription={a11yProps().accessibilityDescription}
         accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
         importantForAccessibility={a11yProps().importantForAccessibility}
-        android={a11yProps().android}
+        accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
       >
         <Text
           testID={`${props.testId}:description`}
@@ -462,7 +462,7 @@ export function BasicAudioPlayer(props: A2uiComponentProps): JSX.Element {
       accessibilityDescription={a11yProps().accessibilityDescription}
       accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
       importantForAccessibility={a11yProps().importantForAccessibility}
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     >
       <If when={descriptionText().length > 0}>
         <Text

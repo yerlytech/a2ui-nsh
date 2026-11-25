@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `CheckBox` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `CheckBox` component on Native Shell (`nsh 0.7.0`).
  *
  * Uses `nsh/base` `<Checkbox>` with a native `Path2D` checkmark indicator,
  * batched two-way boolean `@path` binding, `@checks` error/warning/info
@@ -123,7 +123,7 @@ export function BasicCheckBox(props: A2uiComponentProps): JSX.Element {
       accessibilityDescribedBy={
         checkState().results.length > 0 ? feedbackRef() : null
       }
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     >
       <Checkbox
         testID={props.testId}

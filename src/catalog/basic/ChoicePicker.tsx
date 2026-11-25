@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `ChoicePicker` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `ChoicePicker` component on Native Shell (`nsh 0.7.0`).
  *
  * Maps every combination of `variant` (`mutuallyExclusive` | `multipleSelection`),
  * `displayStyle` (`checkbox` | `chips`), and `filterable` onto accessible
@@ -207,7 +207,7 @@ export function BasicChoicePicker(props: A2uiComponentProps): JSX.Element {
       accessibilityDescribedBy={
         checkState().results.length > 0 ? feedbackRef() : null
       }
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     >
       <If when={labelText().length > 0}>
         <Text

@@ -1,24 +1,28 @@
 /**
  * Accessibility plumbing from A2UI v1.0 `@accessibility` attributes to
- * Native Shell (`nsh 0.6.1`) views and `nsh/base` wrappers.
+ * Native Shell (`nsh 0.7.0`) views and `nsh/base` wrappers.
  *
- * Addresses the two `nsh 0.6.1` gaps documented in Spec 001 §3:
- * 1. `nsh/base` `ComponentHostProps` omits `accessibilityLabel`,
+ * 1. `nsh/base` `ComponentHostProps` still omits `accessibilityLabel`,
  *    `accessibilityDescription`, `accessibilityElementsHidden`, `role`, and
- *    `android.accessibilityLiveRegion`, so `nsh/base` controls (e.g. `TextView`)
- *    use a transparent `<View>` wrapper when accessibility attributes apply.
- * 2. `accessibilityLiveRegion` is Android-only in `nsh 0.6.1` TSX
- *    (`android={{ accessibilityLiveRegion }}`), so cross-platform live regions
- *    pair `role="alert"` (for `assertive`) with `announce()` on dynamic updates.
+ *    `accessibilityLiveRegion` (`types.d.ts` `ComponentHostProps`), so `nsh/base`
+ *    controls (e.g. `TextView`) use a transparent `<View>` wrapper when
+ *    accessibility attributes apply.
+ * 2. Since `nsh 0.7.0` (#2816) the plain `accessibilityLiveRegion` view prop is
+ *    read by the screen reader on Android, macOS, Windows, Linux and the web.
+ *    iOS and the terminal still have no live regions, so there (and only there)
+ *    `useLiveRegionAnnouncement` calls `announce()` on dynamic updates.
  */
 
 import {
   announce,
   effect,
+  platform,
   type AccessibilityRole,
   type Accessor,
-  type LiveRegion,
 } from "nsh";
+
+/** `nsh`'s `accessibilityLiveRegion` view prop value (`nsh 0.7.0` `HostProps`). */
+export type NativeLiveRegion = "none" | "polite" | "assertive";
 
 /** `nsh`'s `announce()`: says a message to assistive technology on every target. */
 export { announce };
@@ -34,8 +38,8 @@ export interface ResolvedAccessibility {
   readonly hidden?: boolean;
 }
 
-/** Semantic role mirrored in `AccessibilitySnapshot` (includes `"textbox"`, omitted from `nsh 0.6.1` `AccessibilityRole`). */
-export type SnapshotAccessibilityRole = AccessibilityRole | "textbox";
+/** Semantic role mirrored in `AccessibilitySnapshot` (`nsh 0.7.0` `AccessibilityRole` includes `"textbox"`). */
+export type SnapshotAccessibilityRole = AccessibilityRole;
 
 /** Options controlling how component defaults merge with explicit `@accessibility`. */
 export interface AccessibilityOptions {
@@ -43,8 +47,7 @@ export interface AccessibilityOptions {
   readonly defaultRole?: AccessibilityRole;
   /**
    * Optional semantic role mirrored into `AccessibilitySnapshot` when the
-   * platform control reports a native role (e.g. `"textbox"` on `<Input>`) that
-   * `nsh 0.6.1`'s `AccessibilityRole` union omits (Spec 001 §3 Gap #9c).
+   * platform control reports a native role itself (e.g. `"textbox"` on `<Input>`).
    */
   readonly snapshotRole?: SnapshotAccessibilityRole;
   /** Optional checked state mirrored into `AccessibilitySnapshot` (e.g. `CheckBox`). */
@@ -58,22 +61,20 @@ export interface AccessibilityOptions {
   readonly decorativeByDefault?: boolean;
 }
 
-/** Subset of `nsh 0.6.1` `ViewProps` carrying native accessibility metadata. */
+/** Subset of `nsh 0.7.0` `ViewProps` carrying native accessibility metadata. */
 export interface ViewAccessibilityProps {
   readonly role?: AccessibilityRole;
   readonly accessibilityLabel?: string;
   readonly accessibilityDescription?: string;
   readonly accessibilityElementsHidden?: boolean;
   readonly importantForAccessibility?: "auto" | "yes" | "no" | "no-hide-descendants";
-  readonly android?: {
-    readonly accessibilityLiveRegion?: LiveRegion;
-  };
+  readonly accessibilityLiveRegion?: NativeLiveRegion;
 }
 
 /**
- * Typed accessibility mirror snapshot for headless tests (Spec 001 §3 Gap #3,
- * because `nsh/test` 0.6.1 does not yet expose `accessibilityDescription()` or
- * `accessibilityElementsHidden()`).
+ * Typed accessibility mirror snapshot for headless tests (Spec 001 §3 Gap #3:
+ * `nsh/test` 0.7.0 `app.accessibility()` reports role, label and description,
+ * but not live regions or `accessibilityElementsHidden`).
  */
 export interface AccessibilitySnapshot {
   readonly label?: string;
@@ -125,10 +126,10 @@ export function resolveEffectiveLabel(
   return nonEmptyString(fallbackLabel);
 }
 
-/** Maps A2UI `live` mode onto `nsh`'s Android `LiveRegion` prop value. */
-export function mapAndroidLiveRegion(
+/** Maps A2UI `live` mode onto `nsh`'s `accessibilityLiveRegion` prop value. */
+export function mapNativeLiveRegion(
   live: LiveRegionMode | undefined,
-): LiveRegion | undefined {
+): NativeLiveRegion | undefined {
   if (live === "polite") {
     return "polite";
   }
@@ -140,6 +141,9 @@ export function mapAndroidLiveRegion(
   }
   return undefined;
 }
+
+/** @deprecated Since `nsh 0.7.0` the live region is not Android-only; use `mapNativeLiveRegion`. */
+export const mapAndroidLiveRegion = mapNativeLiveRegion;
 
 /** Resolves whether the element should be hidden from assistive technologies. */
 export function resolveEffectiveHidden(
@@ -168,7 +172,7 @@ export function resolveEffectiveRole(
 }
 
 /**
- * Builds native `nsh 0.6.1` accessibility props for primitive elements
+ * Builds native `nsh 0.7.0` accessibility props for primitive elements
  * (`<View>`, `<Text>`, `<Image>`, `<Canvas>`).
  */
 export function buildViewAccessibilityProps(
@@ -178,7 +182,7 @@ export function buildViewAccessibilityProps(
   const effectiveLabel = resolveEffectiveLabel(a11y, options?.fallbackLabel);
   const effectiveHidden = resolveEffectiveHidden(a11y, options);
   const role = resolveEffectiveRole(a11y, options);
-  const androidLive = mapAndroidLiveRegion(a11y.live);
+  const liveRegion = mapNativeLiveRegion(a11y.live);
 
   return {
     ...(role !== undefined ? { role } : {}),
@@ -192,16 +196,14 @@ export function buildViewAccessibilityProps(
           importantForAccessibility: "no-hide-descendants" as const,
         }
       : {}),
-    ...(androidLive !== undefined
-      ? { android: { accessibilityLiveRegion: androidLive } }
-      : {}),
+    ...(liveRegion !== undefined ? { accessibilityLiveRegion: liveRegion } : {}),
   };
 }
 
 /**
  * Returns true when an `nsh/base` component (whose `ComponentHostProps` drops
  * `accessibilityDescription`, `accessibilityElementsHidden`, `role`, and
- * `android.accessibilityLiveRegion`) requires a transparent `<View>` wrapper.
+ * `accessibilityLiveRegion`) requires a transparent `<View>` wrapper.
  */
 export function needsAccessibilityWrapper(
   a11y: ResolvedAccessibility,
@@ -239,14 +241,53 @@ export function buildAccessibilitySnapshot(
 }
 
 /**
- * Announces live-region text changes via `nsh`'s `announce()` so `polite` and
- * `assertive` regions work cross-platform while `accessibilityLiveRegion` is
- * Android-only in `nsh 0.6.1`.
+ * What the platform's screen reader does by itself for a live region
+ * (measured from the `nsh 0.7.0` platform sources, #2816 and #3119).
+ */
+export interface LiveRegionReading {
+  /** The platform reads `accessibilityLiveRegion` changes by itself. */
+  readonly changes: boolean;
+  /** The platform reads a `role="alert"` view by itself when it appears. */
+  readonly alertsOnAppear: boolean;
+}
+
+/**
+ * Live-region support of `nsh 0.7.0` by platform: Android, macOS, Windows,
+ * Linux and the web read `accessibilityLiveRegion` changes; iOS and the
+ * terminal (`idiom === "terminal"`) do not. macOS and the web read an alert
+ * as it appears (`website/docs/accessibility.md`); the others need `announce()`.
+ */
+export function liveRegionReadingFor(
+  os: string,
+  idiom: string,
+): LiveRegionReading {
+  if (idiom === "terminal") {
+    return { changes: false, alertsOnAppear: false };
+  }
+  const changes =
+    os === "android" ||
+    os === "macos" ||
+    os === "windows" ||
+    os === "linux" ||
+    os === "web";
+  return { changes, alertsOnAppear: os === "macos" || os === "web" };
+}
+
+function currentLiveRegionReading(): LiveRegionReading {
+  return liveRegionReadingFor(platform.os, platform.idiom);
+}
+
+/**
+ * Announces live-region text changes via `nsh`'s `announce()` where the
+ * platform does not read the view's `accessibilityLiveRegion` by itself
+ * (`reading`), so `polite` and `assertive` regions are heard once on every
+ * target and never twice.
  */
 export function useLiveRegionAnnouncement(
   a11yAccessor: Accessor<ResolvedAccessibility>,
   messageAccessor: Accessor<string>,
   onAnnounce: (message: string) => void = announce,
+  reading: LiveRegionReading = currentLiveRegionReading(),
 ): void {
   let initialized = false;
   let lastMessage = "";
@@ -260,13 +301,19 @@ export function useLiveRegionAnnouncement(
     if (!initialized) {
       initialized = true;
       lastMessage = message;
-      if (!isHidden && live === "assertive" && message.length > 0) {
+      if (
+        !reading.alertsOnAppear &&
+        !isHidden &&
+        live === "assertive" &&
+        message.length > 0
+      ) {
         onAnnounce(message);
       }
       return;
     }
 
     if (
+      !reading.changes &&
       !isHidden &&
       (live === "polite" || live === "assertive") &&
       message.length > 0 &&

@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Text` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `Text` component on Native Shell (`nsh 0.7.0`).
  *
  * Renders plain text and `caption` variants via `<Text>` and A2UI's simple
  * Markdown subset (without raw HTML, active links, or images) via `nsh/base`
@@ -150,7 +150,7 @@ export function BasicText(props: A2uiComponentProps): JSX.Element {
           accessibilityDescription={a11yProps().accessibilityDescription}
           accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
           importantForAccessibility={a11yProps().importantForAccessibility}
-          android={a11yProps().android}
+          accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
         >
           {visibleText()}
         </Text>
@@ -165,7 +165,7 @@ export function BasicText(props: A2uiComponentProps): JSX.Element {
         accessibilityDescription={a11yProps().accessibilityDescription}
         accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
         importantForAccessibility={a11yProps().importantForAccessibility}
-        android={a11yProps().android}
+        accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
       >
         <TextView
           document={parsedMarkdown()?.document ?? { blocks: [] }}

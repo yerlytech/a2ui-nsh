@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Modal` overlay component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `Modal` overlay component on Native Shell (`nsh 0.7.0`).
  *
  * Mounts only its `trigger` initially; activating the trigger opens an `nsh/base`
  * `<Dialog>` containing `content` with a backdrop, Escape dismissal, an accessible
@@ -144,7 +144,7 @@ export function BasicModal(props: A2uiComponentProps): JSX.Element {
       style={weightStyle(weightProp())}
       accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
       importantForAccessibility={a11yProps().importantForAccessibility}
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     >
       <ModalTriggerContext.Provider value={triggerController}>
         <View

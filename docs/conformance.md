@@ -23,7 +23,35 @@ just conformance /path/to/google-A2UI
 
 ## Stage Coverage (C1–C6)
 
-Measured on `nsh 0.6.1 (2f51d86)` against `google/A2UI` `496df0e`: **27/27 test suites pass** (`705` upstream cases passed, `0` failed, `51` documented skips across 29 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests).
+Measured on `nsh 0.7.0 (3f8ecd8)` against `google/A2UI` `496df0e`: **27/27 test suites pass** (`705` upstream cases passed, `0` failed, `51` documented skips across 29 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests). The executed-case manifest is identical to the one recorded on `nsh 0.6.1 (2f51d86)`.
+
+## Results on `nsh 0.7.0` (2026-11-25, macOS arm64)
+
+| Check | Result |
+|---|---|
+| `just lint` (`just check`) | Pass |
+| `just test` | Pass: 86 test files, 759 tests (754 passed, 0 failed, 5 skipped) |
+| `just conformance` | Pass: 27/27 suites, 705 cases passed, 51 documented skips, 29 YAML files |
+| `just build` | Pass: library and `examples/erp-customers/` bytecode bundles |
+| `just walk-macos` | Pass: 16/16 tests, 24 screenshots in `target/walk-macos/` |
+| `just test-tui` | Not run: the 0.7.0 `tui` runtime is not installed (`nsh component add tui`) |
+| `just test-web`, `just package-web` | Not run: the 0.7.0 `web` runtime is not installed (`nsh component add web`) |
+
+`just conformance` runs `nsh test --jobs 1`: `nsh` 0.7 runs test files in parallel by default (#2809), and every suite rewrites the one executed-case manifest, so parallel suites dropped each other's records.
+
+### `nsh 0.7.0` breaking changes
+
+| Change | a2ui-nsh |
+|---|---|
+| Desktop windows close independently; `quitMode` (#2307) | Not touched: one window, no `Window` or quit API. Every root now gets an implicit main window, which logs an `"application"` warning on macOS and Windows under host-only capabilities (harmless). |
+| Pointer press no longer moves focus on macOS and iOS (#2783); Escape order with `Popover`/`Sheet` (#2794) | Not touched: `Modal` uses `Dialog` and restores the trigger's focus with `ref.focus()`; no `Popover`, `Sheet`, or `captureKeys`. Modal, Tabs, and keyboard tests pass. |
+| `clickCount: 0` for keyboard presses (#2509) | Not touched: no handler reads `clickCount`. |
+| `Clipboard.writeText` results, `Storage.setItem` rejection | Not touched: neither API is used. |
+| RichEditor / Tiptap changes | Not touched: not used. |
+| 1024 view depth limit (#2614) | Checked: `src/renderer/depth.test.tsx` renders the deepest tree the validator allows (50) for six containers. |
+| Rust struct literals need `..Default::default()` | Not touched: no Rust code. |
+| `Bundle.links`, Speech moved to `nsh-extra` (#2947) | Not touched: neither is used. |
+| `LiveRegion` type removed; `accessibilityLiveRegion` on every platform (#2816) | Touched and fixed: `just check` failed (TS2305); see [architecture gap 2](architecture.md#measured-nsh-070-gaps--mitigations). |
 
 | Stage | Runner file | Upstream suites |
 |---|---|---|
@@ -60,7 +88,7 @@ Beyond headless C1–C6 conformance, Spec 002 adds target-compatible suites (omi
 
 ## Weekly `nsh` Latest-Release Compatibility Check
 
-Because `nsh` is pre-1.0 (`0.6.x`), `.github/workflows/nsh-weekly.yml` runs every Thursday at `06:00 UTC` (and on `workflow_dispatch`) on `ubuntu-24.04` with `permissions: contents: read` and no secrets:
+Because `nsh` is pre-1.0 (`0.7.x`), `.github/workflows/nsh-weekly.yml` runs every Thursday at `06:00 UTC` (and on `workflow_dispatch`) on `ubuntu-24.04` with `permissions: contents: read` and no secrets:
 
 1. Checks out `a2ui-nsh` and the pinned `google/A2UI` conformance suites (`actions/checkout` pinned by commit SHA).
 2. Installs `just` via pinned `astral-sh/setup-uv` and downloads the latest `longbridge/nsh` Linux x86_64 release with SHA-256 verification.

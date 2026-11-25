@@ -226,9 +226,11 @@ conformance ref_dir=a2ui_conformance_root:
       base="$(basename "$suite" .suite.ts)"
       printf 'import "../../%s";\n' "${suite%.ts}" > "target/conformance-run/${base}.test.ts"
     done
+    # nsh 0.7 runs test files in parallel by default (#2809); every suite
+    # read-modify-writes the one manifest file, so they run one at a time.
     A2UI_CONFORMANCE_ROOT="$ref_abs" \
     A2UI_CONFORMANCE_MANIFEST="$manifest_abs" \
-    nsh test target/conformance-run
+    nsh test --jobs 1 target/conformance-run
 
 # Build release QuickJS bytecode bundles into target/nsh-out (and target/erp-release).
 [group('build')]

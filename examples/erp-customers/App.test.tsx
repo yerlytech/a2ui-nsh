@@ -10,7 +10,7 @@ const ERP_HANDLERS = {
   "a2ui.data": null,
 };
 
-describe("ERP Customers example (pure A2UI v1.0 JSON on nsh 0.6.1)", () => {
+describe("ERP Customers example (pure A2UI v1.0 JSON on nsh 0.7.0)", () => {
   test("renders desktop master-detail customer list, formatted currency/dates, and tabbed edit form with zero A2UI errors", async () => {
     const app = await open(APP_ENTRY, {
       platform: "macos",

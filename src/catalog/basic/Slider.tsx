@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Slider` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `Slider` component on Native Shell (`nsh 0.7.0`).
  *
  * Wraps `nsh/base` `<Slider>` with A2UI `min` (default `0`), `max`, two-way
  * `DynamicNumber` `value`, division-count `steps` translation (`step = (max - min) / steps`,
@@ -241,7 +241,7 @@ export function BasicSlider(props: A2uiComponentProps): JSX.Element {
       accessibilityDescribedBy={
         checkState().results.length > 0 ? feedbackRef() : null
       }
-      android={a11yProps().android}
+      accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
     >
       <View class="flex-row items-center justify-between gap-2">
         <If when={labelText().length > 0}>

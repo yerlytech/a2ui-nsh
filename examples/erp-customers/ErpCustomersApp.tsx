@@ -1,5 +1,5 @@
 /**
- * Thin Native Shell (`nsh 0.6.1`) TSX host shell for the ERP Customers demo.
+ * Thin Native Shell (`nsh 0.7.0`) TSX host shell for the ERP Customers demo.
  *
  * All visible UI comes purely from A2UI v1.0 JSON envelopes (`a2ui/surface.json`
  * + `ErpCustomerAgent` updates) rendered by `A2uiStore` and `<A2uiSurface>`.

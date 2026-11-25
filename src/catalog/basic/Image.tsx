@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Image` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `Image` component on Native Shell (`nsh 0.7.0`).
  *
  * Supports `url` (sanitized against unsafe schemes), `description` (fallback
  * accessibility label overridden by `@accessibility.label`), `fit`, `variant`,
@@ -119,7 +119,7 @@ export function BasicImage(props: A2uiComponentProps): JSX.Element {
           accessibilityDescription={a11yProps().accessibilityDescription}
           accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
           importantForAccessibility={a11yProps().importantForAccessibility}
-          android={a11yProps().android}
+          accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
         />
       }
     >
@@ -132,7 +132,7 @@ export function BasicImage(props: A2uiComponentProps): JSX.Element {
         accessibilityDescription={a11yProps().accessibilityDescription}
         accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
         importantForAccessibility={a11yProps().importantForAccessibility}
-        android={a11yProps().android}
+        accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
         onError={() => {
           const url = safeUrl();
           if (url !== undefined) {

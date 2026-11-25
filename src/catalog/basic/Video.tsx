@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Video` component on Native Shell (`nsh 0.6.1`).
+ * A2UI Basic Catalog v1 `Video` component on Native Shell (`nsh 0.7.0`).
  *
  * Wraps `nsh` `<Video>` with `sanitizeMediaUrl()` on `url` and optional
  * `posterUrl`, paused-by-default playback (`paused={true}`, `controls={true}`
@@ -215,7 +215,7 @@ export function BasicVideo(props: A2uiComponentProps): JSX.Element {
           accessibilityDescription={a11yProps().accessibilityDescription}
           accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
           importantForAccessibility={a11yProps().importantForAccessibility}
-          android={a11yProps().android}
+          accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
         >
           <Text
             testID={`${props.testId}:fallback-title`}
@@ -241,7 +241,7 @@ export function BasicVideo(props: A2uiComponentProps): JSX.Element {
         accessibilityDescription={a11yProps().accessibilityDescription}
         accessibilityElementsHidden={a11yProps().accessibilityElementsHidden}
         importantForAccessibility={a11yProps().importantForAccessibility}
-        android={a11yProps().android}
+        accessibilityLiveRegion={a11yProps().accessibilityLiveRegion}
       >
         <Video
           testID={`${props.testId}:player`}
