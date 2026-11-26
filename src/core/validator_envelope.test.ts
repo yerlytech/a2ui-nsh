@@ -68,6 +68,7 @@ describe("PayloadValidator — createSurface envelope", () => {
       createSurface: { surfaceId: 7 },
     });
     expect(error.path).toBe("/surfaceId");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.details?.[0]?.path).toBe(
       "messages.0.createSurface.surfaceId",
     );
@@ -80,6 +81,7 @@ describe("PayloadValidator — createSurface envelope", () => {
       createSurface: { surfaceId: "s1", extra: true },
     });
     expect(error.path).toBe("/extra");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.surfaceId).toBe("s1");
   });
 
@@ -103,6 +105,7 @@ describe("PayloadValidator — createSurface envelope", () => {
       createSurface: { surfaceId: "s1", catalogId: 5 },
     });
     expect(error.path).toBe("/catalogId");
+    expect(error.code).toBe("VALIDATION_FAILED");
   });
 
   test("requires sendDataModel to be a boolean", () => {
@@ -111,6 +114,7 @@ describe("PayloadValidator — createSurface envelope", () => {
       createSurface: { surfaceId: "s1", sendDataModel: "yes" },
     });
     expect(error.path).toBe("/sendDataModel");
+    expect(error.code).toBe("VALIDATION_FAILED");
   });
 
   test("requires dataModel to be an object", () => {
@@ -119,6 +123,7 @@ describe("PayloadValidator — createSurface envelope", () => {
       createSurface: { surfaceId: "s1", dataModel: [] },
     });
     expect(error.path).toBe("/dataModel");
+    expect(error.code).toBe("VALIDATION_FAILED");
   });
 
   test("requires components to be a non-empty array", () => {
@@ -127,6 +132,7 @@ describe("PayloadValidator — createSurface envelope", () => {
       createSurface: { surfaceId: "s1", components: [] },
     });
     expect(error.path).toBe("/components");
+    expect(error.code).toBe("VALIDATION_FAILED");
   });
 
   test("accepts the minimal envelope", () => {
@@ -159,6 +165,7 @@ describe("PayloadValidator — updateComponents envelope", () => {
       1,
     );
     expect(error.path).toBe("/surfaceId");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.details?.[0]?.path).toBe(
       "messages.1.updateComponents.surfaceId",
     );
@@ -174,6 +181,7 @@ describe("PayloadValidator — updateComponents envelope", () => {
       },
     });
     expect(error.path).toBe("/surfaceId");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.details?.[0]?.code).toBe("type_mismatch");
   });
 
@@ -187,6 +195,7 @@ describe("PayloadValidator — updateComponents envelope", () => {
       },
     });
     expect(error.path).toBe("/extra");
+    expect(error.code).toBe("VALIDATION_FAILED");
   });
 
   test("requires a non-empty components array", () => {
@@ -195,6 +204,7 @@ describe("PayloadValidator — updateComponents envelope", () => {
       updateComponents: { surfaceId: "s1", components: [] },
     });
     expect(error.path).toBe("/components");
+    expect(error.code).toBe("VALIDATION_FAILED");
   });
 
   test("accepts the minimal envelope", () => {
@@ -226,6 +236,7 @@ describe("PayloadValidator — updateDataModel envelope", () => {
       updateDataModel: { value: 1 },
     });
     expect(error.path).toBe("/surfaceId");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.details?.[0]?.path).toBe(
       "messages.0.updateDataModel.surfaceId",
     );
@@ -238,6 +249,7 @@ describe("PayloadValidator — updateDataModel envelope", () => {
       updateDataModel: { surfaceId: 7, value: 1 },
     });
     expect(error.path).toBe("/surfaceId");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.details?.[0]?.code).toBe("type_mismatch");
   });
 
@@ -247,6 +259,7 @@ describe("PayloadValidator — updateDataModel envelope", () => {
       updateDataModel: { surfaceId: "s1", value: 1, extra: true },
     });
     expect(error.path).toBe("/extra");
+    expect(error.code).toBe("VALIDATION_FAILED");
   });
 
   test("requires value", () => {
@@ -255,6 +268,7 @@ describe("PayloadValidator — updateDataModel envelope", () => {
       updateDataModel: { surfaceId: "s1" },
     });
     expect(error.path).toBe("/value");
+    expect(error.code).toBe("VALIDATION_FAILED");
   });
 
   test("requires path to be a string", () => {
@@ -263,6 +277,7 @@ describe("PayloadValidator — updateDataModel envelope", () => {
       updateDataModel: { surfaceId: "s1", value: 1, path: 5 },
     });
     expect(error.path).toBe("/path");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.message).toMatch(/must be a string/);
   });
 
@@ -272,6 +287,7 @@ describe("PayloadValidator — updateDataModel envelope", () => {
       updateDataModel: { surfaceId: "s1", value: 1, path: "count" },
     });
     expect(error.path).toBe("/path");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.message).toMatch(/must start with '\/'/);
   });
 
@@ -281,6 +297,7 @@ describe("PayloadValidator — updateDataModel envelope", () => {
       updateDataModel: { surfaceId: "s1", value: 1, path: "/a~2b" },
     });
     expect(error.path).toBe("/path");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.message).toMatch(/invalid '~' escape/);
   });
 
@@ -311,6 +328,7 @@ describe("PayloadValidator — deleteSurface envelope", () => {
       deleteSurface: {},
     });
     expect(error.path).toBe("/surfaceId");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.details?.[0]?.path).toBe(
       "messages.0.deleteSurface.surfaceId",
     );
@@ -323,6 +341,7 @@ describe("PayloadValidator — deleteSurface envelope", () => {
       deleteSurface: { surfaceId: 7 },
     });
     expect(error.path).toBe("/surfaceId");
+    expect(error.code).toBe("VALIDATION_FAILED");
     expect(error.details?.[0]?.code).toBe("type_mismatch");
   });
 
@@ -332,6 +351,7 @@ describe("PayloadValidator — deleteSurface envelope", () => {
       deleteSurface: { surfaceId: "s1", extra: true },
     });
     expect(error.path).toBe("/extra");
+    expect(error.code).toBe("VALIDATION_FAILED");
   });
 
   test("accepts the minimal envelope", () => {
@@ -375,6 +395,7 @@ describe("PayloadValidator — callRendererFunction envelope", () => {
       },
     });
     expect(error.path).toBe("/surfaceId");
+    expect(error.code).toBe("INVALID_FUNCTION_CALL");
     expect(error.functionCallId).toBe("fc1");
   });
 
@@ -384,6 +405,7 @@ describe("PayloadValidator — callRendererFunction envelope", () => {
       callRendererFunction: { functionCallId: "fc1", callFunction: null },
     });
     expect(error.path).toBe("/callFunction");
+    expect(error.code).toBe("INVALID_FUNCTION_CALL");
     expect(error.functionCallId).toBe("fc1");
   });
 
@@ -396,6 +418,7 @@ describe("PayloadValidator — callRendererFunction envelope", () => {
       },
     });
     expect(error.path).toBe("/callFunction/@call");
+    expect(error.code).toBe("INVALID_FUNCTION_CALL");
   });
 
   test("requires a catalogId", () => {
@@ -407,6 +430,7 @@ describe("PayloadValidator — callRendererFunction envelope", () => {
       },
     });
     expect(error.path).toBe("/callFunction/catalogId");
+    expect(error.code).toBe("INVALID_FUNCTION_CALL");
   });
 
   test("requires args to be an object when present", () => {
@@ -418,6 +442,7 @@ describe("PayloadValidator — callRendererFunction envelope", () => {
       },
     });
     expect(error.path).toBe("/callFunction/args");
+    expect(error.code).toBe("INVALID_FUNCTION_CALL");
   });
 
   test("accepts the minimal envelope", () => {
