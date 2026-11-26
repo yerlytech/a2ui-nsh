@@ -19,7 +19,7 @@ function makeStore(): A2uiStore {
   });
 }
 
-describe("A2uiStore & SurfaceSignalStore (nsh 0.7.0 signal bridge)", () => {
+describe("A2uiStore & SurfaceSignalStore (nsh 0.7.1 signal bridge)", () => {
   test("tracks surface creation, rootNode, template children, and leaf prop signals", () => {
     const store = makeStore();
     expect(store.surfaceIds()).toEqual([]);

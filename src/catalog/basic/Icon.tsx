@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Icon` component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `Icon` component on Native Shell (`nsh 0.7.1`).
  *
  * Renders all 59 Basic Catalog v1 named icons and custom dynamic `{ svgPath }`
  * strings natively on `<Canvas>` via `Path2D` scaled from a 24×24 viewBox.

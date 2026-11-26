@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Tabs` navigation component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `Tabs` navigation component on Native Shell (`nsh 0.7.1`).
  *
  * Uses `nsh/base` `<Tabs>` + `<Tab>` for native WAI-ARIA tablist semantics,
  * roving-tabindex keyboard navigation (Tab/Shift+Tab, Arrow keys, Home/End,

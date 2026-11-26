@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Button` component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `Button` component on Native Shell (`nsh 0.7.1`).
  *
  * Wraps `nsh/base` `<Button>` with `default` / `primary` / `borderless`
  * variants, `@checks` disabled-on-error semantics (warnings and info stay

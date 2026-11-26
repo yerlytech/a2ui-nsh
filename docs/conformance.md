@@ -23,21 +23,36 @@ just conformance /path/to/google-A2UI
 
 ## Stage Coverage (C1–C6)
 
-Measured on `nsh 0.7.0 (3f8ecd8)` against `google/A2UI` `496df0e`: **27/27 test suites pass** (`705` upstream cases passed, `0` failed, `51` documented skips across 29 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests). The executed-case manifest is identical to the one recorded on `nsh 0.6.1 (2f51d86)`.
+Measured on `nsh 0.7.1 (f78eace)` against `google/A2UI` `496df0e`: **27/27 test suites pass** (`705` upstream cases passed, `0` failed, `51` documented skips across 29 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests). The executed-case manifest is identical to the ones recorded on `nsh 0.7.0 (3f8ecd8)` and `nsh 0.6.1 (2f51d86)`.
 
-## Results on `nsh 0.7.0` (2026-11-25, macOS arm64)
+## Results on `nsh 0.7.1` (2026-11-26, macOS arm64)
 
 | Check | Result |
 |---|---|
 | `just lint` (`just check`) | Pass |
-| `just test` | Pass: 86 test files, 759 tests (754 passed, 0 failed, 5 skipped) |
+| `just test` | Pass: 89 test files, 817 tests (812 passed, 0 failed, 5 skipped) |
 | `just conformance` | Pass: 27/27 suites, 705 cases passed, 51 documented skips, 29 YAML files |
 | `just build` | Pass: library and `examples/erp-customers/` bytecode bundles |
 | `just walk-macos` | Pass: 16/16 tests, 24 screenshots in `target/walk-macos/` |
-| `just test-tui` | Not run: the 0.7.0 `tui` runtime is not installed (`nsh component add tui`) |
-| `just test-web`, `just package-web` | Not run: the 0.7.0 `web` runtime is not installed (`nsh component add web`) |
+| `just test-tui` | Not run: the 0.7.1 `tui` runtime is not installed (`nsh component add tui`) |
+| `just test-web`, `just package-web` | Not run: the 0.7.1 `web` runtime is not installed (`nsh component add web`) |
+
+On `nsh 0.7.0` (2026-11-25) the same checks passed with 86 test files and 759 tests; the TUI and Web runs were not run either.
 
 `just conformance` runs `nsh test --jobs 1`: `nsh` 0.7 runs test files in parallel by default (#2809), and every suite rewrites the one executed-case manifest, so parallel suites dropped each other's records.
+
+### `nsh 0.7.1` changes
+
+0.7.1 is a patch release (23 commits after v0.7.0). Each commit that can reach `a2ui-nsh`:
+
+| Change | a2ui-nsh |
+|---|---|
+| `List` and `DataTable` rows kept under `display: none` (#3193) | Not touched: no `List` or table is ever kept mounted under `display: none`. `BasicList` renders `<List viewport="parent">` (graphical) or a plain column (TUI); `Tabs` mounts only the active panel; every `when`/`If` guard unmounts what it hides; the `display: none` placeholders in `A2uiSurface` have no children. xlarge `Table` uses `nsh/base` `Table`/`TableBody`/`TableRow` views, not `DataTable`. `List.test.tsx`, `Table.test.tsx`, and `tests/targets/` pass unchanged. |
+| Web runtime drops unused `nsh/base` part gates (#3238) | Not touched: it applies only to a Rust-root app that calls JS through wasm-bindgen; `a2ui-nsh` is a TSX app on the prebuilt runtime. |
+| nshm build error names the nshm built for another `nsh` (#3225); nshm inherited version and `nsh-core` requirement (#3232) | Not touched: no `nsh.json` names an nshm and the repository has no Rust code. |
+| macOS scroll-view indicator placed again on a size change (#3192) | Not asserted: it places the indicator of a `Scroll` or `List` whose frame changes size (a layout animation or a live resize). `a2ui-nsh` sets no layout animation, no test reads the indicator, and `just walk-macos` passes. |
+| macOS: no batch applied from a frame inside a nested run loop (#3191) | Not touched: the reported path is a window zoom (`SetMode(Maximized)`); `a2ui-nsh` sets no window mode. `just walk-macos` passes. |
+| Linux, Windows, canvas, media-linking, docs, and skills commits | Not touched: no API `a2ui-nsh` calls changes (`git diff --stat v0.7.0..v0.7.1` changes no `.d.ts` file). |
 
 ### `nsh 0.7.0` breaking changes
 
@@ -51,7 +66,7 @@ Measured on `nsh 0.7.0 (3f8ecd8)` against `google/A2UI` `496df0e`: **27/27 test 
 | 1024 view depth limit (#2614) | Checked: `src/renderer/depth.test.tsx` renders the deepest tree the validator allows (50) for six containers. |
 | Rust struct literals need `..Default::default()` | Not touched: no Rust code. |
 | `Bundle.links`, Speech moved to `nsh-extra` (#2947) | Not touched: neither is used. |
-| `LiveRegion` type removed; `accessibilityLiveRegion` on every platform (#2816) | Touched and fixed: `just check` failed (TS2305); see [architecture gap 2](architecture.md#measured-nsh-070-gaps--mitigations). |
+| `LiveRegion` type removed; `accessibilityLiveRegion` on every platform (#2816) | Touched and fixed: `just check` failed (TS2305); see [architecture gap 2](architecture.md#measured-nsh-071-gaps--mitigations). |
 
 | Stage | Runner file | Upstream suites |
 |---|---|---|

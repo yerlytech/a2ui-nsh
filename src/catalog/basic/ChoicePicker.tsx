@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `ChoicePicker` component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `ChoicePicker` component on Native Shell (`nsh 0.7.1`).
  *
  * Maps every combination of `variant` (`mutuallyExclusive` | `multipleSelection`),
  * `displayStyle` (`checkbox` | `chips`), and `filterable` onto accessible

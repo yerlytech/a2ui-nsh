@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `AudioPlayer` component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `AudioPlayer` component on Native Shell (`nsh 0.7.1`).
  *
  * Composes an accessible control bar (`Button` Play/Pause, `Slider` scrub bar,
  * elapsed/duration `Text`, optional `description` title) over `nsh`'s

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Runs on `nsh` 0.7.1 (was 0.7.0): every pin, the install line, and CI move
+  to 0.7.1. None of its 23 commits changes what `a2ui-nsh` draws: no `List`
+  or table is kept under `display: none` (#3193), and the web part gates
+  (#3238), nshm reading (#3225, #3232), and macOS scroll-indicator (#3192)
+  and nested run-loop (#3191) fixes reach no code here. The measured `nsh`
+  gaps in `docs/architecture.md` are re-checked on 0.7.1; none moves.
 - Runs on `nsh` 0.7.0 (was 0.6.1): every pin, the install line, and CI move
   to 0.7.0, and the measured `nsh` gaps in `docs/architecture.md` are
   re-measured.

@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Row` layout component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `Row` layout component on Native Shell (`nsh 0.7.1`).
  *
  * Arranges static or template-repeated child `ComponentNode`s horizontally,
  * preserving surviving child view identity via `key={(child) => child.id}`.

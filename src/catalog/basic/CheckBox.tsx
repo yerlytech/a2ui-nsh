@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `CheckBox` component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `CheckBox` component on Native Shell (`nsh 0.7.1`).
  *
  * Uses `nsh/base` `<Checkbox>` with a native `Path2D` checkmark indicator,
  * batched two-way boolean `@path` binding, `@checks` error/warning/info

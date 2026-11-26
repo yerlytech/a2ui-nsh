@@ -46,7 +46,7 @@ describe("Basic Catalog Card", () => {
     expect(app.shows("id:s_card:root")).toBe(true);
     expect(app.shows("label:Profile Card")).toBe(true);
     expect(app.texts()).toContain("Customer Profile");
-    // nsh 0.7.0 `app.accessibility()` reads the native label and description.
+    // nsh 0.7.1 `app.accessibility()` reads the native label and description.
     expect(app.accessibility("id:s_card:root")).toMatchObject({
       label: "Profile Card",
       description: "Summary of account details",

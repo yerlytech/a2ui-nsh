@@ -9,4 +9,4 @@ Product source code for `a2ui-nsh` (pure TypeScript / TSX, zero runtime npm depe
 - `src/catalog/basic/` — all 18 Basic Catalog v1 TSX components with per-component `*.test.tsx`.
 - `src/catalog/xlarge/` — renderers for xlarge's own catalog (`tech.yerly.xlarge/v1`): `Card`, `Field`, `Form`, `Table` (spec 003, `docs/catalog-parity.md`).
 
-See [`docs/architecture.md`](../docs/architecture.md) for boundaries, seams, and measured `nsh 0.7.0` gaps.
+See [`docs/architecture.md`](../docs/architecture.md) for boundaries, seams, and measured `nsh 0.7.1` gaps.

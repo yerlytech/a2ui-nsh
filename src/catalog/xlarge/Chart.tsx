@@ -5,7 +5,7 @@
  * `lab_samples.figures` answers them) as `kind` says, the way xlarge's web
  * client does: a `sparkline` (a small line beside its big figure, the last
  * value or, with `sum`, the exact total), a `line`, `bars`, or anything else
- * a donut. Kept from Native Shell 0.6.1: `nsh 0.7.0` has a `Plot` primitive
+ * a donut. Kept from Native Shell 0.6.1: since `nsh 0.7.0` there is a `Plot` primitive
  * (`nsh/base/plot`), and this still draws the shapes on `Canvas`; moving to it
  * is a separate change, and no chart library is added. Values are formatted by
  * `format` (default `number`) from the text they came as, never through a

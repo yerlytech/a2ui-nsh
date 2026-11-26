@@ -6,7 +6,7 @@ The project includes a zero-dependency TypeScript protocol core, an `nsh` signal
 
 ## Status
 
-Version 0.1.0 implements A2UI 1.0 against `nsh` 0.7.0. Headless tests, the pinned Google A2UI C1–C6 conformance suites, and automated macOS, TUI, and Web/WASM checks pass. The conformance scope and documented skips are listed in [`docs/conformance.md`](docs/conformance.md).
+Version 0.1.0 implements A2UI 1.0 against `nsh` 0.7.1. Headless tests, the pinned Google A2UI C1–C6 conformance suites, and automated macOS, TUI, and Web/WASM checks pass. The conformance scope and documented skips are listed in [`docs/conformance.md`](docs/conformance.md).
 
 Verification currently covers macOS AppKit, terminal TUI, and Web/WASM. Other platforms supported by `nsh` are not verified by this project.
 
@@ -57,7 +57,7 @@ Known limits:
 
 Prerequisites:
 
-- [`nsh` 0.7.0](https://github.com/longbridge/nsh)
+- [`nsh` 0.7.1](https://github.com/longbridge/nsh)
 - [`just`](https://github.com/casey/just) 1.29.0 or newer
 - Git, to fetch the external A2UI conformance suites
 
@@ -66,7 +66,7 @@ No Node.js or npm packages are required.
 Install the pinned `nsh` release on macOS or Linux using the official installer:
 
 ```bash
-curl -fsSL https://nsh.dev/install.sh | NSH_VERSION=v0.7.0 sh
+curl -fsSL https://nsh.dev/install.sh | NSH_VERSION=v0.7.1 sh
 ```
 
 For TUI and Web development, install the corresponding runtimes once:
@@ -85,7 +85,7 @@ compatible with this repository's Apache-2.0 license:
 
 | Tool | Version | Role | License |
 |---|---|---|---|
-| [`nsh`](https://github.com/longbridge/nsh) | 0.7.0 (pinned) | Native runtime, TSX toolchain, and test runners | Apache-2.0 |
+| [`nsh`](https://github.com/longbridge/nsh) | 0.7.1 (pinned) | Native runtime, TSX toolchain, and test runners | Apache-2.0 |
 | [`just`](https://github.com/casey/just) | 1.29.0 or newer | Task recipes | CC0-1.0 |
 | [`gitleaks`](https://github.com/gitleaks/gitleaks) | 8.30.1 (pinned) | Secret scanning through the pre-commit hook | MIT |
 | [`jq`](https://github.com/jqlang/jq) | 1.8.2 (tested) | JSON checks in the TUI test recipe | MIT |

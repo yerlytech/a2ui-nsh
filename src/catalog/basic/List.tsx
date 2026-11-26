@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `List` collection component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `List` collection component on Native Shell (`nsh 0.7.1`).
  *
  * Vertical lists render via `nsh`'s native virtualized `<List viewport="parent">`
  * with `keyExtractor={(child) => child.id}` so only cells near the viewport exist
@@ -45,7 +45,7 @@ export function BasicList(props: A2uiComponentProps): JSX.Element {
     buildViewAccessibilityProps(a11y(), a11yOptions()),
   );
 
-  // Kept from `nsh 0.6.1`: `nsh 0.7.0` adds `alignItems` to `ListContentStyle`;
+  // Kept from `nsh 0.6.1`: `nsh 0.7.0` added `alignItems` to `ListContentStyle`;
   // cross-axis alignment still applies on each cell wrapper (moving it is a
   // separate change, Spec 001 §3 Gap #8).
   const itemAlignmentStyle = computed<ViewStyle>(() => ({

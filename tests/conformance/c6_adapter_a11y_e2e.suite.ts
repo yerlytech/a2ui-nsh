@@ -6,7 +6,7 @@
  * - `conformance/e2e/*.yaml` (renderer half, protocol version 1.0)
  *
  * Mounts real `<A2uiSurface>` trees via `tests/conformance/AdapterApp.tsx` on
- * Native Shell (`nsh 0.7.0`), drives interactions through `nsh/test` (`app.type`,
+ * Native Shell (`nsh 0.7.1`), drives interactions through `nsh/test` (`app.type`,
  * `app.clear`, `app.press`), validates every outbound envelope against upstream
  * `specification/v1_0/json/renderer_to_agent.json`, and writes executed-case
  * manifest records to `A2UI_CONFORMANCE_MANIFEST`.

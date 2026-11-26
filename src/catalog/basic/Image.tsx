@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Image` component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `Image` component on Native Shell (`nsh 0.7.1`).
  *
  * Supports `url` (sanitized against unsafe schemes), `description` (fallback
  * accessibility label overridden by `@accessibility.label`), `fit`, `variant`,

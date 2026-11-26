@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `DateTimeInput` component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `DateTimeInput` component on Native Shell (`nsh 0.7.1`).
  *
  * Composes `nsh/base` `<DatePicker>` and `<TimeField>` across date-only,
  * time-only, and combined date+time modes with `min`/`max` bounds, ISO 8601

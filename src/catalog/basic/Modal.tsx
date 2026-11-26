@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Modal` overlay component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `Modal` overlay component on Native Shell (`nsh 0.7.1`).
  *
  * Mounts only its `trigger` initially; activating the trigger opens an `nsh/base`
  * `<Dialog>` containing `content` with a backdrop, Escape dismissal, an accessible

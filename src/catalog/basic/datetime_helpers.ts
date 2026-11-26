@@ -4,7 +4,7 @@
  *
  * Bridges A2UI v1.0 ISO 8601 strings (which may be `""`, `"YYYY-MM-DD"`,
  * `"HH:MM"`, `"HH:MM:SS"`, or `"YYYY-MM-DDTHH:MM:SSZ"` / offsets) onto
- * `nsh 0.7.0` `DatePicker` (`DatePickerValue`: a single `"YYYY-MM-DD"` | `null`)
+ * `nsh 0.7.1` `DatePicker` (`DatePickerValue`: a single `"YYYY-MM-DD"` | `null`)
  * and `TimeField` (`string`: `"HH:MM"` | `"HH:MM:SS"`). Measured on `0.6.1`, not
  * re-measured: their `JsValue::from_js` rejects empty strings and timezone suffixes.
  */
@@ -137,7 +137,7 @@ function toMinutesOfDay(hhmm: string): number {
 /**
  * Clamps an `"HH:MM"` time within optional `[minTime, maxTime]` bounds.
  *
- * Kept from `nsh 0.6.1`: `nsh 0.7.0` `TimeField` has native `min`/`max` props;
+ * Kept from `nsh 0.6.1`: since `nsh 0.7.0`, `TimeField` has native `min`/`max` props;
  * moving to them is a separate change (Spec 001 §3 Gap #9).
  */
 export function clampTimeToBounds(

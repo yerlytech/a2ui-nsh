@@ -58,7 +58,7 @@ describe("renderer/accessibility", () => {
       accessibilityLiveRegion: "assertive",
     });
 
-    // nsh 0.7.0 reads the plain prop on every platform with live regions (#2816).
+    // Since nsh 0.7.0, nsh reads the plain prop on every platform with live regions (#2816).
     expect(
       buildViewAccessibilityProps({ live: "polite" }, { defaultRole: "text" }),
     ).toEqual({ role: "text", accessibilityLiveRegion: "polite" });
@@ -118,7 +118,7 @@ describe("renderer/accessibility", () => {
     });
   });
 
-  test("liveRegionReadingFor follows nsh 0.7.0 live-region support by platform", () => {
+  test("liveRegionReadingFor follows nsh 0.7.1 live-region support by platform", () => {
     for (const os of ["android", "windows", "linux"]) {
       expect(liveRegionReadingFor(os, "desktop")).toEqual({
         changes: true,

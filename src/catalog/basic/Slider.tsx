@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Slider` component on Native Shell (`nsh 0.7.0`).
+ * A2UI Basic Catalog v1 `Slider` component on Native Shell (`nsh 0.7.1`).
  *
  * Wraps `nsh/base` `<Slider>` with A2UI `min` (default `0`), `max`, two-way
  * `DynamicNumber` `value`, division-count `steps` translation (`step = (max - min) / steps`,
