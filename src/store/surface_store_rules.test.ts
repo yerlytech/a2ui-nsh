@@ -251,10 +251,11 @@ describe("SurfaceSignalStore.errors rules", () => {
       "UNKNOWN_COMPONENT_TYPE",
       "UNKNOWN_COMPONENT_TYPE",
     ]);
-    expect(surfaceStore.errors().map((entry) => entry.error.surfaceId)).toEqual([
-      "err-s",
-      "err-s",
-    ]);
+    expect(
+      surfaceStore.errors().map(
+        (entry) => (entry.error as { surfaceId?: string }).surfaceId,
+      ),
+    ).toEqual(["err-s", "err-s"]);
     // Resolver-dispatched errors carry code + surface id, but no path.
     expect(surfaceStore.errors().map((entry) => "path" in entry.error)).toEqual([
       false,
