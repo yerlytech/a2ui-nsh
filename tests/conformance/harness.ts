@@ -55,8 +55,9 @@ interface BridgeEnv {
 
 /**
  * Headless `nsh` bridge providing native `fs/promises` and env access
- * (nsh 0.6.1's outer test VM defaults to `Os::Web`, while opened apps with
- * `platform: "macos"` expose native capability-checked `fs/promises`).
+ * (measured on `nsh 0.6.1`, not re-measured: the outer test VM defaults to
+ * `Os::Web`, while opened apps with `platform: "macos"` expose native
+ * capability-checked `fs/promises`).
  */
 export class ConformanceClient {
   private readonly app: App;

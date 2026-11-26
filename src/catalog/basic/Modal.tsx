@@ -5,11 +5,11 @@
  * `<Dialog>` containing `content` with a backdrop, Escape dismissal, an accessible
  * Close button, keyboard focus containment, and focus return on close.
  *
- * Because `nsh 0.6.1` routes presses only to the innermost pressable view, `Modal`
- * provides `ModalTriggerContext` so pressable triggers (such as Basic `Button` in
- * T11 or custom catalog triggers) can open the enclosing modal alongside their own
- * `action`, while non-pressable triggers (`Text`, `Card`, `Row`) activate via the
- * trigger wrapper's `onPress` and keyboard focus stop.
+ * Measured on `nsh 0.6.1`, not re-measured: presses reach only the innermost
+ * pressable view, so `Modal` provides `ModalTriggerContext` so pressable triggers
+ * (such as Basic `Button` in T11 or custom catalog triggers) can open the enclosing
+ * modal alongside their own `action`, while non-pressable triggers (`Text`, `Card`,
+ * `Row`) activate via the trigger wrapper's `onPress` and keyboard focus stop.
  */
 
 import {
@@ -48,8 +48,8 @@ export interface ModalTriggerController {
 
 /**
  * Context provided to a `Modal`'s `trigger` subtree (and cleared inside `content`)
- * so pressable triggers can open their enclosing modal in `nsh 0.6.1` where presses
- * do not bubble past the innermost pressable view.
+ * so pressable triggers can open their enclosing modal; measured on `nsh 0.6.1`,
+ * not re-measured, presses do not bubble past the innermost pressable view.
  */
 export const ModalTriggerContext = context<ModalTriggerController | undefined>(
   undefined,
