@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A `createSurface` `metadata`, `callRendererFunction` `callFunction.args`,
+  and an `agentFunctionResponse` `value` are now held to the global depth
+  limit (50) counted from the message root, as A2UI 1.0 does (metadata and
+  the response value sit at depth 2, `args` at depth 3). One container past
+  the limit is refused with `RECURSION_LIMIT_EXCEEDED`; scalars are never
+  refused. Before, they carried no JSON depth check of their own. Nested
+  `@call`s in `args` now meet this limit before the RPC call depth (32).
+
 ### Changed
 
 - The `nsh` notes measured only on 0.6.1 are re-measured headless on 0.7.1

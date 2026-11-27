@@ -284,6 +284,28 @@ const COMPONENT_DEPTH_IN_MESSAGE = 3;
  */
 const DATA_VALUE_DEPTH_IN_MESSAGE = 2;
 
+/**
+ * Depth of surface metadata in its message: message (0) → `createSurface`
+ * (1) → `metadata` (2). A component's `@metadata` is part of the component
+ * and is counted with it.
+ */
+const SURFACE_METADATA_DEPTH_IN_MESSAGE = 2;
+
+/**
+ * Depth of a renderer call's arguments in its message: message (0) →
+ * `callRendererFunction` (1) → `callFunction` (2) → `args` (3). Nested
+ * `@call`s inside `args` are counted by this limit too; the RPC call depth
+ * (`RpcLimits.maxCallDepth`) stays as a second guard for calls that do not
+ * come through a message.
+ */
+const RENDERER_CALL_ARGS_DEPTH_IN_MESSAGE = 3;
+
+/**
+ * Depth of a function response value in its message: message (0) →
+ * `agentFunctionResponse` (1) → `value` (2).
+ */
+const FUNCTION_RESPONSE_VALUE_DEPTH_IN_MESSAGE = 2;
+
 /** Validates JSON value nesting depth against `maxDepth` (0-based root object/array). */
 export function validateJsonNestingDepth(
   value: unknown,
@@ -745,10 +767,18 @@ export class PayloadValidator {
         this.validateDeleteSurfaceEnvelope(body, messageIndex);
         break;
       case "callRendererFunction":
-        this.validateCallRendererFunctionEnvelope(body);
+        this.validateCallRendererFunctionEnvelope(body, config);
         break;
       case "agentFunctionResponse":
         validateV10CommonType("FunctionResponse", body);
+        // Counted from its message root as A2UI 1.0 does.
+        validateJsonNestingDepth(
+          (body as JsonObject)["value"],
+          config.maxRecursionDepth,
+          undefined,
+          "/value",
+          FUNCTION_RESPONSE_VALUE_DEPTH_IN_MESSAGE,
+        );
         break;
     }
 
@@ -865,6 +895,14 @@ export class PayloadValidator {
     }
     if (body["metadata"] !== undefined) {
       validateMetadataEnvelope(body["metadata"], "/metadata", surfaceId);
+      // Counted from its message root as A2UI 1.0 does.
+      validateJsonNestingDepth(
+        body["metadata"],
+        config.maxRecursionDepth,
+        surfaceId,
+        "/metadata",
+        SURFACE_METADATA_DEPTH_IN_MESSAGE,
+      );
     }
     if (body["components"] !== undefined) {
       if (!Array.isArray(body["components"]) || body["components"].length === 0) {
@@ -1063,7 +1101,10 @@ export class PayloadValidator {
     }
   }
 
-  private validateCallRendererFunctionEnvelope(body: unknown): void {
+  private validateCallRendererFunctionEnvelope(
+    body: unknown,
+    config: ValidationConfig,
+  ): void {
     if (!isJsonObject(body)) {
       throw new A2uiValidationError(
         "INVALID_FUNCTION_CALL",
@@ -1126,6 +1167,14 @@ export class PayloadValidator {
         { functionCallId },
       );
     }
+    // Counted from its message root as A2UI 1.0 does.
+    validateJsonNestingDepth(
+      callFn["args"],
+      config.maxRecursionDepth,
+      typeof body["surfaceId"] === "string" ? body["surfaceId"] : undefined,
+      "/callFunction/args",
+      RENDERER_CALL_ARGS_DEPTH_IN_MESSAGE,
+    );
   }
 
   /**
