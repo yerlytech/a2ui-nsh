@@ -370,7 +370,7 @@ const THREE_DECIMAL_CURRENCIES = new Set([
   "TND",
 ]);
 
-const BCP47_TAG_RE = /^[A-Za-z]{2,3}(?:-[A-Za-z]{4})?(?:-(?:[A-Za-z]{2}|[0-9]{3}))?(?:-[A-Za-z0-9]{5,8})*$/;
+const BCP47_TAG_RE = /^[A-Za-z]{2,3}(?:-[A-Za-z]{4})?(?:-(?:[A-Za-z]{2}|[0-9]{3}))?(?:-(?:[A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*$/;
 
 /**
  * Resolves a BCP 47 locale tag, falling back to `en-US` for missing,
@@ -513,11 +513,13 @@ const ROMANIAN: PluralRuleFn = ({ i, v, n }) => {
 };
 
 const LITHUANIAN: PluralRuleFn = ({ n, f }) => {
+  // The CLDR many rule (f != 0) outranks the integer one/few rules, so any
+  // visible fraction is "many".
+  if (f !== 0) return "many";
   const mod10 = n % 10;
   const mod100 = n % 100;
   if (mod10 === 1 && !(mod100 >= 11 && mod100 <= 19)) return "one";
   if (mod10 >= 2 && mod10 <= 9 && !(mod100 >= 11 && mod100 <= 19)) return "few";
-  if (f !== 0) return "many";
   return "other";
 };
 
@@ -599,6 +601,25 @@ export function selectPluralCategory(
 // Exact decimal rounding & localized number / currency formatting
 // ---------------------------------------------------------------------------
 
+/** Expands a finite non-negative integer magnitude >= 1e21 to plain digits. */
+function toPlainIntegerDigits(value: number): string {
+  const str = String(value);
+  const e = str.indexOf("e");
+  if (e < 0) {
+    const dot = str.indexOf(".");
+    return dot < 0 ? str : str.slice(0, dot);
+  }
+  const mantissa = str.slice(0, e);
+  const exponent = Number(str.slice(e + 1));
+  const dot = mantissa.indexOf(".");
+  const digits = mantissa.replace(".", "");
+  const intLength = (dot < 0 ? mantissa.length : dot) + exponent;
+  if (intLength >= digits.length) {
+    return digits + "0".repeat(intLength - digits.length);
+  }
+  return digits.slice(0, intLength) || "0";
+}
+
 /**
  * Rounds a non-negative finite number half-away-from-zero to `decimals`
  * fractional digits and returns `{ intPart, fracPart }` as digit strings.
@@ -608,6 +629,14 @@ function roundHalfAwayFromZero(
   decimals: number,
 ): { readonly intPart: string; readonly fracPart: string } {
   const clamped = Math.max(0, Math.min(20, Math.trunc(decimals)));
+  if (absValue >= 1e21) {
+    // Number#toFixed switches to exponent notation at 1e21; expand the
+    // integer magnitude so grouping and decimals stay plain digits.
+    return {
+      intPart: toPlainIntegerDigits(absValue),
+      fracPart: "0".repeat(clamped),
+    };
+  }
   // Use exponential scaling to avoid binary float drift (e.g. 1.005 -> 1.01).
   const scaled = Number(`${absValue}e+${clamped}`);
   const rounded = Number.isFinite(scaled)

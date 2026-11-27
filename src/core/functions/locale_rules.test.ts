@@ -105,10 +105,9 @@ describe("resolveLocaleTag", () => {
     expect(resolveLocaleTag("xx-XX")).toBe(DEFAULT_LOCALE);
   });
 
-  test("rejects the four-digit variant in de-DE-1996", () => {
-    // differs from CLDR: BCP 47 allows four-digit variant subtags such as
-    // "1996", so "de-DE-1996" is well-formed and should be kept.
-    expect(resolveLocaleTag("de-DE-1996")).toBe(DEFAULT_LOCALE);
+  test("keeps a four-digit variant and a five-letter variant", () => {
+    expect(resolveLocaleTag("de-DE-1996")).toBe("de-DE-1996");
+    expect(resolveLocaleTag("sl-rozaj")).toBe("sl-rozaj");
   });
 });
 
@@ -247,13 +246,15 @@ describe("selectPluralCategory", () => {
     expect(selectPluralCategory(4, "cy")).toBe("other");
   });
 
-  test("HEBREW: Hebrew one/two boundaries", () => {
+  test("HEBREW: Hebrew one/two/other boundaries", () => {
     expect(selectPluralCategory(1, "he")).toBe("one");
     expect(selectPluralCategory(2, "he")).toBe("two");
     expect(selectPluralCategory(3, "he")).toBe("other");
-    // differs from CLDR: Hebrew has a "many" category for v=0 when n != 0
-    // and n % 10 = 0, so 10 should be "many".
+    // Current CLDR Hebrew has only one, two, and other (the old many rule
+    // for n % 10 = 0 was dropped), so multiples of ten are other.
     expect(selectPluralCategory(10, "he")).toBe("other");
+    expect(selectPluralCategory(20, "he")).toBe("other");
+    expect(selectPluralCategory(11, "he")).toBe("other");
   });
 
   test("ROMANIAN: Romanian one/few/other boundaries", () => {
@@ -274,9 +275,8 @@ describe("selectPluralCategory", () => {
     expect(selectPluralCategory(12, "lt")).toBe("other");
     expect(selectPluralCategory(10, "lt")).toBe("other");
     expect(selectPluralCategory(1.5, "lt")).toBe("many");
-    // differs from CLDR: f != 0 means "many", but a fraction whose n % 10
-    // lands in 2..9 is classified as "few" here.
-    expect(selectPluralCategory(2.5, "lt")).toBe("few");
+    expect(selectPluralCategory(2.5, "lt")).toBe("many");
+    expect(selectPluralCategory(0.1, "lt")).toBe("many");
   });
 
   test("SLOVENIAN: Slovenian one/two/few/other boundaries", () => {
@@ -359,11 +359,12 @@ describe("formatLocalizedNumber rounding", () => {
     );
   });
 
-  test("1e21 currently falls into exponent notation", () => {
-    // differs from CLDR: expected "1,000,000,000,000,000,000,000.00"; the
-    // fallback uses Number#toFixed, which switches to exponent notation.
+  test("large magnitudes expand to full digits instead of exponent notation", () => {
     expect(formatLocalizedNumber(1e21, { locale: "en-US", decimals: 2 })).toBe(
-      "1e,+21",
+      "1,000,000,000,000,000,000,000.00",
+    );
+    expect(formatLocalizedNumber(1e22, { locale: "en-US", decimals: 2 })).toBe(
+      "10,000,000,000,000,000,000,000.00",
     );
   });
 });
