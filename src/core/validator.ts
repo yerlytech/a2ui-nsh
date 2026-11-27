@@ -47,10 +47,12 @@ export interface ValidationConfig {
   readonly allowUnknownElements: boolean;
   /** Allow component batches before 'root' arrives. Default: false. */
   readonly allowMissingRoot: boolean;
-  /** Maximum component tree & JSON object nesting depth. Default: 50. */
+  /**
+   * Maximum component tree & JSON object nesting depth. Default: 50. Nested
+   * `@call` function calls have no limit of their own: each call adds two
+   * JSON levels (the call and its `args`), so this limit bounds them too.
+   */
   readonly maxRecursionDepth: number;
-  /** Maximum nested `@call` function call depth. Default: 5. */
-  readonly maxFunctionCallDepth: number;
 }
 
 /** Strict validation preset (default for A2UI v1.0 validation). */
@@ -60,7 +62,6 @@ export const STRICT_VALIDATION: Readonly<ValidationConfig> = Object.freeze({
   allowUnknownElements: false,
   allowMissingRoot: false,
   maxRecursionDepth: 50,
-  maxFunctionCallDepth: 5,
 });
 
 /** Permissive streaming validation preset (allows incremental out-of-order updates). */
@@ -70,7 +71,6 @@ export const PERMISSIVE_VALIDATION: Readonly<ValidationConfig> = Object.freeze({
   allowUnknownElements: true,
   allowMissingRoot: true,
   maxRecursionDepth: 50,
-  maxFunctionCallDepth: 5,
 });
 
 /**
@@ -96,8 +96,6 @@ export function resolveValidationConfig(
       override.allowMissingRoot ?? STRICT_VALIDATION.allowMissingRoot,
     maxRecursionDepth:
       override.maxRecursionDepth ?? STRICT_VALIDATION.maxRecursionDepth,
-    maxFunctionCallDepth:
-      override.maxFunctionCallDepth ?? STRICT_VALIDATION.maxFunctionCallDepth,
   };
 }
 
@@ -271,6 +269,12 @@ function mapIssueKeywordToDetailCode(keyword: string): string {
       return "invalid_value";
   }
 }
+
+/**
+ * Depth of a component object in its message: message (0) →
+ * `createSurface` / `updateComponents` (1) → `components` (2) → component (3).
+ */
+const COMPONENT_DEPTH_IN_MESSAGE = 3;
 
 /** Validates JSON value nesting depth against `maxDepth` (0-based root object/array). */
 export function validateJsonNestingDepth(
@@ -1141,12 +1145,14 @@ export class PayloadValidator {
         );
       }
 
-      // Global JSON nesting depth check on the component object.
+      // Global JSON nesting depth check on the component object, counted
+      // from its message root as A2UI 1.0 does.
       validateJsonNestingDepth(
         rawComp,
         config.maxRecursionDepth,
         surfaceId,
         basePath,
+        COMPONENT_DEPTH_IN_MESSAGE,
       );
 
       // ID validation
@@ -1515,14 +1521,13 @@ export class PayloadValidator {
       }
     } else {
       // Check dynamic values, bindings, and nested function calls FIRST so
-      // function depth / multi-catalog / agentOnly errors get exact diagnostics.
-      this.walkDynamicValuesInComponent(schemaCandidate, basePath, ctx, 0);
+      // multi-catalog / agentOnly errors get exact diagnostics.
+      this.walkDynamicValuesInComponent(schemaCandidate, basePath, ctx);
       if (parsedA11y) {
         this.walkDynamicValuesInValue(
           parsedA11y,
           `${basePath}/@accessibility`,
           ctx,
-          0,
         );
       }
 
@@ -1586,13 +1591,12 @@ export class PayloadValidator {
 
     // Even when component type is unknown (permissive), validate dynamic values & function calls!
     if (!compDef) {
-      this.walkDynamicValuesInComponent(schemaCandidate, basePath, ctx, 0);
+      this.walkDynamicValuesInComponent(schemaCandidate, basePath, ctx);
       if (parsedA11y) {
         this.walkDynamicValuesInValue(
           parsedA11y,
           `${basePath}/@accessibility`,
           ctx,
-          0,
         );
       }
     }
@@ -1668,13 +1672,12 @@ export class PayloadValidator {
     comp: JsonObject,
     basePath: string,
     ctx: ValidateBatchContext,
-    callDepth: number,
   ): void {
     for (const [k, v] of Object.entries(comp)) {
       if (k === "id" || k === "component") {
         continue;
       }
-      this.walkDynamicValuesInValue(v, `${basePath}/${k}`, ctx, callDepth);
+      this.walkDynamicValuesInValue(v, `${basePath}/${k}`, ctx);
     }
   }
 
@@ -1682,14 +1685,13 @@ export class PayloadValidator {
     value: unknown,
     path: string,
     ctx: ValidateBatchContext,
-    callDepth: number,
   ): void {
     if (value === null || typeof value !== "object") {
       return;
     }
     if (Array.isArray(value)) {
       for (let i = 0; i < value.length; i += 1) {
-        this.walkDynamicValuesInValue(value[i], `${path}/${i}`, ctx, callDepth);
+        this.walkDynamicValuesInValue(value[i], `${path}/${i}`, ctx);
       }
       return;
     }
@@ -1713,12 +1715,12 @@ export class PayloadValidator {
     }
 
     if (hasCall) {
-      this.validateFunctionCall(obj, path, ctx, callDepth + 1);
+      this.validateFunctionCall(obj, path, ctx);
       return;
     }
 
     for (const [k, v] of Object.entries(obj)) {
-      this.walkDynamicValuesInValue(v, `${path}/${k}`, ctx, callDepth);
+      this.walkDynamicValuesInValue(v, `${path}/${k}`, ctx);
     }
   }
 
@@ -1726,18 +1728,8 @@ export class PayloadValidator {
     callObj: JsonObject,
     path: string,
     ctx: ValidateBatchContext,
-    callDepth: number,
   ): void {
     const { surfaceId, defaultCatalogId, config } = ctx;
-
-    if (callDepth > config.maxFunctionCallDepth) {
-      throw new A2uiRecursionError(
-        "RECURSION_LIMIT_EXCEEDED",
-        `Maximum functionCall depth (${config.maxFunctionCallDepth}) exceeded`,
-        surfaceId,
-        path,
-      );
-    }
 
     // Validate top-level keys of FunctionCall
     for (const k of Object.keys(callObj)) {
@@ -1827,7 +1819,6 @@ export class PayloadValidator {
             rawArgs["offset"],
             `${path}/args/offset`,
             ctx,
-            callDepth,
           );
           const commonSchema = getCachedCommonTypesV1Schema();
           const issues = validateJsonSchema(
@@ -1911,14 +1902,13 @@ export class PayloadValidator {
     }
 
     // Recurse into nested function calls / bindings inside args BEFORE schema check
-    // so depth > 5 and nested catalog/agentOnly errors are caught cleanly.
+    // so nested catalog/agentOnly errors are caught cleanly.
     if (isJsonObject(rawArgs)) {
       for (const [argKey, argVal] of Object.entries(rawArgs)) {
         this.walkDynamicValuesInValue(
           argVal,
           `${path}/args/${argKey}`,
           ctx,
-          callDepth,
         );
       }
     }

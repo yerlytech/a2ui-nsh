@@ -16,6 +16,15 @@ import {
   toRendererError,
 } from "./validator";
 
+/** Builds `count` nested `formatString` calls around a string leaf. */
+function nestFormatStringCalls(count: number): Record<string, unknown> {
+  let value: unknown = "leaf";
+  for (let i = 0; i < count; i += 1) {
+    value = { "@call": "formatString", args: { value } };
+  }
+  return value as Record<string, unknown>;
+}
+
 describe("PayloadValidator — envelope & component checks", () => {
   test("rejects missing version, unsupported version, and multiple actions", () => {
     const validator = new PayloadValidator(CatalogRegistry.withBasicV1());
@@ -88,43 +97,34 @@ describe("PayloadValidator — envelope & component checks", () => {
     ).toThrow(/agentOnly/);
   });
 
-  test("enforces maxFunctionCallDepth (5) and maxRecursionDepth (50)", () => {
+  test("nested function calls have no depth limit of their own", () => {
     const validator = new PayloadValidator(CatalogRegistry.withBasicV1());
 
-    // Depth 6 nested function call exceeds limit of 5
-    const deepCall = {
-      "@call": "formatString",
-      args: {
-        value: {
-          "@call": "formatString",
-          args: {
-            value: {
-              "@call": "formatString",
-              args: {
-                value: {
-                  "@call": "formatString",
-                  args: {
-                    value: {
-                      "@call": "formatString",
-                      args: {
-                        value: {
-                          "@call": "formatString",
-                          args: { value: "too deep" },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
+    // Six calls failed the former limit of 5; 23 is the most the global
+    // depth limit (50, counted from the message) leaves room for.
+    for (const count of [6, 23]) {
+      expect(() =>
+        validator.validateComponentsBatch(
+          [{ id: "root", component: "Text", text: nestFormatStringCalls(count) }],
+          {
+            surfaceId: "s1",
+            defaultCatalogId: BASIC_CATALOG_V1_ID,
+            existingComponents: new Map(),
+            config: STRICT_VALIDATION,
           },
-        },
-      },
-    };
+        ),
+      ).not.toThrow();
+    }
+  });
 
+  test("nested function calls past the global depth limit fail with RecursionError", () => {
+    const validator = new PayloadValidator(CatalogRegistry.withBasicV1());
+
+    // Each call adds two JSON levels (the call and its args). The component
+    // sits at depth 3 of its message, so the args of call 24 sit at 51.
     expect(() =>
       validator.validateComponentsBatch(
-        [{ id: "root", component: "Text", text: deepCall }],
+        [{ id: "root", component: "Text", text: nestFormatStringCalls(24) }],
         {
           surfaceId: "s1",
           defaultCatalogId: BASIC_CATALOG_V1_ID,
@@ -133,6 +133,17 @@ describe("PayloadValidator — envelope & component checks", () => {
         },
       ),
     ).toThrow(A2uiRecursionError);
+    expect(() =>
+      validator.validateComponentsBatch(
+        [{ id: "root", component: "Text", text: nestFormatStringCalls(24) }],
+        {
+          surfaceId: "s1",
+          defaultCatalogId: BASIC_CATALOG_V1_ID,
+          existingComponents: new Map(),
+          config: STRICT_VALIDATION,
+        },
+      ),
+    ).toThrow(/Global recursion limit exceeded/);
   });
 
   test("resolveValidationConfig defaults omitted fields to strict", () => {
