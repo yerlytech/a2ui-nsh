@@ -45,9 +45,8 @@ export function sanitizeMediaUrl(urlInput: unknown): string | undefined {
   }
 
   if (scheme === "asset:") {
-    return trimmed.startsWith("asset:/") && trimmed.length > "asset:/".length
-      ? trimmed
-      : undefined;
+    const path = trimmed.slice(schemeMatch[1]!.length);
+    return path.startsWith("/") && path.length > 1 ? trimmed : undefined;
   }
 
   // Validate http(s) URL structure.

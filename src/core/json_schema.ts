@@ -7,7 +7,7 @@
  */
 
 import { deepEqual } from "./data_model";
-import { encodePointerSegment } from "./pointer";
+import { encodePointerSegment, parseArrayIndex } from "./pointer";
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
@@ -95,8 +95,8 @@ export function resolveLocalRef(
     }
     const key = decodeJsonPointerSegment(parts[i]!);
     if (Array.isArray(current)) {
-      const idx = Number(key);
-      if (!Number.isInteger(idx) || idx < 0 || idx >= current.length) {
+      const idx = parseArrayIndex(key);
+      if (idx === null || idx >= current.length) {
         current = undefined;
         break;
       }

@@ -64,8 +64,7 @@ describe("json_schema: resolveLocalRef", () => {
     expect(resolveLocalRef(root, "#/list/abc")).toBeUndefined();
   });
 
-  // bug: Number() parsing accepts "01" and "" as array indexes, RFC 6901 does not
-  test.skip("rejects array indexes with a leading zero or no digits", () => {
+  test("rejects array indexes with a leading zero or no digits", () => {
     expect(resolveLocalRef(root, "#/list/01")).toBeUndefined();
     expect(resolveLocalRef(root, "#/list/")).toBeUndefined();
   });

@@ -128,16 +128,11 @@ describe("evaluateLength", () => {
     expect(evaluateLength("abc", undefined, Number.NaN)).toEqual({ valid: true });
   });
 
+  // google/A2UI 36725ee `typescript/core/web_core/src/universal/basic_catalog/functions.ts` uses String#length (UTF-16 code units) for `length`.
   test("counts UTF-16 code units, so a non-BMP emoji is two long", () => {
     expect(evaluateLength("😀", 2, 2).valid).toBe(true);
     expect(evaluateLength("😀", 1, 1).valid).toBe(false);
     expect(evaluateLength("a😀", 3, 3).valid).toBe(true);
-  });
-
-  // bug: evaluateLength uses String#length (UTF-16 code units), so a non-BMP
-  // emoji counts as 2 even though A2UI string length should count code points.
-  test.skip("counts a non-BMP emoji as one code point", () => {
-    expect(evaluateLength("😀", 1, 1).valid).toBe(true);
   });
 });
 

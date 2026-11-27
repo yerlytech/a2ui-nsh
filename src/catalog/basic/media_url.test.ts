@@ -26,11 +26,15 @@ describe("sanitizeMediaUrl", () => {
     );
   });
 
-  // bug: the scheme match lowercases `ASSET:` but the asset path check is
-  // case-sensitive, so an allowed scheme in upper case is refused.
-  test.skip("bug: accepts an upper-case asset scheme", () => {
+  test("accepts an upper-case asset scheme", () => {
     expect(sanitizeMediaUrl("ASSET:/icons/logo.png")).toBe(
       "ASSET:/icons/logo.png",
+    );
+  });
+
+  test("accepts a mixed-case asset scheme", () => {
+    expect(sanitizeMediaUrl("Asset:/icons/logo.png")).toBe(
+      "Asset:/icons/logo.png",
     );
   });
 
