@@ -1,5 +1,8 @@
 # a2ui-nsh commands.
 
+# Pinned google/A2UI commit for the upstream conformance suites.
+a2ui_conformance_pin := "36725eee042da90c526f469f94246f96e16fdc35"
+
 # Default path to the read-only google-A2UI reference checkout.
 a2ui_conformance_root := env("A2UI_CONFORMANCE_ROOT", "target/refs/google-A2UI")
 
@@ -28,6 +31,7 @@ lint: check
 test:
     #!/usr/bin/env bash
     set -euo pipefail
+    tests/conformance/root.test.sh
     files=()
     while IFS= read -r file; do
       files+=("$file")
@@ -208,12 +212,14 @@ conformance ref_dir=a2ui_conformance_root:
       echo "No conformance harness under tests/conformance yet."
       exit 0
     fi
-    ref_arg="$1"
-    if [ ! -d "$ref_arg" ]; then
-      echo "A2UI conformance root not found: $ref_arg" >&2
-      exit 1
+    # An explicit argument or A2UI_CONFORMANCE_ROOT always wins. Only the
+    # default relative path falls back to the main checkout, so a git
+    # worktree with an empty target/ still finds the pinned suites.
+    fallback="no"
+    if [ -z "${A2UI_CONFORMANCE_ROOT:-}" ] && [ "$1" = "{{a2ui_conformance_root}}" ]; then
+      fallback="yes"
     fi
-    ref_abs="$(cd "$ref_arg" && pwd -P)"
+    ref_abs="$(scripts/a2ui-conformance-root.sh "{{a2ui_conformance_pin}}" "$1" "$fallback")"
     mkdir -p target/conformance-run
     target_abs="$(cd target && pwd -P)"
     manifest_abs="$target_abs/conformance-manifest.jsonl"

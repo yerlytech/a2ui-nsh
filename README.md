@@ -105,15 +105,16 @@ just check
 just test
 ```
 
-Fetch the pinned upstream conformance checkout, then run the conformance suite:
+Fetch the upstream conformance checkout, then run the conformance suite:
 
 ```bash
 git clone https://github.com/google/A2UI target/refs/google-A2UI
-git -C target/refs/google-A2UI checkout 36725eee042da90c526f469f94246f96e16fdc35
 just conformance
 ```
 
-To use a different A2UI checkout, pass its path as `just conformance /path/to/google-A2UI` or set `A2UI_CONFORMANCE_ROOT`.
+`just conformance` requires the checkout at `target/refs/google-A2UI` to be at the commit pinned by `a2ui_conformance_pin` in the Justfile. On a mismatch it refuses and prints the `git fetch` and `git checkout` command that fixes it. From a git worktree with an empty `target/`, it falls back to the main checkout's `target/refs/google-A2UI`.
+
+To use a different A2UI checkout, pass its path as `just conformance /path/to/google-A2UI` or set `A2UI_CONFORMANCE_ROOT`; an explicit path must also be at the pin.
 
 ## Run the ERP Customers example
 

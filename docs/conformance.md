@@ -1,23 +1,25 @@
 # Conformance & Compatibility
 
-`a2ui-nsh` validates its protocol core and TSX adapter directly against upstream [`google/A2UI`](https://github.com/google/A2UI) language-agnostic YAML conformance suites (`conformance/core/*.yaml`, `conformance/adapter/markdown_subset.yaml`, `conformance/e2e/*.yaml`) at commit `36725eee042da90c526f469f94246f96e16fdc35` (Apache-2.0).
+`a2ui-nsh` validates its protocol core and TSX adapter directly against upstream [`google/A2UI`](https://github.com/google/A2UI) language-agnostic YAML conformance suites (`conformance/core/*.yaml`, `conformance/adapter/markdown_subset.yaml`, `conformance/e2e/*.yaml`) at the commit pinned by `a2ui_conformance_pin` in the Justfile (Apache-2.0).
 
 No upstream YAML suite files are copied into this repository; `just conformance` reads them from `A2UI_CONFORMANCE_ROOT` (default `target/refs/google-A2UI`) with the `nsh test` VM's own `fs/promises` (`tests/conformance/harness.ts`, no bridge app) and a zero-dependency TypeScript YAML parser (`tests/conformance/yaml.ts`). The runner `nsh.json` the recipe writes under `target/conformance-run/` grants reads of the suite root and `target/`, writes to `target/` (the manifest), and the `A2UI_CONFORMANCE_ROOT`, `A2UI_CONFORMANCE_MANIFEST`, and `PWD` environment names, nothing more.
 
 ## Running Conformance Locally
 
-Fetch the pinned upstream `google/A2UI` repository into `target/refs/google-A2UI` (the default path expected by the `conformance` recipe), then run `just conformance`:
+Fetch the upstream `google/A2UI` repository into `target/refs/google-A2UI` (the default path expected by the `conformance` recipe), then run `just conformance`:
 
 ```bash
-# Fetch the pinned upstream google/A2UI conformance suites
-git clone https://github.com/google/A2UI target/refs/google-A2UI && git -C target/refs/google-A2UI checkout 36725ee
+# Fetch the upstream google/A2UI conformance suites
+git clone https://github.com/google/A2UI target/refs/google-A2UI
 
-# Uses target/refs/google-A2UI by default
+# Requires the checkout at the commit pinned by a2ui_conformance_pin
 just conformance
 
 # Or point at another checkout of google/A2UI
 just conformance /path/to/google-A2UI
 ```
+
+`just conformance` checks that the checkout HEAD equals `a2ui_conformance_pin` (Justfile). On a mismatch it refuses with the HEAD, the pin, and the `git fetch`/`git checkout` command that fixes it. From a git worktree with an empty `target/`, it falls back to the main checkout's `target/refs/google-A2UI`. An explicit argument or `A2UI_CONFORMANCE_ROOT` always wins over that fallback.
 
 `just conformance` writes an executed-case manifest in JSON Lines format to `target/conformance-manifest.jsonl` matching upstream `executed_case_manifest.schema.json`. Every skip list is strictly enforced: any stale skip entry fails the suite.
 

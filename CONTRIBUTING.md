@@ -13,13 +13,14 @@ just check
 just test
 ```
 
-To run conformance tests, fetch the pinned Google A2UI checkout:
+To run conformance tests, fetch the upstream Google A2UI checkout, then run the suite:
 
 ```bash
 git clone https://github.com/google/A2UI target/refs/google-A2UI
-git -C target/refs/google-A2UI checkout 36725eee042da90c526f469f94246f96e16fdc35
 just conformance
 ```
+
+The recipe requires the checkout HEAD to match `a2ui_conformance_pin` in the Justfile and prints the fetch/checkout command when it does not. From a git worktree with an empty `target/`, it falls back to the main checkout's `target/refs/google-A2UI`.
 
 ## Build and test
 
