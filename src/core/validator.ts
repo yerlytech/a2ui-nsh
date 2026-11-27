@@ -276,6 +276,14 @@ function mapIssueKeywordToDetailCode(keyword: string): string {
  */
 const COMPONENT_DEPTH_IN_MESSAGE = 3;
 
+/**
+ * Depth of a data value in its message: message (0) →
+ * `createSurface` / `updateDataModel` (1) → `dataModel` / `value` (2).
+ * `DataModel.applyUpdate` checks no JSON depth itself: an app can call it
+ * without a message, so this message check is the guard.
+ */
+const DATA_VALUE_DEPTH_IN_MESSAGE = 2;
+
 /** Validates JSON value nesting depth against `maxDepth` (0-based root object/array). */
 export function validateJsonNestingDepth(
   value: unknown,
@@ -846,11 +854,13 @@ export class PayloadValidator {
           { surfaceId },
         );
       }
+      // Counted from its message root as A2UI 1.0 does.
       validateJsonNestingDepth(
         body["dataModel"],
         config.maxRecursionDepth,
         surfaceId,
         "/dataModel",
+        DATA_VALUE_DEPTH_IN_MESSAGE,
       );
     }
     if (body["metadata"] !== undefined) {
@@ -1001,11 +1011,13 @@ export class PayloadValidator {
       // Let A2uiDataError (e.g. FORBIDDEN_SEGMENT like __proto__) propagate as DataError.
       parsePointer(path);
     }
+    // Counted from its message root as A2UI 1.0 does.
     validateJsonNestingDepth(
       body["value"],
       config.maxRecursionDepth,
       surfaceId,
       "/value",
+      DATA_VALUE_DEPTH_IN_MESSAGE,
     );
   }
 

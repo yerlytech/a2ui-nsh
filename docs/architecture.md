@@ -87,7 +87,7 @@ One TSX codebase renders across `nsh`'s headless engine, macOS AppKit (`--target
 
 ## Security & Capability Sandbox
 
-- **Fail-closed protocol guards:** Explicit caps on JSON nesting depth, JSON Pointer array indices, expression length/depth, pending RPC count, and portable A2UI regex patterns (`<= 256` code points, rejecting backreferences, lookbehinds, named groups, `\p{...}`, and nested quantifiers before `RegExp` compilation).
+- **Fail-closed protocol guards:** Explicit caps on JSON nesting depth (counted from the message root, as A2UI 1.0 does), JSON Pointer array indices, expression length/depth, pending RPC count, and portable A2UI regex patterns (`<= 256` code points, rejecting backreferences, lookbehinds, named groups, `\p{...}`, and nested quantifiers before `RegExp` compilation).
 - **Minimal `nsh` capabilities:** `nsh.json` and `examples/erp-customers/nsh.json` grant only `"capabilities": { "host": ["a2ui.*"] }`. `"audio": true` and `capabilities.network` remain opt-in (`src/renderer/media_test_harness/` isolates granted-media tests); unauthorized `fetch`, `fs`, `openUrl`, audio, and non-`a2ui.*` host messages fail closed with `ERR_ACCESS_DENIED` (verified by `src/renderer/sandbox.test.tsx`, `src/catalog/basic/AudioPlayer.test.tsx`, and `tests/conformance/c6_sandbox.suite.ts`), and `Video` / `AudioPlayer` render degraded status cards instead of crashing.
 - **QuickJS hardening:** Release bytecode builds (`just build`) run inside `nsh`'s hardened QuickJS VM (`eval`/`Function` disabled, frozen prototypes, 256 MB heap, 2 s per-call CPU budget, 200,000 node limit).
 
