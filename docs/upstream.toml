@@ -11,7 +11,7 @@ check = "nsh/base prop changes, accessibility prop support, nsh.json capability 
 [[watch]]
 name = "a2ui"
 source = "ghcommit:google/A2UI"
-pin = "496df0e76e2ad9aba4cc2a12abe066f43d4f171d"
+pin = "36725eee042da90c526f469f94246f96e16fdc35"
 pinned_in = ".github/workflows/nsh-weekly.yml"
 why = "A2UI v1.0 specification, Basic Catalog v1 JSON schemas, and upstream conformance YAML suites"
 check = "v1.0 schema or conformance YAML additions; refresh target/refs/google-A2UI and run just conformance"

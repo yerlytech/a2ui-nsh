@@ -1,6 +1,6 @@
 # Conformance & Compatibility
 
-`a2ui-nsh` validates its protocol core and TSX adapter directly against upstream [`google/A2UI`](https://github.com/google/A2UI) language-agnostic YAML conformance suites (`conformance/core/*.yaml`, `conformance/adapter/markdown_subset.yaml`, `conformance/e2e/*.yaml`) at commit `496df0e76e2ad9aba4cc2a12abe066f43d4f171d` (Apache-2.0).
+`a2ui-nsh` validates its protocol core and TSX adapter directly against upstream [`google/A2UI`](https://github.com/google/A2UI) language-agnostic YAML conformance suites (`conformance/core/*.yaml`, `conformance/adapter/markdown_subset.yaml`, `conformance/e2e/*.yaml`) at commit `36725eee042da90c526f469f94246f96e16fdc35` (Apache-2.0).
 
 No upstream YAML suite files are copied into this repository; `just conformance` reads them from `A2UI_CONFORMANCE_ROOT` (default `target/refs/google-A2UI`) via `tests/conformance/` and a zero-dependency TypeScript YAML parser (`tests/conformance/yaml.ts`).
 
@@ -10,7 +10,7 @@ Fetch the pinned upstream `google/A2UI` repository into `target/refs/google-A2UI
 
 ```bash
 # Fetch the pinned upstream google/A2UI conformance suites
-git clone https://github.com/google/A2UI target/refs/google-A2UI && git -C target/refs/google-A2UI checkout 496df0e
+git clone https://github.com/google/A2UI target/refs/google-A2UI && git -C target/refs/google-A2UI checkout 36725ee
 
 # Uses target/refs/google-A2UI by default
 just conformance
@@ -23,15 +23,15 @@ just conformance /path/to/google-A2UI
 
 ## Stage Coverage (C1–C6)
 
-Measured on `nsh 0.7.1 (f78eace)` against `google/A2UI` `496df0e`: **27/27 test suites pass** (`705` upstream cases passed, `0` failed, `51` documented skips across 29 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests). The executed-case manifest is identical to the ones recorded on `nsh 0.7.0 (3f8ecd8)` and `nsh 0.6.1 (2f51d86)`.
+Measured on `nsh 0.7.1 (f78eace)` against `google/A2UI` `36725ee` (2026-11-27): **27/27 test suites pass** (`712` upstream cases passed, `0` failed, `51` documented skips across 29 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests). Against the previous pin `496df0e` the same run passed `705` cases; the 7 new ones are in `core/rpc_functions.yaml` (33 → 40). See [`google/A2UI` `36725ee`](#googlea2ui-36725ee-measured-2026-11-27).
 
 ## Results on `nsh 0.7.1` (2026-11-26, macOS arm64)
 
 | Check | Result |
 |---|---|
 | `just lint` (`just check`) | Pass |
-| `just test` | Pass: 89 test files, 817 tests (812 passed, 0 failed, 5 skipped) |
-| `just conformance` | Pass: 27/27 suites, 705 cases passed, 51 documented skips, 29 YAML files |
+| `just test` | Pass: 98 test files, 1160 tests (1155 passed, 0 failed, 5 skipped), re-run 2026-11-27 |
+| `just conformance` | Pass: 27/27 suites, 712 cases passed, 51 documented skips, 29 YAML files (`google/A2UI` `36725ee`, 2026-11-27) |
 | `just build` | Pass: library and `examples/erp-customers/` bytecode bundles |
 | `just walk-macos` | Pass: 16/16 tests, 24 screenshots in `target/walk-macos/` |
 | `just test-tui` | Not run: the 0.7.1 `tui` runtime is not installed (`nsh component add tui`) |
@@ -40,6 +40,27 @@ Measured on `nsh 0.7.1 (f78eace)` against `google/A2UI` `496df0e`: **27/27 test 
 On `nsh 0.7.0` (2026-11-25) the same checks passed with 86 test files and 759 tests; the TUI and Web runs were not run either.
 
 `just conformance` runs `nsh test --jobs 1`: `nsh` 0.7 runs test files in parallel by default (#2809), and every suite rewrites the one executed-case manifest, so parallel suites dropped each other's records.
+
+### `google/A2UI` `36725ee` (measured 2026-11-27)
+
+The pin moved from `496df0e` to `36725ee` (upstream `main` on 2026-11-26, 40 commits). Seven of them touch the v1.0 specification, `catalogs/basic/v1/`, or the conformance suites; `catalogs/basic/v1/` itself does not change.
+
+| `just conformance` | `496df0e` | `36725ee`, before the fixes | `36725ee`, after |
+|---|---|---|---|
+| Suites | 27/27 | 25/27 | 27/27 |
+| Cases passed | 705 | 701 (11 failed) | 712 |
+| Documented skips | 51 | 51 | 51 |
+| `core/validator_v1_0.yaml` | 50/50 | 47/50 | 50/50 |
+| `core/rpc_functions.yaml` | 33/33 | 32/40 | 40/40 |
+
+| Upstream change | a2ui-nsh |
+|---|---|
+| Nested function calls no longer have a depth limit of 5; only the global depth limit (50, counted from the message) bounds them (#4296) | Followed: `ValidationConfig.maxFunctionCallDepth` is gone, and a component's JSON depth counts from its message root (the component sits at depth 3). Tests: `src/core/validator.test.ts`. |
+| `callRendererFunction` checks every nested `@call` and `${...}` template call against the agent's caller boundary: `rendererOnly`, or `requiresUserActivation` without a gesture, rejects the call with `INVALID_FUNCTION_CALL`; `agentOnly` is allowed; static `@call`s are checked before any argument runs (#4336) | Followed in `src/core/rpc.ts` and `src/core/functions/evaluator.ts`. A boundary error wins over another error in the same template. A template call made for the agent finds a function by its registered implementation, as the agent's own call does. Tests: `src/core/rpc_agent_boundary.test.ts`, `src/core/functions/evaluator.test.ts`. |
+| `core/rpc_functions.yaml` names new test doubles (`renderTemplate`, `tagValue`, `secretRendererOnly`, `agentSecret`) and a per-function `catalogId` | Followed in the harness (`tests/conformance/c4_actions_rpc.suite.ts`), with the behavior upstream's harnesses give them. |
+| `MessageProcessor.addCatalog` and `core/add_catalog.yaml` (#3304) | Known, not yet followed: a new processor feature, not a correction. The harness does not run `core/add_catalog.yaml`. |
+| The global depth limit counts from the message root for every value | Known, not yet followed outside components: a `createSurface` `dataModel` and an `updateDataModel` `value` still count their depth from the value itself, so they allow two levels more than upstream. No upstream case pins this yet. |
+| Agent-side suites (`conformance/agent/*`, Express and Direct JSON), `core/validator_v0_9.yaml`, v0.9.1 schema `$id`s (#3975), and doc wording | Not applicable: `a2ui-nsh` is a v1.0 renderer; the harness reads none of them. |
 
 ### `nsh 0.7.1` changes
 

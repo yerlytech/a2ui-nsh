@@ -4,7 +4,8 @@ Which catalog components `a2ui-nsh` draws, measured against the catalog
 definitions it renders. Two catalogs are in scope:
 
 1. **A2UI Basic Catalog v1** (`https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json`),
-   read from `google/A2UI` `496df0e` `catalogs/basic/v1/catalog.json` and
+   read from `google/A2UI` `496df0e` `catalogs/basic/v1/catalog.json`
+   (unchanged through `36725ee`, measured 2026-11-27) and
    reproduced in `src/core/v1_0_schemas.ts`.
 2. **xlarge catalog v1** (`tech.yerly.xlarge/v1`), a custom A2UI 1.0 catalog
    that xlarge publishes (its `src/catalog/catalog.json`, spec 208). The copy

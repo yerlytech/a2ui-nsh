@@ -8,6 +8,7 @@ import {
 import { A2uiValidationError } from "../../src/core/expression";
 import {
   FunctionRegistry,
+  formatStringFunction,
   type FunctionImplementation,
 } from "../../src/core/functions";
 import type { JsonObject } from "../../src/core/json_schema";
@@ -307,7 +308,7 @@ function buildRpcFunctionImpl(
     allowedCallers,
     requiresUserActivation,
     parametersSchema,
-    execute: (args) => {
+    execute: (args, ctx) => {
       switch (fnName) {
         case "playMedia":
           return { playing: true, timestamp: 0 };
@@ -321,6 +322,19 @@ function buildRpcFunctionImpl(
           return { ...args };
         case "calculateTax":
           return Number(args["amount"] ?? 0) * 0.1;
+        // Test doubles named by core/rpc_functions.yaml; upstream's harnesses
+        // give each the same behavior.
+        case "renderTemplate":
+          return formatStringFunction.execute(args, ctx);
+        case "tagValue":
+          if (!("value" in args)) {
+            throw new Error("Missing required 'value' argument.");
+          }
+          return `tagged:${String(args["value"])}`;
+        case "secretRendererOnly":
+          return "SECRET";
+        case "agentSecret":
+          return "AGENT_OK";
         default:
           return { ...args };
       }
@@ -894,6 +908,16 @@ async function runHandleRpcCase(tc: ConformanceCase): Promise<void> {
 
   for (const [fnName, meta] of Object.entries(fnMetaMap)) {
     const impl = buildRpcFunctionImpl(fnName, meta);
+    // A function's own `catalogId` places it in that catalog, created here
+    // when the case names one the registry lacks.
+    const ownCatalogId = meta["catalogId"];
+    if (typeof ownCatalogId === "string") {
+      if (!registry.has(ownCatalogId)) {
+        registry.register(makeRpcCatalog(ownCatalogId, "1.0"));
+      }
+      fnRegistry.register(registry.get(ownCatalogId)!.catalogId, impl);
+      continue;
+    }
     if (targetCatalogId && registry.has(targetCatalogId)) {
       const resolvedCat = registry.get(targetCatalogId)!;
       fnRegistry.register(resolvedCat.catalogId, impl);
@@ -1343,13 +1367,13 @@ describe("C4 conformance — actions, RPC & agent function routing", () => {
     expect(passed).toBe(records.length - ACTIONS_SKIP_TEST_NAMES.size);
   });
 
-  test("core/rpc_functions.yaml passes all 33 cases", async () => {
+  test("core/rpc_functions.yaml passes all 40 cases", async () => {
     const records = await client.runSuite(
       "core/rpc_functions.yaml",
       runHandleRpcCase,
       RPC_FUNCTIONS_SKIP_TEST_NAMES,
     );
-    expect(records.length).toBe(33);
+    expect(records.length).toBe(40);
     expect(records.every((r) => r.status === "passed")).toBe(true);
   });
 

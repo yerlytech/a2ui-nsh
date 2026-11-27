@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Follows `google/A2UI` `36725ee` (was `496df0e`, measured 2026-11-27):
+  the pin, CI, and the clone line move; `just conformance` passes 712 cases
+  (was 705), 51 documented skips. Nested function calls no longer have a
+  depth limit of their own (`ValidationConfig.maxFunctionCallDepth` is
+  removed); the global depth limit of 50 bounds them, counted from the
+  message root for components. `callRendererFunction` now rejects, with
+  `INVALID_FUNCTION_CALL`, a call whose nested `@call` or `${...}` template
+  reaches a `rendererOnly` function or one that needs a user gesture, and
+  checks static nested calls before any argument runs.
+  `MessageProcessor.addCatalog` (`core/add_catalog.yaml`) is known and not
+  yet followed (`docs/conformance.md`).
+
 - Runs on `nsh` 0.7.1 (was 0.7.0): every pin, the install line, and CI move
   to 0.7.1. None of its 23 commits changes what `a2ui-nsh` draws: no `List`
   or table is kept under `display: none` (#3193), and the web part gates

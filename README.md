@@ -109,7 +109,7 @@ Fetch the pinned upstream conformance checkout, then run the conformance suite:
 
 ```bash
 git clone https://github.com/google/A2UI target/refs/google-A2UI
-git -C target/refs/google-A2UI checkout 496df0e76e2ad9aba4cc2a12abe066f43d4f171d
+git -C target/refs/google-A2UI checkout 36725eee042da90c526f469f94246f96e16fdc35
 just conformance
 ```
 

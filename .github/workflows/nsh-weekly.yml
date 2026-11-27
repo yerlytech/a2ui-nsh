@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  A2UI_CONFORMANCE_COMMIT: 496df0e76e2ad9aba4cc2a12abe066f43d4f171d
+  A2UI_CONFORMANCE_COMMIT: 36725eee042da90c526f469f94246f96e16fdc35
 
 jobs:
   nsh-latest:
