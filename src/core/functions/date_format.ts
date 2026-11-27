@@ -143,10 +143,12 @@ export function parseStrictTimestamp(value: unknown): ParsedTimestamp | null {
     offsetMinutes = sign * (offH * 60 + offM);
   }
 
-  // Compute weekday and UTC instant using Date.UTC (independent of host TZ).
-  const wallUtcMs = Date.UTC(year, month - 1, day, hour, minute, second, ms);
-  const wallDate = new Date(wallUtcMs);
-  if (Number.isNaN(wallDate.getTime())) {
+  // Compute weekday and UTC instant in UTC (independent of host TZ).
+  // setUTCFullYear keeps years 0-99 as written; Date.UTC maps them to 1900-1999.
+  const wallDate = new Date(Date.UTC(2000, 0, 1, hour, minute, second, ms));
+  wallDate.setUTCFullYear(year, month - 1, day);
+  const wallUtcMs = wallDate.getTime();
+  if (Number.isNaN(wallUtcMs)) {
     return null;
   }
   const instantMs = wallUtcMs - offsetMinutes * 60_000;
@@ -309,7 +311,11 @@ export function formatTr35Date(
             : formatOffset(parsed.offsetMinutes, false, false);
         break;
       case "X":
-        out += formatOffset(parsed.offsetMinutes, token.length >= 3, true);
+        // TR35: a single X is +HH, with minutes only when they are non-zero.
+        out +=
+          token.length === 1 && parsed.offsetMinutes % 60 === 0
+            ? formatOffset(parsed.offsetMinutes, false, true).slice(0, 3)
+            : formatOffset(parsed.offsetMinutes, token.length >= 3, true);
         break;
       default:
         out += token;
