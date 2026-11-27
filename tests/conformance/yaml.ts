@@ -645,6 +645,17 @@ class FlowParser {
         break;
       }
       if (
+        inFlowContext &&
+        ch === ":" &&
+        (this.text[this.pos + 1] === " " || this.text[this.pos + 1] === "\t")
+      ) {
+        // Rule 6: a flow plain scalar may not contain ": ".
+        throw new YamlParseError(
+          `Unexpected ": " in flow plain scalar near "${this.text.slice(start, this.pos + 2)}"`,
+          this.line,
+        );
+      }
+      if (
         ch === "#" &&
         this.pos > start &&
         (this.text[this.pos - 1] === " " || this.text[this.pos - 1] === "\t")
@@ -814,7 +825,7 @@ class YamlParser {
     lineNum: number,
   ): unknown {
     // Check for leading anchor on sequence item
-    const { anchor, remainder, consumedCols } = extractLeadingAnchor(rest);
+    const { anchor, remainder, consumedCols } = extractLeadingAnchor(rest, lineNum);
     if (anchor !== null && stripInlineComment(remainder).length === 0) {
       this.lineIdx += 1;
       const child = this.peekNextContent();
@@ -906,7 +917,11 @@ class YamlParser {
         break;
       }
       if (findMappingColon(next.trimmed) < 0) {
-        break;
+        // Rule 5: a same-indent line without "key:" cannot continue a block mapping.
+        throw new YamlParseError(
+          `Expected mapping key-value pair near "${next.trimmed}"`,
+          next.idx + 1,
+        );
       }
       this.lineIdx = next.idx;
       const lineText = this.lines[this.lineIdx]!.slice(mapIndent);
@@ -921,7 +936,7 @@ class YamlParser {
     mapIndent: number,
     lineNum: number,
   ): unknown {
-    const { anchor, remainder } = extractLeadingAnchor(rawVal);
+    const { anchor, remainder } = extractLeadingAnchor(rawVal, lineNum);
     const effective = anchor !== null ? remainder : rawVal;
     const stripped = stripInlineComment(effective);
 
@@ -954,7 +969,7 @@ class YamlParser {
     parentIndent: number,
     lineNum: number,
   ): unknown {
-    const { anchor, remainder } = extractLeadingAnchor(rawVal);
+    const { anchor, remainder } = extractLeadingAnchor(rawVal, lineNum);
     const effective = (anchor !== null ? remainder : rawVal).trimStart();
     const stripped = stripInlineComment(effective);
 
@@ -1180,7 +1195,7 @@ function foldBlockLines(lines: string[]): string {
   return out;
 }
 
-function extractLeadingAnchor(text: string): {
+function extractLeadingAnchor(text: string, lineNum: number): {
   anchor: string | null;
   remainder: string;
   consumedCols: number;
@@ -1194,7 +1209,8 @@ function extractLeadingAnchor(text: string): {
   }
   const anchor = text.slice(1, i);
   if (anchor.length === 0) {
-    return { anchor: null, remainder: text, consumedCols: 0 };
+    // Rule 7: an anchor indicator needs a non-empty name.
+    throw new YamlParseError("Empty anchor or alias name", lineNum);
   }
   let j = i;
   while (j < text.length && (text[j] === " " || text[j] === "\t")) {
