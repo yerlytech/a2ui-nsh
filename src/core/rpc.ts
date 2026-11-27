@@ -33,6 +33,7 @@ import {
   coerceDynamicBoolean,
   evaluateDynamicValue,
   normalizeCheckRuleResult,
+  type FunctionCaller,
   type FunctionExecutionContext,
   type FunctionImplementation,
   type NormalizedValidationResult,
@@ -1248,28 +1249,43 @@ export class RpcManager {
     }
 
     // 4. Security boundaries: allowedCallers & requiresUserActivation.
-    const disallowedForAgent =
-      (fnDef !== undefined && fnDef.allowedCallers === "rendererOnly") ||
-      impl.allowedCallers === "rendererOnly";
-    if (disallowedForAgent) {
-      return fail(
-        "INVALID_FUNCTION_CALL",
-        `Function '${fnName}' cannot be called by agent (allowedCallers is rendererOnly).`,
-      );
+    const boundaryError = agentBoundaryError(
+      fnName,
+      fnDef,
+      impl,
+      userActivation,
+    );
+    if (boundaryError) {
+      return fail(boundaryError.code, boundaryError.message);
     }
 
-    const needsActivation =
-      fnDef?.requiresUserActivation === true ||
-      impl.requiresUserActivation === true;
-    if (needsActivation && !userActivation) {
-      return fail(
-        "INVALID_FUNCTION_CALL",
-        `Function '${fnName}' requires user activation context to execute.`,
-      );
+    // 4b. Every static `@call` nested in the args meets the same boundary
+    // before any argument expression runs (A2UI 1.0 callRendererFunction).
+    const rawArgs = callFunction.args ?? {};
+    const nestedError = this.findNestedAgentCallError(
+      rawArgs,
+      surfaceDefaultCatalogId,
+      userActivation,
+      0,
+    );
+    if (nestedError) {
+      return fail(nestedError.code, nestedError.message);
     }
+
+    // `${...}` template calls check the boundary when they run. A boundary
+    // error wins over any other template error in the same request.
+    const templateErrors: { boundary?: Error; other?: Error } = {};
+    const onTemplatePartError = (err: Error): void => {
+      if (isAgentBoundaryError(err)) {
+        templateErrors.boundary ??= err;
+      } else {
+        templateErrors.other ??= err;
+      }
+    };
+    // Read through a call: the handler sets these from inside evaluation.
+    const templateBoundary = (): Error | undefined => templateErrors.boundary;
 
     // 5. Resolve dynamic arguments (`@path`, `@call`, `@@` unescaping).
-    const rawArgs = callFunction.args ?? {};
     let resolvedArgs: Record<string, unknown>;
     try {
       const evaluated = await this.evaluateRpcCallArguments(
@@ -1278,14 +1294,22 @@ export class RpcManager {
         surfaceId,
         surfaceDefaultCatalogId,
         userActivation,
+        onTemplatePartError,
       );
       resolvedArgs = normalizeUndefinedToNull(evaluated) as Record<
         string,
         unknown
       >;
     } catch (err) {
+      if (isAgentBoundaryError(err)) {
+        return fail("INVALID_FUNCTION_CALL", err.message);
+      }
       const msg = err instanceof Error ? err.message : String(err);
       return fail("EXECUTION_ERROR", msg);
+    }
+    const argsBoundary = templateBoundary();
+    if (argsBoundary) {
+      return fail("INVALID_FUNCTION_CALL", argsBoundary.message);
     }
 
     // 6. Validate resolved arguments against the function schema & apply defaults.
@@ -1315,21 +1339,96 @@ export class RpcManager {
       caller: "agent",
       catalogRegistry: this.catalogRegistry,
       functionRegistry: this.functionRegistry,
+      onTemplatePartError,
     };
 
     try {
       const rawResult = await impl.execute(parsedArgs.args, execContext);
+      const boundary = templateBoundary();
+      if (boundary) {
+        return fail("INVALID_FUNCTION_CALL", boundary.message);
+      }
+      if (templateErrors.other) {
+        throw templateErrors.other;
+      }
       const normalized = rawResult === undefined ? null : rawResult;
       return emitResponse({
         functionCallId,
         value: normalized,
       });
-    } catch {
+    } catch (err) {
+      if (isAgentBoundaryError(err)) {
+        return fail("INVALID_FUNCTION_CALL", err.message);
+      }
       return fail(
         "EXECUTION_ERROR",
         "An error occurred during function execution.",
       );
     }
+  }
+
+  /**
+   * Walks `callFunction.args` for static `@call` objects and returns the first
+   * boundary error the agent's call meets, without running anything. Nesting
+   * past `limits.maxCallDepth` fails closed with EXECUTION_ERROR, the error
+   * evaluation would give.
+   */
+  private findNestedAgentCallError(
+    value: unknown,
+    surfaceDefaultCatalogId: string | undefined,
+    userActivation: boolean,
+    callDepth: number,
+  ): { readonly code: string; readonly message: string } | undefined {
+    if (value === null || typeof value !== "object") {
+      return undefined;
+    }
+    const children: readonly unknown[] = Array.isArray(value)
+      ? value
+      : Object.values(value as Record<string, unknown>);
+    let depth = callDepth;
+    if (isV1FunctionCall(value)) {
+      const fnName = value["@call"];
+      depth += 1;
+      if (depth > this.limits.maxCallDepth) {
+        return {
+          code: "EXECUTION_ERROR",
+          message: `Maximum function call depth (${this.limits.maxCallDepth}) exceeded while calling '${fnName}'`,
+        };
+      }
+      const targetCatalogId = value.catalogId ?? surfaceDefaultCatalogId;
+      const catalog =
+        targetCatalogId === undefined || fnName.startsWith("@")
+          ? undefined
+          : this.catalogRegistry.get(targetCatalogId);
+      if (catalog) {
+        const err = agentBoundaryError(
+          fnName,
+          catalog.functions.get(fnName),
+          lookupLocalImplementation(
+            catalog.catalogId,
+            fnName,
+            this.functionRegistry,
+            targetCatalogId,
+          ),
+          userActivation,
+        );
+        if (err) {
+          return err;
+        }
+      }
+    }
+    for (const child of children) {
+      const err = this.findNestedAgentCallError(
+        child,
+        surfaceDefaultCatalogId,
+        userActivation,
+        depth,
+      );
+      if (err) {
+        return err;
+      }
+    }
+    return undefined;
   }
 
   private async evaluateRpcCallArguments(
@@ -1338,6 +1437,7 @@ export class RpcManager {
     surfaceId: string | undefined,
     surfaceDefaultCatalogId: string | undefined,
     userActivation: boolean,
+    onTemplatePartError: (error: Error) => void,
   ): Promise<Record<string, unknown>> {
     const out: Record<string, unknown> = {};
     for (const key of Object.keys(rawArgs)) {
@@ -1349,6 +1449,8 @@ export class RpcManager {
         userActivation,
         allowAgentRouting: surfaceId !== undefined && this.hasOutboundListener,
         reportErrors: false,
+        caller: "agent",
+        onTemplatePartError,
       });
       defineOwn(out, unescapeAtKey(key), val);
     }
@@ -1374,6 +1476,48 @@ export interface ImperativeEvalContext {
   /** Whether errors should be emitted to `rpc.onError` before throwing. Default: true. */
   readonly reportErrors?: boolean;
   readonly callDepth?: number;
+  /** Caller identity enforcing `allowedCallers`. Default: `"renderer"`. */
+  readonly caller?: FunctionCaller;
+  /** Receives failing `${...}` template parts in place of `rpc.onError`. */
+  readonly onTemplatePartError?: (error: Error) => void;
+}
+
+/**
+ * The INVALID_FUNCTION_CALL error an agent's call to `fnName` meets: the
+ * function is rendererOnly, or needs a user gesture that is absent.
+ */
+function agentBoundaryError(
+  fnName: string,
+  fnDef: FunctionDefinition | undefined,
+  impl: FunctionImplementation | undefined,
+  userActivation: boolean,
+): A2uiFunctionError | undefined {
+  if (
+    fnDef?.allowedCallers === "rendererOnly" ||
+    impl?.allowedCallers === "rendererOnly"
+  ) {
+    return new A2uiFunctionError(
+      "INVALID_FUNCTION_CALL",
+      `Function '${fnName}' cannot be called by agent (allowedCallers is rendererOnly).`,
+      fnName,
+    );
+  }
+  if (
+    (fnDef?.requiresUserActivation === true ||
+      impl?.requiresUserActivation === true) &&
+    !userActivation
+  ) {
+    return new A2uiFunctionError(
+      "INVALID_FUNCTION_CALL",
+      `Function '${fnName}' requires user activation context to execute.`,
+      fnName,
+    );
+  }
+  return undefined;
+}
+
+function isAgentBoundaryError(err: unknown): err is A2uiFunctionError {
+  return err instanceof A2uiFunctionError && err.code === "INVALID_FUNCTION_CALL";
 }
 
 /** Internal sentinel signaling an error was already emitted to `rpc.onError`. */
@@ -1496,9 +1640,21 @@ export async function evaluateImperativeFunctionCall(
   );
 
   // 3. Enforce boundaries BEFORE evaluating args or dispatching.
+  const caller = ctx.caller ?? "renderer";
+  if (caller === "agent") {
+    const boundaryError = agentBoundaryError(
+      fnName,
+      fnDef,
+      impl,
+      ctx.userActivation,
+    );
+    if (boundaryError) {
+      throw boundaryError;
+    }
+  }
   const effectiveAllowedCallers =
     fnDef?.allowedCallers ?? impl?.allowedCallers ?? "rendererOnly";
-  if (effectiveAllowedCallers === "agentOnly") {
+  if (caller === "renderer" && effectiveAllowedCallers === "agentOnly") {
     reportAndWrap(
       ctx,
       "EXPRESSION_ERROR",
@@ -1554,11 +1710,11 @@ export async function evaluateImperativeFunctionCall(
       inheritedCatalogId: catalog.catalogId,
       surfaceDefaultCatalogId: ctx.surfaceDefaultCatalogId,
       surfaceId: ctx.surfaceId,
-      caller: "renderer",
+      caller,
       catalogRegistry: ctx.rpc.catalogRegistry,
       functionRegistry: ctx.rpc.functionRegistry,
       callDepth: depth,
-      onTemplatePartError: (err) => {
+      onTemplatePartError: ctx.onTemplatePartError ?? ((err) => {
         if (ctx.reportErrors !== false) {
           ctx.rpc.reportSurfaceError(
             ctx.surfaceId,
@@ -1566,7 +1722,7 @@ export async function evaluateImperativeFunctionCall(
             err.message,
           );
         }
-      },
+      }),
     };
 
     try {

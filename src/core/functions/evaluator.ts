@@ -160,10 +160,24 @@ function enforceCallPolicies(
       fnName,
     );
   }
+  // A2UI 1.0 callRendererFunction: a function the agent's call reaches (nested
+  // `@call` or `${...}`) that is rendererOnly, or needs a user gesture that is
+  // absent, rejects the whole call with INVALID_FUNCTION_CALL.
   if (caller === "agent" && allowedCallers === "rendererOnly") {
     throw new A2uiFunctionError(
-      "EXPRESSION_ERROR",
-      `Function '${fnName}' cannot be called by agent (allowedCallers: rendererOnly)`,
+      "INVALID_FUNCTION_CALL",
+      `Function '${fnName}' cannot be called by agent (allowedCallers is rendererOnly).`,
+      fnName,
+    );
+  }
+  if (
+    caller === "agent" &&
+    requiresUserActivation &&
+    context.userActivation !== true
+  ) {
+    throw new A2uiFunctionError(
+      "INVALID_FUNCTION_CALL",
+      `Function '${fnName}' requires user activation context to execute.`,
       fnName,
     );
   }
@@ -244,6 +258,26 @@ function executeResolvedCall(
     );
     const fnDef = catalog.functions.get(fnName);
     if (!fnDef) {
+      // callRendererFunction finds the agent's function by its registered
+      // implementation when the catalog document does not declare it
+      // (rpc.ts), so a template call made for the agent does the same.
+      const agentImpl =
+        context.caller === "agent"
+          ? lookupImplementation(catalog.catalogId, fnName, fnRegistry)
+          : undefined;
+      if (agentImpl) {
+        enforceCallPolicies(
+          fnName,
+          agentImpl.allowedCallers,
+          agentImpl.requiresUserActivation,
+          context,
+        );
+        return agentImpl.execute(resolvedArgs, {
+          ...context,
+          inheritedCatalogId: catalog.catalogId,
+          callDepth: depth,
+        });
+      }
       throw new A2uiFunctionError(
         "EXPRESSION_ERROR",
         `Function '${fnName}' is not declared in catalog '${catalog.catalogId}'`,

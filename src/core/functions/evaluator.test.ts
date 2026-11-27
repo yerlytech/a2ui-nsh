@@ -335,7 +335,7 @@ describe("evaluateFunctionCall call policies from the catalog", () => {
     ).toBe("EXPRESSION_ERROR");
   });
 
-  test("a rendererOnly function is refused to the agent", () => {
+  test("a rendererOnly function is refused to the agent with INVALID_FUNCTION_CALL", () => {
     expect(
       functionErrorCode(() =>
         evaluateFunctionCall(
@@ -343,7 +343,7 @@ describe("evaluateFunctionCall call policies from the catalog", () => {
           policyContext(fnDecl(), { caller: "agent" }),
         ),
       ),
-    ).toBe("EXPRESSION_ERROR");
+    ).toBe("INVALID_FUNCTION_CALL");
   });
 
   test("a requiresUserActivation function fails without user activation", () => {
