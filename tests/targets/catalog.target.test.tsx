@@ -597,7 +597,12 @@ describe("Real-target 18-component Basic Catalog v1 suite", () => {
     await app.waitFor("text:Modal body ready", { state: "gone" });
 
     expect(app.shows("text:errors=0")).toBe(true);
-  });
+    // Measured on nsh 0.7.2 (0c29b5e), 2026-11-27, with the machine loaded:
+    // `--target tui` moves the 960-point Slider drag 10 points a display frame
+    // at about six frames a second, so the drag alone takes ~17 s and the test
+    // 31-35 s; `--target web` took 40-45 s. Both pass the 30 s default (a
+    // 480-point drag stops at 40%, short of the check). The steps stay the same.
+  }, 90_000);
 
   test("renders Video and AudioPlayer with safe degraded fallbacks under default host-only capabilities", async () => {
     const app = await open(APP_ENTRY, {

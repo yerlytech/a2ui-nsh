@@ -108,11 +108,12 @@ export function BasicList(props: A2uiComponentProps): JSX.Element {
             </List>
           }
         >
-          {/* Measured on `nsh 0.6.1` TUI, not re-measured (TUI runtime for 0.7.2 not
-              installed): `<List viewport="parent">`
-              clips unmeasured rows when stacked above siblings in a compact 80x24
-              scroll view; a plain column keeps every row full-height inside the
-              enclosing `<Scroll>`. */}
+          {/* Measured on `nsh 0.6.1` TUI: `<List viewport="parent">` clipped
+              unmeasured rows when stacked above siblings in a compact 80x24
+              scroll view. Re-measured on `nsh 0.7.2` (0c29b5e), 2026-11-27: it
+              mounts every row but lays them out a cell short, so the next
+              sibling covers the last row's second line. A plain column keeps
+              every row full-height inside the enclosing `<Scroll>`. */}
           <View
             testID={props.testId}
             style={verticalTerminalStyle()}

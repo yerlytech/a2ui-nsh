@@ -19,6 +19,14 @@ import mediaShowcaseSurfaceJson from "./a2ui/media_showcase_surface.json";
 const APP_ENTRY = "./App.tsx";
 const SCREENSHOT_DIR = "target/walk-tui";
 
+/**
+ * Measured on nsh 0.7.2 (0c29b5e), 2026-11-27: on `--target tui` every step
+ * costs a few display frames of the terminal host, about 0.3-1 s a press or a
+ * typed character with the machine loaded, so the typing-heavy steps (3-5)
+ * took 20-34 s against the 30 s default. The steps and checks stay the same.
+ */
+const TUI_STEP_TIMEOUT_MS = 90_000;
+
 /** Default `nsh` TUI cell scale: 8 x 16 points per terminal cell. */
 const CELL_WIDTH_PT = 8;
 const CELL_HEIGHT_PT = 16;
@@ -149,7 +157,7 @@ describe("TUI target walk for examples/erp-customers", () => {
           expect(grid.text).not.toContain("le · Enterprise");
           expect(grid.text).toContain("Enterprise · Active");
         }
-      });
+      }, TUI_STEP_TIMEOUT_MS);
 
       test("Step 2: search filter, empty-search state, and Clear Search recovery", async () => {
         const app = await open(APP_ENTRY, {
@@ -185,7 +193,7 @@ describe("TUI target walk for examples/erp-customers", () => {
         await app.waitFor(`text:Showing 5 of 5 customers (${mode})`);
         expect(app.shows("text:Cedar Ridge Timber Works")).toBe(true);
         expect(app.value("label:Search customers")).toBe("");
-      });
+      }, TUI_STEP_TIMEOUT_MS);
 
       test("Step 3: select Cobalt Harbor Supply, edit Details fields, and verify Billing tab", async () => {
         const app = await open(APP_ENTRY, {
@@ -234,7 +242,7 @@ describe("TUI target walk for examples/erp-customers", () => {
           `${tag}-03-edit-billing`,
         );
         expect(billingGrid.text).toContain("52000.00");
-      });
+      }, TUI_STEP_TIMEOUT_MS);
 
       test("Step 4: live @checks validation disables Save Customer and re-enables on valid values", async () => {
         const app = await open(APP_ENTRY, {
@@ -270,7 +278,7 @@ describe("TUI target walk for examples/erp-customers", () => {
           state: "gone",
         });
         expect(app.enabled("text:Save Customer")).toBe(true);
-      });
+      }, TUI_STEP_TIMEOUT_MS);
 
       test("Step 5: create and save a new customer with confirmation banner", async () => {
         const app = await open(APP_ENTRY, {
@@ -292,7 +300,7 @@ describe("TUI target walk for examples/erp-customers", () => {
         expect(app.shows(`text:Showing 6 of 6 customers (${mode})`)).toBe(true);
         expect(app.shows("text:Summit Valley Packaging")).toBe(true);
         await captureCells(app, profile, base + 6, `${tag}-05-create-save`);
-      });
+      }, TUI_STEP_TIMEOUT_MS);
 
       test("Step 6: delete confirmation modal with Cancel, Escape, and Confirm Delete", async () => {
         const app = await open(APP_ENTRY, {
@@ -336,7 +344,7 @@ describe("TUI target walk for examples/erp-customers", () => {
           base + 8,
           `${tag}-06-delete-confirmed`,
         );
-      });
+      }, TUI_STEP_TIMEOUT_MS);
 
       test("Keyboard: Tab/Shift+Tab traverse controls and form fields, Enter activates buttons, and Escape dismisses the modal", async () => {
         const app = await open(APP_ENTRY, {
@@ -371,7 +379,7 @@ describe("TUI target walk for examples/erp-customers", () => {
         expect(app.value("label:Email")).toBe(
           "billing@cedarridge.examplexy",
         );
-      });
+      }, TUI_STEP_TIMEOUT_MS);
 
       test("Step 7: Reload loading skeleton and Simulate Error + Retry recovery", async () => {
         const app = await open(APP_ENTRY, {
@@ -414,7 +422,7 @@ describe("TUI target walk for examples/erp-customers", () => {
         await app.waitFor(
           "text:Connection restored and customer directory synced.",
         );
-      });
+      }, TUI_STEP_TIMEOUT_MS);
 
       test("Step 8: A2UI JSON surface with Slider and terminal Video/AudioPlayer fallback cards", async () => {
         const app = await open(APP_ENTRY, {
@@ -464,7 +472,7 @@ describe("TUI target walk for examples/erp-customers", () => {
             "Audio playback is unavailable in terminal.",
           );
         }
-      });
+      }, TUI_STEP_TIMEOUT_MS);
     });
   }
 });

@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `just conformance` (absent `google/A2UI` checkout), and the `tui` / `web`
   suites (runtimes not installed) could not run in the measuring environment,
   as recorded in `docs/conformance.md`.
+- The `tui` and `web` real-target suites run green on `nsh` 0.7.2
+  (`just test-tui`, `just test-web`). Steps on a real target cost real
+  display frames, so the catalog forms test and the ERP TUI walk steps take a
+  90 s timeout instead of the 30 s default; no step or check changed. Gaps 10,
+  11, 14, 15 and 16 in `docs/architecture.md` record what 0.7.2 shows on
+  those targets.
 - The conformance harness reads the upstream suites and writes the
   executed-case manifest from the `nsh test` VM itself, with its own
   `fs/promises` and `process.env`; the headless `platform: "macos"` bridge
