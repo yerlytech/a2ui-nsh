@@ -32,12 +32,13 @@ Last measured on `nsh 0.7.2 (0c29b5e)` against `google/A2UI` `36725ee` (2026-11-
 | Check | Result |
 |---|---|
 | `just lint` (`just check`) | Pass (re-run with `MessageProcessor.addCatalog`) |
-| `just test` | Pass: 108 test files, 1259 tests (1254 passed, 0 failed, 5 skipped), with `MessageProcessor.addCatalog`; 107 files and 1250 tests before it |
+| `just test` | Pass: 117 test files, 1632 tests (1629 passed, 0 failed, 3 skipped), including the `examples/xl-phones/phone_walk.test.tsx` headless walk |
 | `just conformance` | Pass: 28/28 suites, 715 cases passed, 51 documented skips, 30 YAML files (`google/A2UI` `36725ee`); before `MessageProcessor.addCatalog`, 27/27 suites and 712 cases on the same run |
 | `just build` | Pass: library and `examples/erp-customers/` bytecode bundles |
 | `just test-tui` | Not run: the 0.7.2 `tui` runtime is not installed (adding it needs the network) |
 | `just test-web`, `just package-web` | Not run: the 0.7.2 `web` runtime is not installed (adding it needs the network) |
 | `just walk-macos` | Not run: it opens the native AppKit host; this run stayed headless |
+| `nsh test examples/xl-phones --target ios` / `--target android` | Pass: 3/3 on iPhone 17 Pro (iOS 26.5) and 3/3 on a Pixel 8 Android 15 emulator (emulator-5554), 2026-11-27; screenshots in `docs/assets/phones/` |
 
 `just lint`, `just test`, and `just conformance` are green on the new pin; every check that was not run is listed with why.
 

@@ -13,6 +13,7 @@ const WORDS = {
   "crm.field.stage": "Stage",
   "crm.field.note": "Note",
   "crm.field.owner": "Owner",
+  "crm.field.email": "Billing email",
   "crm.stage.won": "Won",
   "action.save": "Save",
 };
@@ -146,5 +147,32 @@ describe("xlarge catalog Detail", () => {
     );
     expect(reportedErrors(app)).toEqual([]);
     expect(app.texts()).toEqual(["name", "Acme", "city", "Izmir"]);
+  });
+
+  test("a long value stays on one line with an ellipsis", async () => {
+    const app = await open(
+      HARNESS,
+      harnessOptions(
+        surfaceMessages(
+          "s_detail_long",
+          [
+            {
+              id: "root",
+              component: "Detail",
+              record: { "@path": "/customer" },
+              rows: [{ field: "email", label: "crm.field.email" }],
+            },
+          ],
+          { customer: { email: "accounts-payable.department@cobaltharbor.example" } },
+        ),
+        WORDS,
+      ),
+    );
+    const value = app.layout("id:s_detail_long:root:value:email");
+    expect(value).not.toBeNull();
+    if (value !== null) {
+      expect(value.height).toBeLessThan(30);
+    }
+    expect(app.texts()).toContain("accounts-payable.department@cobaltharbor.example");
   });
 });

@@ -1,0 +1,95 @@
+[
+  {
+    "version": "1.0",
+    "createSurface": {
+      "surfaceId": "register",
+      "catalogId": "tech.yerly.xlarge/v1"
+    }
+  },
+  {
+    "version": "1.0",
+    "updateComponents": {
+      "surfaceId": "register",
+      "components": [
+        {
+          "id": "root",
+          "component": "Card",
+          "title": "crm.title.new_customer",
+          "subtitle": "Register a customer for XL",
+          "children": ["form"]
+        },
+        {
+          "id": "form",
+          "component": "Form",
+          "title": "crm.form.new_customer",
+          "submit": "crm.create_customer",
+          "submitLabel": "crm.action.save_customer",
+          "children": ["name", "email", "phone", "segment", "amount", "note"]
+        },
+        {
+          "id": "name",
+          "component": "Field",
+          "field": "name",
+          "input": "text",
+          "label": "crm.field.name",
+          "example": "crm.example.name",
+          "checks": ["required"]
+        },
+        {
+          "id": "email",
+          "component": "Field",
+          "field": "email",
+          "input": "email",
+          "label": "crm.field.email",
+          "example": "crm.example.email",
+          "checks": ["required"]
+        },
+        {
+          "id": "phone",
+          "component": "Field",
+          "field": "phone",
+          "input": "text",
+          "label": "crm.field.phone",
+          "example": "crm.example.phone"
+        },
+        {
+          "id": "segment",
+          "component": "Field",
+          "field": "segment",
+          "input": "choice",
+          "label": "crm.field.segment",
+          "optionPrefix": "crm.segment.",
+          "options": ["smb", "midmarket", "enterprise"]
+        },
+        {
+          "id": "amount",
+          "component": "Field",
+          "field": "amount",
+          "input": "money",
+          "label": "crm.field.amount",
+          "example": "crm.example.amount"
+        },
+        {
+          "id": "note",
+          "component": "Field",
+          "field": "note",
+          "input": "note",
+          "label": "crm.field.note",
+          "example": "crm.example.note"
+        }
+      ]
+    }
+  },
+  {
+    "version": "1.0",
+    "updateDataModel": {
+      "surfaceId": "register",
+      "path": "/",
+      "value": {
+        "draft": {
+          "source": "erp-customers seed"
+        }
+      }
+    }
+  }
+]

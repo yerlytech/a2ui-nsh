@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `examples/xl-phones/` draws three fictional XL screens (the ERP Customers list and edit form, an xlarge registration `Form`, and an xlarge `Card` summary) on the iOS simulator and the Android emulator. `just run-ios` / `just run-android` boot a device when needed and shut it down after; `phone_walk.test.tsx` covers touch, typing, a single Save tap and a touch scroll, with small screenshots in `docs/assets/phones/`.
 - `MessageProcessor.addCatalog(catalog)`, as A2UI 1.0 defines it
   (google/A2UI #3304): a catalog added after the processor is built serves
   later `createSurface` messages only; a surface keeps the catalogs it was
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The phone app pads for the safe area (notch and home indicator), and the form `Scroll`s set `keyboardShouldPersistTaps="handled"` so the first Save tap after typing is not swallowed. xlarge `Detail` clamps a long value to one line with an ellipsis instead of breaking an address mid-word (`src/catalog/xlarge/Detail.tsx`).
 - A `createSurface` `metadata`, `callRendererFunction` `callFunction.args`,
   and an `agentFunctionResponse` `value` are now held to the global depth
   limit (50) counted from the message root, as A2UI 1.0 does (metadata and

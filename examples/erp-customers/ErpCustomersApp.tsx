@@ -183,7 +183,11 @@ export function ErpCustomersApp(): JSX.Element {
   });
 
   return (
-    <Scroll class="flex-1 bg-background" contentClass="p-4">
+    <Scroll
+      class="flex-1 bg-background"
+      contentClass="p-4"
+      keyboardShouldPersistTaps="handled"
+    >
       <Each of={store.surfaces()} key={(s) => s.surfaceId}>
         {(surface) => <A2uiSurface store={surface()} registry={registry} />}
       </Each>

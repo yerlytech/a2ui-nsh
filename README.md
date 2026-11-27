@@ -8,7 +8,7 @@ The project includes a zero-dependency TypeScript protocol core, an `nsh` signal
 
 Version 0.1.0 implements A2UI 1.0 against `nsh` 0.7.2. Headless tests, the pinned Google A2UI C1–C6 conformance suites, and automated macOS, TUI, and Web/WASM checks pass. The conformance scope and documented skips are listed in [`docs/conformance.md`](docs/conformance.md).
 
-Verification currently covers macOS AppKit, terminal TUI, and Web/WASM. Other platforms supported by `nsh` are not verified by this project.
+Verification currently covers macOS AppKit, terminal TUI, Web/WASM, the iOS simulator, and the Android emulator. The phone trial in [`examples/xl-phones/`](examples/xl-phones/) is the first iOS/Android check; other platforms supported by `nsh` are not verified by this project.
 
 ## Basic Catalog components
 
@@ -69,11 +69,13 @@ Install the pinned `nsh` release on macOS or Linux using the official installer:
 curl -fsSL https://nsh.dev/install.sh | NSH_VERSION=v0.7.2 sh
 ```
 
-For TUI and Web development, install the corresponding runtimes once:
+For TUI, Web, iOS and Android development, install the corresponding runtimes once:
 
 ```bash
 nsh component add tui
 nsh component add web
+nsh component add ios
+nsh component add android
 ```
 
 `just test-tui` also requires `jq`. `just test-web` requires Chrome, Edge, or Chromium.
@@ -145,6 +147,30 @@ just package-web
 ```
 
 See the [ERP Customers guide](examples/erp-customers/README.md) for manual walkthroughs and target-specific controls.
+
+## Run the XL phone trial (iOS and Android)
+
+[`examples/xl-phones/`](examples/xl-phones/) draws three fictional XL screens on a phone:
+
+1. **Customers** — the [`examples/erp-customers/`](examples/erp-customers/) customer list and edit form (Basic Catalog v1) in its compact, stacked layout.
+2. **Register** — an xlarge `Form` and `Field` registration screen, built from the `crm.deals` form shape in [`tests/fixtures/xlarge/crm-deals.json`](tests/fixtures/xlarge/crm-deals.json).
+3. **Summary** — an xlarge `Card` with `Metric`, `Chart` and `Detail`, from [`metric-synthetic.json`](tests/fixtures/xlarge/metric-synthetic.json) and [`detail-synthetic.json`](tests/fixtures/xlarge/detail-synthetic.json).
+
+The company names, people and amounts are invented. The app pads for the safe area (notch and home indicator), keeps form taps alive while the keyboard is up, and scrolls the summary by touch.
+
+```bash
+just run-ios        # boots iPhone 17 Pro if needed and shuts it down afterwards
+just run-android    # starts the first AVD if needed and stops it afterwards
+```
+
+The walk test runs headless in `just test`, and against real devices with:
+
+```bash
+nsh test examples/xl-phones --target ios --device "iPhone 17 Pro"
+nsh test examples/xl-phones --target android --device emulator-5554
+```
+
+Screenshots from both walks are in [`docs/assets/phones/`](docs/assets/phones/): `ios-customers.png`, `ios-register.png`, `ios-summary.png`, and the same three with `android-`.
 
 ## Build and test
 

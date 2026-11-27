@@ -1,0 +1,120 @@
+[
+  {
+    "version": "1.0",
+    "createSurface": {
+      "surfaceId": "summary",
+      "catalogId": "tech.yerly.xlarge/v1"
+    }
+  },
+  {
+    "version": "1.0",
+    "updateComponents": {
+      "surfaceId": "summary",
+      "components": [
+        {
+          "id": "root",
+          "component": "Card",
+          "title": "crm.title.customer_summary",
+          "heading": "Cobalt Harbor Supply",
+          "subtitle": "Customer since Jan 2026",
+          "children": ["kpis", "chart", "detail"]
+        },
+        {
+          "id": "kpis",
+          "component": "Columns",
+          "widths": [1, 1],
+          "children": ["annual", "open_deals"]
+        },
+        {
+          "id": "annual",
+          "component": "Metric",
+          "label": "crm.kpi.annual_value",
+          "value": { "@path": "/kpi/annualValue" },
+          "format": "money",
+          "change": { "@path": "/kpi/annualChange" },
+          "better": "up",
+          "accent": "accent",
+          "hint": "crm.kpi.this_year",
+          "icon": "money"
+        },
+        {
+          "id": "open_deals",
+          "component": "Metric",
+          "label": "crm.kpi.open_deals",
+          "value": { "@path": "/kpi/openDeals" },
+          "format": "count",
+          "change": { "@path": "/kpi/openDealsChange" },
+          "better": "down",
+          "accent": "rose",
+          "hint": "crm.kpi.this_month"
+        },
+        {
+          "id": "chart",
+          "component": "Chart",
+          "kind": "bars",
+          "label": "crm.chart.quarterly",
+          "data": { "@path": "/chart/quarterly" },
+          "format": "money"
+        },
+        {
+          "id": "detail",
+          "component": "Detail",
+          "record": { "@path": "/customer" },
+          "rows": [
+            { "field": "name", "label": "crm.field.name" },
+            { "field": "email", "label": "crm.field.email" },
+            { "field": "phone", "label": "crm.field.phone" },
+            { "field": "segment", "label": "crm.field.segment", "enumPrefix": "crm.segment." },
+            { "field": "annualValue", "label": "crm.field.amount", "format": "money" },
+            { "field": "contractStart", "label": "crm.field.contract_start", "format": "date" },
+            { "field": "taxId", "label": "crm.field.tax_id" },
+            { "field": "paymentTerms", "label": "crm.field.payment_terms", "enumPrefix": "crm.terms." },
+            { "field": "address", "label": "crm.field.address" },
+            { "field": "city", "label": "crm.field.city" },
+            { "field": "country", "label": "crm.field.country" },
+            { "field": "notes", "label": "crm.field.notes" }
+          ],
+          "skipEmpty": true,
+          "update": "crm.customer.update"
+        }
+      ]
+    }
+  },
+  {
+    "version": "1.0",
+    "updateDataModel": {
+      "surfaceId": "summary",
+      "path": "/",
+      "value": {
+        "kpi": {
+          "annualValue": "34800",
+          "annualChange": "12.5",
+          "openDeals": "4",
+          "openDealsChange": "-2"
+        },
+        "chart": {
+          "quarterly": [
+            { "label": "Q1", "value": "7200" },
+            { "label": "Q2", "value": "8400" },
+            { "label": "Q3", "value": "9100" },
+            { "label": "Q4", "value": "10100" }
+          ]
+        },
+        "customer": {
+          "name": "Cobalt Harbor Supply",
+          "email": "finance@cobaltharbor.example",
+          "phone": "+1 555 010 200",
+          "segment": "smb",
+          "annualValue": "34800",
+          "contractStart": "2026-01-10T00:00:00Z",
+          "taxId": "US-73-6543210",
+          "paymentTerms": "net15",
+          "address": "18 Harbor Lane",
+          "city": "Portland, OR",
+          "country": "United States",
+          "notes": "Seasonal marine hardware orders."
+        }
+      }
+    }
+  }
+]

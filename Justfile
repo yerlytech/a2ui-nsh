@@ -21,6 +21,9 @@ check:
     if [ -f examples/erp-customers/tsconfig.json ]; then
       nsh check examples/erp-customers
     fi
+    if [ -f examples/xl-phones/tsconfig.json ]; then
+      nsh check examples/xl-phones
+    fi
 
 # Pre-commit lint hook entry point.
 [group('build')]
@@ -67,6 +70,13 @@ test:
           failed=$((failed + 1))
         fi
       done < <(find examples/erp-customers -type f \( -name '*.test.ts' -o -name '*.test.tsx' \) ! -name '*.macos.test.tsx' ! -name 'tui.test.tsx' ! -name 'web.test.tsx' | sort)
+    fi
+    if [ -d examples/xl-phones ]; then
+      while IFS= read -r file; do
+        if ! nsh test "$file"; then
+          failed=$((failed + 1))
+        fi
+      done < <(find examples/xl-phones -type f \( -name '*.test.ts' -o -name '*.test.tsx' \) | sort)
     fi
     if [ "$failed" -ne 0 ]; then
       echo "$failed test target(s) failed" >&2
@@ -288,3 +298,89 @@ nsh-check-latest ref_dir=a2ui_conformance_root:
     just test
     just conformance "{{ref_dir}}"
     just build
+
+
+# Launch examples/xl-phones on the iOS simulator; boot a device if none is running and shut it down afterwards.
+[group('run')]
+run-ios device="iPhone 17 Pro":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    nsh_cmd="nsh"
+    if [ -x target/nsh-local/bin/nsh ]; then
+      nsh_cmd="target/nsh-local/bin/nsh"
+    fi
+    if ! "$nsh_cmd" component list 2>/dev/null | grep -Eq "^ios[[:space:]]+installed"; then
+      "$nsh_cmd" component add ios
+    fi
+    started="no"
+    if ! xcrun simctl list devices booted | grep -Fq "{{device}} ("; then
+      xcrun simctl boot "{{device}}"
+      started="yes"
+    fi
+    open -a Simulator >/dev/null 2>&1 || true
+    cleanup() {
+      if [ "${started}" = "yes" ]; then
+        xcrun simctl shutdown "{{device}}" >/dev/null 2>&1 || true
+      fi
+    }
+    trap cleanup EXIT INT TERM
+    "$nsh_cmd" run examples/xl-phones --target ios --device "{{device}}"
+
+# Launch examples/xl-phones on an Android emulator; start the first AVD if no device is running and stop it afterwards.
+[group('run')]
+run-android device="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
+    if [ ! -x "$sdk/platform-tools/adb" ] && [ -x /opt/homebrew/share/android-commandlinetools/platform-tools/adb ]; then
+      sdk="/opt/homebrew/share/android-commandlinetools"
+    fi
+    if [ ! -x "$sdk/platform-tools/adb" ]; then
+      echo "Android SDK not found. Install the command-line tools and set ANDROID_HOME." >&2
+      exit 1
+    fi
+    export ANDROID_HOME="$sdk"
+    export ANDROID_SDK_ROOT="$sdk"
+    export PATH="$sdk/platform-tools:$sdk/emulator:$PATH"
+    mkdir -p target/tmp
+    export TMPDIR="$PWD/target/tmp"
+    export JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=$TMPDIR"
+    nsh_cmd="nsh"
+    if [ -x target/nsh-local/bin/nsh ]; then
+      nsh_cmd="target/nsh-local/bin/nsh"
+    fi
+    if ! "$nsh_cmd" component list 2>/dev/null | grep -Eq "^android[[:space:]]+installed"; then
+      "$nsh_cmd" component add android
+    fi
+    serial="{{device}}"
+    if [ -z "$serial" ]; then
+      serial="$(adb devices | awk "NR > 1 && \$2 == \"device\" { print \$1; exit }")"
+    fi
+    started="no"
+    if [ -z "$serial" ]; then
+      avd="$(emulator -list-avds | head -n 1)"
+      if [ -z "$avd" ]; then
+        echo "No Android emulator is running and no AVD exists. Create one first." >&2
+        exit 1
+      fi
+      emulator -avd "$avd" -no-snapshot -no-boot-anim -no-audio > target/android-emulator.log 2>&1 &
+      started="yes"
+      for _ in $(seq 1 120); do
+        serial="$(adb devices | awk "NR > 1 && \$2 == \"device\" { print \$1; exit }")"
+        if [ -n "$serial" ] && [ "$(adb -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; then
+          break
+        fi
+        sleep 2
+      done
+    fi
+    if [ -z "$serial" ]; then
+      echo "The Android emulator did not boot in 240 seconds; see target/android-emulator.log." >&2
+      exit 1
+    fi
+    cleanup() {
+      if [ "${started}" = "yes" ]; then
+        adb -s "$serial" emu kill >/dev/null 2>&1 || true
+      fi
+    }
+    trap cleanup EXIT INT TERM
+    "$nsh_cmd" run examples/xl-phones --target android --device "$serial"

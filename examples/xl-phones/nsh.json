@@ -1,0 +1,9 @@
+{
+  "name": "XL Phones",
+  "id": "dev.a2ui.nsh.xl.phones",
+  "version": "0.1.0",
+  "build": 1,
+  "capabilities": {
+    "host": ["a2ui.*"]
+  }
+}

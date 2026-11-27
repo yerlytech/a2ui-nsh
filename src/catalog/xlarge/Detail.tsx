@@ -119,7 +119,11 @@ export function createXlargeDetail(
               <If
                 when={entry().edit !== undefined}
                 else={
-                  <Text testID={`${props.testId}:value:${entry().field}`} class="min-w-0 flex-1 text-sm text-foreground">
+                  <Text
+                    testID={`${props.testId}:value:${entry().field}`}
+                    class="min-w-0 flex-1 text-sm text-foreground"
+                    style={{ numberOfLines: 1, textOverflow: "ellipsis" }}
+                  >
                     {entry().text === "" ? "—" : entry().text}
                   </Text>
                 }
@@ -133,7 +137,9 @@ export function createXlargeDetail(
                       class="min-h-[44px] min-w-0 flex-1 flex-row items-center rounded-(--radius) px-2 hover:bg-muted focus-visible:outline-2"
                       onPress={() => begin(entry())}
                     >
-                      <Text class="text-sm text-foreground">{entry().text === "" ? "—" : entry().text}</Text>
+                      <Text class="text-sm text-foreground" style={{ numberOfLines: 1, textOverflow: "ellipsis" }}>
+                        {entry().text === "" ? "—" : entry().text}
+                      </Text>
                     </Button>
                   }
                 >
