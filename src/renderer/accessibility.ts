@@ -1,6 +1,6 @@
 /**
  * Accessibility plumbing from A2UI v1.0 `@accessibility` attributes to
- * Native Shell (`nsh 0.7.1`) views and `nsh/base` wrappers.
+ * Native Shell (`nsh 0.7.2`) views and `nsh/base` wrappers.
  *
  * 1. `nsh/base` `ComponentHostProps` still omits `accessibilityLabel`,
  *    `accessibilityDescription`, `accessibilityElementsHidden`, `role`, and
@@ -21,7 +21,7 @@ import {
   type Accessor,
 } from "nsh";
 
-/** `nsh`'s `accessibilityLiveRegion` view prop value (`nsh 0.7.1` `HostProps`). */
+/** `nsh`'s `accessibilityLiveRegion` view prop value (`nsh 0.7.2` `HostProps`). */
 export type NativeLiveRegion = "none" | "polite" | "assertive";
 
 /** `nsh`'s `announce()`: says a message to assistive technology on every target. */
@@ -38,7 +38,7 @@ export interface ResolvedAccessibility {
   readonly hidden?: boolean;
 }
 
-/** Semantic role mirrored in `AccessibilitySnapshot` (`nsh 0.7.1` `AccessibilityRole` includes `"textbox"`). */
+/** Semantic role mirrored in `AccessibilitySnapshot` (`nsh 0.7.2` `AccessibilityRole` includes `"textbox"`). */
 export type SnapshotAccessibilityRole = AccessibilityRole;
 
 /** Options controlling how component defaults merge with explicit `@accessibility`. */
@@ -61,7 +61,7 @@ export interface AccessibilityOptions {
   readonly decorativeByDefault?: boolean;
 }
 
-/** Subset of `nsh 0.7.1` `ViewProps` carrying native accessibility metadata. */
+/** Subset of `nsh 0.7.2` `ViewProps` carrying native accessibility metadata. */
 export interface ViewAccessibilityProps {
   readonly role?: AccessibilityRole;
   readonly accessibilityLabel?: string;
@@ -73,7 +73,7 @@ export interface ViewAccessibilityProps {
 
 /**
  * Typed accessibility mirror snapshot for headless tests (Spec 001 §3 Gap #3:
- * `nsh/test` 0.7.1 `app.accessibility()` reports role, label and description,
+ * `nsh/test` 0.7.2 `app.accessibility()` reports role, label and description,
  * but not live regions or `accessibilityElementsHidden`).
  */
 export interface AccessibilitySnapshot {
@@ -172,7 +172,7 @@ export function resolveEffectiveRole(
 }
 
 /**
- * Builds native `nsh 0.7.1` accessibility props for primitive elements
+ * Builds native `nsh 0.7.2` accessibility props for primitive elements
  * (`<View>`, `<Text>`, `<Image>`, `<Canvas>`).
  */
 export function buildViewAccessibilityProps(
@@ -252,8 +252,8 @@ export interface LiveRegionReading {
 }
 
 /**
- * Live-region support by platform, as measured on `nsh 0.7.0` (0.7.1
- * changes no live-region code): Android, macOS, Windows,
+ * Live-region support by platform, as measured on `nsh 0.7.0` (0.7.2
+ * types still export `announce` and the plain prop): Android, macOS, Windows,
  * Linux and the web read `accessibilityLiveRegion` changes; iOS and the
  * terminal (`idiom === "terminal"`) do not. macOS and the web read an alert
  * as it appears (`website/docs/accessibility.md`); the others need `announce()`.

@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Text` component on Native Shell (`nsh 0.7.1`).
+ * A2UI Basic Catalog v1 `Text` component on Native Shell (`nsh 0.7.2`).
  *
  * Renders plain text and `caption` variants via `<Text>` and A2UI's simple
  * Markdown subset (without raw HTML, active links, or images) via `nsh/base`

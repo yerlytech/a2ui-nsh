@@ -53,7 +53,7 @@ function errorMessage(err: unknown): string {
 
 /**
  * Reads the suites and writes the manifest from the outer `nsh test` VM.
- * Measured on `nsh 0.7.1` (2026-11-27): the outer test VM reports
+ * Measured on `nsh 0.7.2` (2026-11-27): the outer test VM reports
  * `platform.os === "ios"`; its `fs/promises` reads, lists, checks and writes
  * paths under the directories `capabilities.fs.read` / `capabilities.fs.write`
  * grant (a file path granted as a root fails with `ENOTDIR`), and

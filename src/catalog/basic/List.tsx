@@ -1,11 +1,11 @@
 /**
- * A2UI Basic Catalog v1 `List` collection component on Native Shell (`nsh 0.7.1`).
+ * A2UI Basic Catalog v1 `List` collection component on Native Shell (`nsh 0.7.2`).
  *
  * Vertical lists render via `nsh`'s native virtualized `<List viewport="parent">`
  * with `keyExtractor={(child) => child.id}` so only cells near the viewport exist
  * while surviving template-repeater rows preserve view identity.
  *
- * Horizontal lists render via `<Scroll horizontal>`: measured on `nsh 0.7.1`
+ * Horizontal lists render via `<Scroll horizontal>`: measured on `nsh 0.7.2`
  * (2026-11-27), its `<List horizontal>` still cannot auto-size its cross-axis
  * height without an explicit fixed height (Spec 001 §3 Gap #8): headless, a list of
  * three 60x40 cells lays out 0 high and mounts no cell, while `<Scroll
@@ -108,7 +108,7 @@ export function BasicList(props: A2uiComponentProps): JSX.Element {
             </List>
           }
         >
-          {/* Measured on `nsh 0.6.1` TUI, not re-measured (TUI runtime for 0.7.1 not
+          {/* Measured on `nsh 0.6.1` TUI, not re-measured (TUI runtime for 0.7.2 not
               installed): `<List viewport="parent">`
               clips unmeasured rows when stacked above siblings in a compact 80x24
               scroll view; a plain column keeps every row full-height inside the

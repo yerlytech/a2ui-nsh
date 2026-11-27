@@ -1,5 +1,5 @@
 /**
- * Measured on `nsh 0.7.1` (2026-11-27), headless: a press reaches only the
+ * Measured on `nsh 0.7.2` (2026-11-27), headless: a press reaches only the
  * innermost pressable view; the pressable views around it hear nothing. This
  * is why `BasicModal` provides `ModalTriggerContext`. It fails the day
  * `nsh` starts bubbling presses.
@@ -7,7 +7,7 @@
 
 import { describe, expect, open, test } from "nsh/test";
 
-describe("nsh 0.7.1 measurement: presses do not bubble", () => {
+describe("nsh 0.7.2 measurement: presses do not bubble", () => {
   test("a press on an inner pressable view or Button leaves the outer view's onPress silent", async () => {
     const app = await open("./PressProbe.tsx", { platform: "macos" });
     const counts = () => app.texts().find((t) => t.startsWith("outer=")) ?? "";

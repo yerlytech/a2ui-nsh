@@ -5,11 +5,11 @@ Guidance for contributors and AI agents working on a2ui-nsh. Read
 
 ## Setup
 
-Install `nsh` 0.7.1 (the version pinned in `docs/upstream.toml`) with the
+Install `nsh` 0.7.2 (the version pinned in `docs/upstream.toml`) with the
 official installer, plus `just` 1.29.0 or newer:
 
 ```bash
-curl -fsSL https://nsh.dev/install.sh | NSH_VERSION=v0.7.1 sh
+curl -fsSL https://nsh.dev/install.sh | NSH_VERSION=v0.7.2 sh
 ```
 
 No Node.js or npm install is required. For the optional target checks, add the

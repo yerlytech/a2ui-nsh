@@ -13,7 +13,7 @@ concurrency:
 
 env:
   # Keep in sync with docs/upstream.toml.
-  NSH_VERSION: v0.7.1
+  NSH_VERSION: v0.7.2
 
 jobs:
   changes:
@@ -76,7 +76,7 @@ jobs:
       - name: Verify nsh version
         run: |
           nsh --version
-          nsh --version | grep -F "0.7.1"
+          nsh --version | grep -F "0.7.2"
 
       - name: Check
         run: just check

@@ -1,6 +1,6 @@
 # ERP Customers Demo (`examples/erp-customers`)
 
-Pure A2UI v1.0 JSON-driven ERP **Customer List + Tabbed Customer Edit Form** rendered natively on Native Shell (`nsh 0.7.1`). All customer records in `a2ui/seed_customers.json` are completely invented (no real companies or people).
+Pure A2UI v1.0 JSON-driven ERP **Customer List + Tabbed Customer Edit Form** rendered natively on Native Shell (`nsh 0.7.2`). All customer records in `a2ui/seed_customers.json` are completely invented (no real companies or people).
 
 ## Architecture
 

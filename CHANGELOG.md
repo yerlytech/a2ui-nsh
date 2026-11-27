@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Runs on `nsh` 0.7.2 (was 0.7.1): every pin, the install line, and CI
+  move to 0.7.2. The measured `nsh` gaps in `docs/architecture.md` are
+  re-checked on 0.7.2; the two changes expected for this move (a `Video`
+  `poster`, #3398, and component hosts taking the view accessibility props,
+  #3408) are not in the installed v0.7.2 build, so `BasicVideo` keeps its
+  `<Image>` poster overlay and the accessibility wrapper stays, now pinned
+  by `src/catalog/basic/measured/host_a11y.test.tsx`. Headless `just test`
+  (1241 tests) and `just build` pass; `just lint` (TypeScript 7 download),
+  `just conformance` (absent `google/A2UI` checkout), and the `tui` / `web`
+  suites (runtimes not installed) could not run in the measuring environment,
+  as recorded in `docs/conformance.md`.
 - The conformance harness reads the upstream suites and writes the
   executed-case manifest from the `nsh test` VM itself, with its own
   `fs/promises` and `process.env`; the headless `platform: "macos"` bridge

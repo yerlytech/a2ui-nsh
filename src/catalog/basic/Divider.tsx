@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Divider` component on Native Shell (`nsh 0.7.1`).
+ * A2UI Basic Catalog v1 `Divider` component on Native Shell (`nsh 0.7.2`).
  *
  * Renders a 1 pt horizontal or vertical theme-colored border line, hidden from
  * screen readers by default unless explicit `@accessibility` attributes opt in.

@@ -4,8 +4,8 @@
  *
  * Bridges A2UI v1.0 ISO 8601 strings (which may be `""`, `"YYYY-MM-DD"`,
  * `"HH:MM"`, `"HH:MM:SS"`, or `"YYYY-MM-DDTHH:MM:SSZ"` / offsets) onto
- * `nsh 0.7.1` `DatePicker` (`DatePickerValue`: a single `"YYYY-MM-DD"` | `null`)
- * and `TimeField` (`string`: `"HH:MM"` | `"HH:MM:SS"`). Measured on `nsh 0.7.1`
+ * `nsh 0.7.2` `DatePicker` (`DatePickerValue`: a single `"YYYY-MM-DD"` | `null`)
+ * and `TimeField` (`string`: `"HH:MM"` | `"HH:MM:SS"`). Measured on `nsh 0.7.2`
  * (2026-11-27): both still reject empty strings and timezone suffixes; headless,
  * `""`, `"…Z"` and `"…+03:00"` log `warn DatePicker.value: expected an ISO date`
  * / `warn TimeField.value: expected a time of day` and are dropped (no day
@@ -142,7 +142,7 @@ function toMinutesOfDay(hhmm: string): number {
  * Clamps an `"HH:MM"` time within optional `[minTime, maxTime]` bounds.
  *
  * `BasicDateTimeInput` also hands these bounds to `TimeField`'s native
- * `min`/`max` (`nsh 0.7.1`); this clamp stays on every write so the data model
+ * `min`/`max` (`nsh 0.7.2`); this clamp stays on every write so the data model
  * never receives an out-of-range time, whatever the native control does.
  */
 export function clampTimeToBounds(

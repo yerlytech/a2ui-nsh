@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `TextField` component on Native Shell (`nsh 0.7.1`).
+ * A2UI Basic Catalog v1 `TextField` component on Native Shell (`nsh 0.7.2`).
  *
  * Uses `nsh/base` `<Input>` supporting `shortText`, `longText` (`multiline`),
  * `number` (`decimal-pad`), and `obscured` (`masked`), batched two-way `@path`

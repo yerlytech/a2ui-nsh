@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Video` component on Native Shell (`nsh 0.7.1`).
+ * A2UI Basic Catalog v1 `Video` component on Native Shell (`nsh 0.7.2`).
  *
  * Wraps `nsh` `<Video>` with `sanitizeMediaUrl()` on `url` and optional
  * `posterUrl`, paused-by-default playback (`paused={true}`, `controls={true}`

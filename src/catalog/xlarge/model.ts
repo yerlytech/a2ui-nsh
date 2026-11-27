@@ -597,7 +597,7 @@ export function draftLines(
 
 // ---------------------------------------------------------------------------
 // QR code (ISO/IEC 18004): byte mode, error correction level M, versions 1–40.
-// A pure encoder, because Native Shell 0.7.1 still has no QR primitive. Its
+// A pure encoder, because Native Shell 0.7.2 still has no QR primitive. Its
 // structure follows Project Nayuki's reference QR encoder (MIT).
 // ---------------------------------------------------------------------------
 

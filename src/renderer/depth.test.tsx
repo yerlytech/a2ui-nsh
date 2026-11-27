@@ -47,7 +47,7 @@ function chain(kind: Container, levels: number): Record<string, unknown>[] {
 // `crates/nsh-core/src/core/mod.rs`, #2614). The A2UI validator caps the
 // component tree at `maxRecursionDepth` (50), so the deepest surface an agent
 // can send must stay below the native limit for every container.
-describe("view depth under nsh 0.7.1's 1024 limit", () => {
+describe("view depth under nsh 0.7.2's 1024 limit", () => {
   const levels = STRICT_VALIDATION.maxRecursionDepth - 1;
   const kinds: readonly Container[] = [
     "Column",

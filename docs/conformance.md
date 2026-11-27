@@ -23,7 +23,21 @@ just conformance /path/to/google-A2UI
 
 ## Stage Coverage (C1–C6)
 
-Measured on `nsh 0.7.1 (f78eace)` against `google/A2UI` `36725ee` (2026-11-27): **27/27 test suites pass** (`712` upstream cases passed, `0` failed, `51` documented skips across 29 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests). Against the previous pin `496df0e` the same run passed `705` cases; the 7 new ones are in `core/rpc_functions.yaml` (33 → 40). See [`google/A2UI` `36725ee`](#googlea2ui-36725ee-measured-2026-11-27).
+Last measured on `nsh 0.7.1 (f78eace)` against `google/A2UI` `36725ee` (2026-11-27): **27/27 test suites pass** (`712` upstream cases passed, `0` failed, `51` documented skips across 29 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests). Against the previous pin `496df0e` the same run passed `705` cases; the 7 new ones are in `core/rpc_functions.yaml` (33 → 40). See [`google/A2UI` `36725ee`](#googlea2ui-36725ee-measured-2026-11-27).
+
+## Results on `nsh 0.7.2` (2026-11-27, macOS arm64)
+
+| Check | Result |
+|---|---|
+| `just lint` (`just check`) | Not run: `nsh check` downloads TypeScript 7 from the npm registry, and network access was refused in this environment |
+| `just test` | Pass: 107 test files, 1241 tests (1236 passed, 0 failed, 5 skipped) |
+| `just conformance` | Not run: the pinned `google/A2UI` checkout (`target/refs/google-A2UI`) is absent and network access was refused |
+| `just build` | Pass: library and `examples/erp-customers/` bytecode bundles |
+| `just test-tui` | Not run: the 0.7.2 `tui` runtime is not installed (adding it needs the network) |
+| `just test-web`, `just package-web` | Not run: the 0.7.2 `web` runtime is not installed (adding it needs the network) |
+| `just walk-macos` | Not run: it opens the native AppKit host; this run stayed headless |
+
+Headless `just test` is green on the new pin; every check that needs a download or the absent reference checkout is listed with why.
 
 ## Results on `nsh 0.7.1` (2026-11-26, macOS arm64)
 
@@ -62,6 +76,17 @@ The pin moved from `496df0e` to `36725ee` (upstream `main` on 2026-11-26, 40 com
 | The global depth limit counts from the message root for every value | Followed in `src/core/validator.ts`: a component sits at depth 3; a `createSurface` `dataModel`, an `updateDataModel` `value`, a `createSurface` `metadata`, and an `agentFunctionResponse` `value` sit at depth 2; `callRendererFunction` `callFunction.args` sit at depth 3. The deepest container any of them may hold is at 50; one deeper is refused with `RECURSION_LIMIT_EXCEEDED` at `/dataModel`, `/value`, `/metadata`, or `/callFunction/args`. Scalars are never refused; the limit counts containers. Each nested `@call` in `args` adds two levels, so a message holds at most 23 nested calls with `args` and the JSON limit refuses them before the RPC call depth (32) is reached; that RPC limit stays for calls made through `RpcManager` without a message. No upstream case pins this yet. Tests: `src/core/validator_data_depth.test.ts`, `src/core/validator_message_depth.test.ts`, `src/core/validator.test.ts`. |
 | Agent-side suites (`conformance/agent/*`, Express and Direct JSON), `core/validator_v0_9.yaml`, v0.9.1 schema `$id`s (#3975), and doc wording | Not applicable: `a2ui-nsh` is a v1.0 renderer; the harness reads none of them. |
 
+### `nsh 0.7.2` changes
+
+The v0.7.1 to v0.7.2 commit list could not be read in this environment: `gh` and the local upstream checkout were unavailable and network access was refused. The two changes this move looked for are **not** in the installed v0.7.2 build (`0c29b5e`):
+
+| Change looked for | What the build shows |
+|---|---|
+| `video: Add a poster shown while the video loads` (#3398) | Absent: `grep -rn poster .nsh/types` finds nothing, and `VideoProps` (`.nsh/types/nsh/index.d.ts:1128`) still has only `src`. No `poster` prop is added to `BasicVideo`; A2UI v1.0 defines `posterUrl`, and the `<Image>` overlay stays. |
+| `core: Let component hosts take a view accessibility props` (#3408) | Absent: `ComponentHostProps` (`.nsh/types/nsh/types.d.ts:187`) still omits them, and `src/catalog/basic/measured/host_a11y.test.tsx` shows a host keeps its label but drops the description and ignores `accessibilityElementsHidden`, while a plain `Text` keeps both. The transparent `View` wrapper stays. |
+
+No other change that alters what `a2ui-nsh` draws was identified from the installed build. `just test` (1241 tests) and `just build` pass unchanged; the `tui` and `web` suites and the upstream conformance run could not run here.
+
 ### `nsh 0.7.1` changes
 
 0.7.1 is a patch release (23 commits after v0.7.0). Each commit that can reach `a2ui-nsh`:
@@ -87,7 +112,7 @@ The pin moved from `496df0e` to `36725ee` (upstream `main` on 2026-11-26, 40 com
 | 1024 view depth limit (#2614) | Checked: `src/renderer/depth.test.tsx` renders the deepest tree the validator allows (50) for six containers. |
 | Rust struct literals need `..Default::default()` | Not touched: no Rust code. |
 | `Bundle.links`, Speech moved to `nsh-extra` (#2947) | Not touched: neither is used. |
-| `LiveRegion` type removed; `accessibilityLiveRegion` on every platform (#2816) | Touched and fixed: `just check` failed (TS2305); see [architecture gap 2](architecture.md#measured-nsh-071-gaps--mitigations). |
+| `LiveRegion` type removed; `accessibilityLiveRegion` on every platform (#2816) | Touched and fixed: `just check` failed (TS2305); see [architecture gap 2](architecture.md#measured-nsh-072-gaps--mitigations). |
 
 | Stage | Runner file | Upstream suites |
 |---|---|---|

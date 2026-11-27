@@ -1,5 +1,5 @@
 /**
- * A2UI Basic Catalog v1 `Card` container component on Native Shell (`nsh 0.7.1`).
+ * A2UI Basic Catalog v1 `Card` container component on Native Shell (`nsh 0.7.2`).
  *
  * Renders a themed card surface (`border`, `bg-card`, `rounded-(--radius)`,
  * padding) holding its single resolved `child` `ComponentNode`.

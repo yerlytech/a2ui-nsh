@@ -1,11 +1,11 @@
 /**
- * A2UI Basic Catalog v1 `Modal` overlay component on Native Shell (`nsh 0.7.1`).
+ * A2UI Basic Catalog v1 `Modal` overlay component on Native Shell (`nsh 0.7.2`).
  *
  * Mounts only its `trigger` initially; activating the trigger opens an `nsh/base`
  * `<Dialog>` containing `content` with a backdrop, Escape dismissal, an accessible
  * Close button, keyboard focus containment, and focus return on close.
  *
- * Measured on `nsh 0.7.1` (2026-11-27): presses reach only the innermost
+ * Measured on `nsh 0.7.2` (2026-11-27): presses reach only the innermost
  * pressable view (headless, a press on a `<View onPress>` or `nsh/base`
  * `<Button>` inside a `<View onPress>` leaves the outer handler at 0 calls;
  * `measured/press_innermost.test.tsx`), so `Modal` provides
@@ -51,7 +51,7 @@ export interface ModalTriggerController {
 
 /**
  * Context provided to a `Modal`'s `trigger` subtree (and cleared inside `content`)
- * so pressable triggers can open their enclosing modal; measured on `nsh 0.7.1`
+ * so pressable triggers can open their enclosing modal; measured on `nsh 0.7.2`
  * (2026-11-27), presses do not bubble past the innermost pressable view.
  */
 export const ModalTriggerContext = context<ModalTriggerController | undefined>(

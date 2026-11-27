@@ -118,7 +118,7 @@ describe("renderer/accessibility", () => {
     });
   });
 
-  test("liveRegionReadingFor follows nsh 0.7.1 live-region support by platform", () => {
+  test("liveRegionReadingFor follows nsh 0.7.2 live-region support by platform", () => {
     for (const os of ["android", "windows", "linux"]) {
       expect(liveRegionReadingFor(os, "desktop")).toEqual({
         changes: true,

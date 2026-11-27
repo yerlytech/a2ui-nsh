@@ -1,5 +1,5 @@
 /**
- * Measured on `nsh 0.7.1` (2026-11-27), headless: `DatePicker` and
+ * Measured on `nsh 0.7.2` (2026-11-27), headless: `DatePicker` and
  * `TimeField` drop an empty string or a value with a timezone suffix, with a
  * `warn DatePicker.value: expected an ISO date …` / `warn TimeField.value:
  * expected a time of day …` line, so `datetime_helpers.ts` normalizes A2UI
@@ -23,7 +23,7 @@ async function timeShown(value: string): Promise<string> {
   return app.texts().join("");
 }
 
-describe("nsh 0.7.1 measurement: DatePicker and TimeField values", () => {
+describe("nsh 0.7.2 measurement: DatePicker and TimeField values", () => {
   test("DatePicker selects a plain ISO date and drops \"\" and timezone suffixes", async () => {
     expect(await dateSelected("2026-10-28")).toBe(true);
     expect(await dateSelected("2026-10-28T09:30")).toBe(true);

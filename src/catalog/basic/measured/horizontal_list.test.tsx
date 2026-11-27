@@ -1,5 +1,5 @@
 /**
- * Measured on `nsh 0.7.1` (2026-11-27), headless: a `<List horizontal>`
+ * Measured on `nsh 0.7.2` (2026-11-27), headless: a `<List horizontal>`
  * without a height lays out 0 high and mounts no cell, while `<Scroll
  * horizontal>` grows to its 40-high cells, so `BasicList` renders horizontal
  * lists through `<Scroll horizontal>` (Spec 001 §3 Gap #8). It fails the day
@@ -8,7 +8,7 @@
 
 import { describe, expect, open, test } from "nsh/test";
 
-describe("nsh 0.7.1 measurement: horizontal List cross-axis height", () => {
+describe("nsh 0.7.2 measurement: horizontal List cross-axis height", () => {
   test("List horizontal needs a fixed height; Scroll horizontal sizes to its cells", async () => {
     const app = await open("./ListProbe.tsx", { platform: "macos" });
 
