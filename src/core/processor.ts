@@ -467,6 +467,12 @@ export class MessageProcessor {
   private readonly surfaceDeletedListeners: Array<
     (surfaceId: string, surface: SurfaceModel) => void
   > = [];
+  /** Number of `addCatalog` calls so far. */
+  private catalogGeneration = 0;
+  /** Catalog ID added by `addCatalog` -> the generation it arrived in. */
+  private readonly addedCatalogGenerations = new Map<string, number>();
+  /** Surface -> the generation it was created in; its catalog set is fixed then. */
+  private readonly surfaceCatalogGenerations = new WeakMap<SurfaceModel, number>();
 
   constructor(options: MessageProcessorOptions = {}) {
     this.registry = options.registry ?? new CatalogRegistry();
@@ -512,6 +518,49 @@ export class MessageProcessor {
       timers: options.timers,
       generateCallId: options.generateCallId,
     });
+  }
+
+  /**
+   * Adds a catalog to the ones this processor holds (google/A2UI #3304).
+   *
+   * `createSurface` messages, renderer function calls and
+   * `getRendererCapabilities` see the catalog from this call on. Surfaces
+   * created before the call keep the catalogs they were created with.
+   *
+   * @throws {A2uiCatalogError} If the processor already holds a catalog with
+   *     the same ID.
+   */
+  addCatalog(catalog: Catalog): void {
+    if (this.registry.has(catalog.catalogId)) {
+      throw new A2uiCatalogError(
+        "CATALOG_ERROR",
+        `Catalog already registered: ${catalog.catalogId}`,
+      );
+    }
+    this.catalogGeneration += 1;
+    this.addedCatalogGenerations.set(catalog.catalogId, this.catalogGeneration);
+    this.registry.register(catalog);
+  }
+
+  /** Looks up catalogs as `surface` sees them: none added after it was created. */
+  private catalogLookupFor(
+    surface: SurfaceModel,
+  ): (catalogId: string) => Catalog | undefined {
+    const created =
+      this.surfaceCatalogGenerations.get(surface) ?? this.catalogGeneration;
+    return (catalogId) => {
+      const catalog = this.registry.get(catalogId);
+      if (!catalog) {
+        return undefined;
+      }
+      const added = this.addedCatalogGenerations.get(catalog.catalogId);
+      return added !== undefined && added > created ? undefined : catalog;
+    };
+  }
+
+  private registerSurface(surface: SurfaceModel): void {
+    this.surfaceCatalogGenerations.set(surface, this.catalogGeneration);
+    this.surfaceMap.set(surface.id, surface);
   }
 
   /** Read-only view of all live surfaces. */
@@ -587,7 +636,7 @@ export class MessageProcessor {
       topologyIndex: new SurfaceTopologyIndex(),
       onForwardError: this.onError,
     });
-    this.surfaceMap.set(options.id, surface);
+    this.registerSurface(surface);
     this.notifySurfaceCreated(surface);
     return surface;
   }
@@ -728,6 +777,8 @@ export class MessageProcessor {
     rawList: readonly unknown[],
     surfaceId: string,
     defaultCatalogId: string | undefined,
+    lookupCatalog: (catalogId: string) => Catalog | undefined = (id) =>
+      this.registry.get(id),
   ): ComponentModel[] {
     const models: ComponentModel[] = [];
     for (let i = 0; i < rawList.length; i += 1) {
@@ -741,7 +792,7 @@ export class MessageProcessor {
         continue;
       }
       const defaultCatalog = defaultCatalogId
-        ? this.registry.get(defaultCatalogId)
+        ? lookupCatalog(defaultCatalogId)
         : undefined;
       const defaultCompSchema = defaultCatalog?.components.get(type)?.schema;
       const defaultDeclaresCustomCatalogId = componentSchemaDeclaresCustomBareProp(
@@ -770,7 +821,7 @@ export class MessageProcessor {
           surfaceId,
         );
       }
-      const catalog = this.registry.get(catId);
+      const catalog = lookupCatalog(catId);
       if (!catalog) {
         throw new A2uiCatalogError(
           "CATALOG_NOT_FOUND",
@@ -943,7 +994,7 @@ export class MessageProcessor {
       surface.upsertComponents(initialModels);
     }
 
-    this.surfaceMap.set(surfaceId, surface);
+    this.registerSurface(surface);
     this.notifySurfaceCreated(surface);
   }
 
@@ -962,11 +1013,13 @@ export class MessageProcessor {
       );
     }
 
+    const lookupCatalog = this.catalogLookupFor(surface);
     if (skipValidation) {
       const models = this.parseUnvalidatedComponents(
         body["components"] as readonly unknown[],
         surfaceId,
         surface.defaultCatalogId,
+        lookupCatalog,
       );
       surface.upsertComponents(models);
       return;
@@ -980,6 +1033,7 @@ export class MessageProcessor {
         existingComponents: surface.components,
         topologyIndex: surface.topologyIndex,
         config,
+        lookupCatalog,
       },
     );
 

@@ -661,6 +661,11 @@ export interface ValidateBatchContext {
   >;
   readonly topologyIndex?: SurfaceTopologyIndex;
   readonly config: ValidationConfig;
+  /**
+   * The catalogs the surface sees (`MessageProcessor.addCatalog` adds none to
+   * a surface created before it); the validator's registry when omitted.
+   */
+  readonly lookupCatalog?: (catalogId: string) => Catalog | undefined;
 }
 
 /** Validates A2UI v1.0 messages, components, nested calls, and surface topology. */
@@ -669,6 +674,15 @@ export class PayloadValidator {
 
   constructor(registry: CatalogRegistry) {
     this.registry = registry;
+  }
+
+  private catalogFor(
+    ctx: ValidateBatchContext,
+    catalogId: string,
+  ): Catalog | undefined {
+    return ctx.lookupCatalog
+      ? ctx.lookupCatalog(catalogId)
+      : this.registry.get(catalogId);
   }
 
   /**
@@ -1315,7 +1329,7 @@ export class PayloadValidator {
   ): ValidatedComponent {
     const { surfaceId, defaultCatalogId, config } = ctx;
     const defaultCatalog = defaultCatalogId
-      ? this.registry.get(defaultCatalogId)
+      ? this.catalogFor(ctx, defaultCatalogId)
       : undefined;
     const defaultCompSchema = defaultCatalog?.components.get(compType)?.schema;
 
@@ -1348,7 +1362,7 @@ export class PayloadValidator {
       }
       if (hasBareCatalogId && !defaultDeclaresCustomCatalogId) {
         // Check target catalog before concluding conflict: target may declare custom `catalogId`.
-        const targetCat = this.registry.get(val);
+        const targetCat = this.catalogFor(ctx, val);
         const targetDeclaresCustomCatalogId =
           componentSchemaDeclaresCustomBareProp(
             targetCat?.components.get(compType)?.schema,
@@ -1387,7 +1401,7 @@ export class PayloadValidator {
       );
     }
 
-    const catalog = this.registry.get(effectiveCatalogId);
+    const catalog = this.catalogFor(ctx, effectiveCatalogId);
     if (!catalog) {
       throw new A2uiCatalogError(
         "CATALOG_NOT_FOUND",
@@ -1946,7 +1960,7 @@ export class PayloadValidator {
       );
     }
 
-    const fnCatalog = this.registry.get(effectiveCatId);
+    const fnCatalog = this.catalogFor(ctx, effectiveCatId);
     if (!fnCatalog) {
       throw new A2uiCatalogError(
         "CATALOG_NOT_FOUND",

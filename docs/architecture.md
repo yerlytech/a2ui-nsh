@@ -16,7 +16,7 @@ src/core/          Pure TypeScript (zero nsh, DOM, or I/O imports)
   ├── v1_0_schemas.ts     Embedded A2UI v1.0 protocol & Basic Catalog v1 schemas
   ├── catalog.ts          Catalog loader/deriver, CatalogRegistry, composition constraints
   ├── validator.ts        PayloadValidator (strict/permissive), depth/cycle/topology checks
-  ├── processor.ts        MessageProcessor (surface lifecycle, out-of-order buffering, errors)
+  ├── processor.ts        MessageProcessor (surface lifecycle, out-of-order buffering, errors, addCatalog)
   ├── functions/          14 Basic Catalog v1 functions + @index, safe regex dialect, CLDR pluralize, TR35 formatDate
   ├── rpc.ts              RpcManager (callRendererFunction / callAgentFunction, caching, cancellation)
   ├── actions.ts          Dispatch-time context/userMessage evaluation, action metadata checks

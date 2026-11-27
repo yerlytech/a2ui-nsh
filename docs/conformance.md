@@ -23,21 +23,21 @@ just conformance /path/to/google-A2UI
 
 ## Stage Coverage (C1–C6)
 
-Last measured on `nsh 0.7.1 (f78eace)` against `google/A2UI` `36725ee` (2026-11-27): **27/27 test suites pass** (`712` upstream cases passed, `0` failed, `51` documented skips across 29 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests). Against the previous pin `496df0e` the same run passed `705` cases; the 7 new ones are in `core/rpc_functions.yaml` (33 → 40). See [`google/A2UI` `36725ee`](#googlea2ui-36725ee-measured-2026-11-27).
+Last measured on `nsh 0.7.2 (0c29b5e)` against `google/A2UI` `36725ee` (2026-11-27): **28/28 test suites pass** (`715` upstream cases passed, `0` failed, `51` documented skips across 30 YAML files, `0` adapter conformance skips, plus capability-sandbox denial tests). Following `MessageProcessor.addCatalog` added `core/add_catalog.yaml` (3 cases) to the run, which passed 27/27 suites and `712` cases before. Against the previous pin `496df0e` the same run passed `705` cases; the 7 new ones are in `core/rpc_functions.yaml` (33 → 40). See [`google/A2UI` `36725ee`](#googlea2ui-36725ee-measured-2026-11-27).
 
 ## Results on `nsh 0.7.2` (2026-11-27, macOS arm64)
 
 | Check | Result |
 |---|---|
-| `just lint` (`just check`) | Not run: `nsh check` downloads TypeScript 7 from the npm registry, and network access was refused in this environment |
-| `just test` | Pass: 107 test files, 1241 tests (1236 passed, 0 failed, 5 skipped) |
-| `just conformance` | Not run: the pinned `google/A2UI` checkout (`target/refs/google-A2UI`) is absent and network access was refused |
+| `just lint` (`just check`) | Pass (re-run with `MessageProcessor.addCatalog`) |
+| `just test` | Pass: 108 test files, 1259 tests (1254 passed, 0 failed, 5 skipped), with `MessageProcessor.addCatalog`; 107 files and 1250 tests before it |
+| `just conformance` | Pass: 28/28 suites, 715 cases passed, 51 documented skips, 30 YAML files (`google/A2UI` `36725ee`); before `MessageProcessor.addCatalog`, 27/27 suites and 712 cases on the same run |
 | `just build` | Pass: library and `examples/erp-customers/` bytecode bundles |
 | `just test-tui` | Not run: the 0.7.2 `tui` runtime is not installed (adding it needs the network) |
 | `just test-web`, `just package-web` | Not run: the 0.7.2 `web` runtime is not installed (adding it needs the network) |
 | `just walk-macos` | Not run: it opens the native AppKit host; this run stayed headless |
 
-Headless `just test` is green on the new pin; every check that needs a download or the absent reference checkout is listed with why.
+`just lint`, `just test`, and `just conformance` are green on the new pin; every check that was not run is listed with why.
 
 ## Results on `nsh 0.7.1` (2026-11-26, macOS arm64)
 
@@ -72,7 +72,7 @@ The pin moved from `496df0e` to `36725ee` (upstream `main` on 2026-11-26, 40 com
 | Nested function calls no longer have a depth limit of 5; only the global depth limit (50, counted from the message) bounds them (#4296) | Followed: `ValidationConfig.maxFunctionCallDepth` is gone, and a component's JSON depth counts from its message root (the component sits at depth 3). Tests: `src/core/validator.test.ts`. |
 | `callRendererFunction` checks every nested `@call` and `${...}` template call against the agent's caller boundary: `rendererOnly`, or `requiresUserActivation` without a gesture, rejects the call with `INVALID_FUNCTION_CALL`; `agentOnly` is allowed; static `@call`s are checked before any argument runs (#4336) | Followed in `src/core/rpc.ts` and `src/core/functions/evaluator.ts`. A boundary error wins over another error in the same template. A template call made for the agent finds a function by its registered implementation, as the agent's own call does. Tests: `src/core/rpc_agent_boundary.test.ts`, `src/core/functions/evaluator.test.ts`. |
 | `core/rpc_functions.yaml` names new test doubles (`renderTemplate`, `tagValue`, `secretRendererOnly`, `agentSecret`) and a per-function `catalogId` | Followed in the harness (`tests/conformance/c4_actions_rpc.suite.ts`), with the behavior upstream's harnesses give them. |
-| `MessageProcessor.addCatalog` and `core/add_catalog.yaml` (#3304) | Known, not yet followed: a new processor feature, not a correction. The harness does not run `core/add_catalog.yaml`. |
+| `MessageProcessor.addCatalog` and `core/add_catalog.yaml` (#3304) | Followed in `src/core/processor.ts`: `addCatalog(catalog)` adds a catalog after the processor is built; `createSurface`, renderer function calls, and `getRendererCapabilities` see it from then on, and a surface created before the call keeps the catalogs it was created with (a component on it naming the added catalog fails with `CATALOG_NOT_FOUND`). A catalog whose ID the processor already holds is refused with `A2uiCatalogError` (`CATALOG_ERROR`, `Catalog already registered: <id>`). The harness (`tests/conformance/c3_processor.suite.ts`) loads each step's `addCatalogPaths` with `Catalog.fromJson` and passes it to `addCatalog`; `core/add_catalog.yaml` passes 3/3 with no skip. Tests: `src/core/processor_add_catalog.test.ts`. |
 | The global depth limit counts from the message root for every value | Followed in `src/core/validator.ts`: a component sits at depth 3; a `createSurface` `dataModel`, an `updateDataModel` `value`, a `createSurface` `metadata`, and an `agentFunctionResponse` `value` sit at depth 2; `callRendererFunction` `callFunction.args` sit at depth 3. The deepest container any of them may hold is at 50; one deeper is refused with `RECURSION_LIMIT_EXCEEDED` at `/dataModel`, `/value`, `/metadata`, or `/callFunction/args`. Scalars are never refused; the limit counts containers. Each nested `@call` in `args` adds two levels, so a message holds at most 23 nested calls with `args` and the JSON limit refuses them before the RPC call depth (32) is reached; that RPC limit stays for calls made through `RpcManager` without a message. No upstream case pins this yet. Tests: `src/core/validator_data_depth.test.ts`, `src/core/validator_message_depth.test.ts`, `src/core/validator.test.ts`. |
 | Agent-side suites (`conformance/agent/*`, Express and Direct JSON), `core/validator_v0_9.yaml`, v0.9.1 schema `$id`s (#3975), and doc wording | Not applicable: `a2ui-nsh` is a v1.0 renderer; the harness reads none of them. |
 
@@ -85,7 +85,7 @@ The v0.7.1 to v0.7.2 commit list could not be read in this environment: `gh` and
 | `video: Add a poster shown while the video loads` (#3398) | Absent: `grep -rn poster .nsh/types` finds nothing, and `VideoProps` (`.nsh/types/nsh/index.d.ts:1128`) still has only `src`. No `poster` prop is added to `BasicVideo`; A2UI v1.0 defines `posterUrl`, and the `<Image>` overlay stays. |
 | `core: Let component hosts take a view accessibility props` (#3408) | Absent: `ComponentHostProps` (`.nsh/types/nsh/types.d.ts:187`) still omits them, and `src/catalog/basic/measured/host_a11y.test.tsx` shows a host keeps its label but drops the description and ignores `accessibilityElementsHidden`, while a plain `Text` keeps both. The transparent `View` wrapper stays. |
 
-No other change that alters what `a2ui-nsh` draws was identified from the installed build. `just test` (1241 tests) and `just build` pass unchanged; the `tui` and `web` suites and the upstream conformance run could not run here.
+No other change that alters what `a2ui-nsh` draws was identified from the installed build. `just test` (1241 tests) and `just build` pass unchanged; the `tui` and `web` suites could not run here. The upstream conformance run was measured later the same day (see the table above).
 
 ### `nsh 0.7.1` changes
 
@@ -118,7 +118,7 @@ No other change that alters what `a2ui-nsh` draws was identified from the instal
 |---|---|---|
 | C1 — Foundations | `tests/conformance/c1_data_model.suite.ts`, `c1_expressions.suite.ts` | `core/data_model.yaml`, `core/data_model_pointers.yaml`, `core/data_deletion.yaml`, `core/data_context.yaml`, `core/expressions.yaml`, `core/reserved_keys.yaml` |
 | C2 — Catalogs & schemas | `tests/conformance/c2_catalog.suite.ts` | `core/catalog.yaml`, `core/common_types.yaml`, `core/agent_to_renderer.yaml`, `core/composition_constraints.yaml` |
-| C3 — Validation & processor | `tests/conformance/c3_processor.suite.ts` | `core/validator_v1_0.yaml`, `core/message_processor_v1_0.yaml`, `core/error_responses.yaml`, `core/multi_catalog.yaml` |
+| C3 — Validation & processor | `tests/conformance/c3_processor.suite.ts` | `core/validator_v1_0.yaml`, `core/message_processor_v1_0.yaml`, `core/error_responses.yaml`, `core/multi_catalog.yaml`, `core/add_catalog.yaml` |
 | C4 — Functions, actions & RPC | `tests/conformance/c4_functions.suite.ts`, `c4_actions_rpc.suite.ts` | `core/functions.yaml`, `core/index_function.yaml`, `core/validation_result.yaml`, `core/actions.yaml`, `core/rpc_functions.yaml`, `core/agent_function_routing.yaml` |
 | C5 — Node resolution & scaling | `tests/conformance/c5_resolver_scaling.suite.ts` | `core/node_resolution.yaml`, `core/message_processor_scaling.yaml` |
 | C6 — Adapter, a11y, markdown, e2e & sandbox | `tests/conformance/c6_adapter_a11y_e2e.suite.ts`, `c6_sandbox.suite.ts` | `core/adapter_conformance.yaml`, `core/accessibility.yaml`, `adapter/markdown_subset.yaml`, `e2e/*.yaml` (4 v1.0 scenarios), plus `ERR_ACCESS_DENIED` sandbox checks |

@@ -62,6 +62,9 @@ export const ERROR_RESPONSES_SKIP_TEST_NAMES: ReadonlyMap<string, string> =
 export const MULTI_CATALOG_SKIP_TEST_NAMES: ReadonlyMap<string, string> =
   new Map();
 
+export const ADD_CATALOG_SKIP_TEST_NAMES: ReadonlyMap<string, string> =
+  new Map();
+
 interface ExpectedErrorSpec extends ConformanceExpectError {
   readonly code?: string;
   readonly surfaceId?: string;
@@ -85,6 +88,8 @@ interface ExpectedErrorSpec extends ConformanceExpectError {
 }
 
 interface ProcessorStep {
+  /** Catalogs the step adds with `MessageProcessor.addCatalog` before its messages. */
+  readonly addCatalogPaths?: readonly string[];
   readonly messages?: unknown;
   readonly payload?: unknown;
   readonly validationConfig?: Partial<ValidationConfig>;
@@ -388,13 +393,23 @@ async function preloadCaseFiles(
     if (skips.has(tc.name)) {
       continue;
     }
-    const paths = tc["catalogPaths"] as readonly string[] | undefined;
-    if (Array.isArray(paths)) {
-      for (const rel of paths) {
-        if (!cache.has(rel)) {
-          const text = await client.readTextFile(`${root}/${rel}`);
-          cache.set(rel, JSON.parse(text) as JsonObject);
+    const paths: string[] = [];
+    const casePaths = tc["catalogPaths"] as readonly string[] | undefined;
+    if (Array.isArray(casePaths)) {
+      paths.push(...casePaths);
+    }
+    const steps = tc["steps"] as readonly ProcessorStep[] | undefined;
+    if (Array.isArray(steps)) {
+      for (const st of steps) {
+        if (Array.isArray(st.addCatalogPaths)) {
+          paths.push(...st.addCatalogPaths);
         }
+      }
+    }
+    for (const rel of paths) {
+      if (!cache.has(rel)) {
+        const text = await client.readTextFile(`${root}/${rel}`);
+        cache.set(rel, JSON.parse(text) as JsonObject);
       }
     }
   }
@@ -580,12 +595,26 @@ function runProcessorOrValidatorCase(
       const stepOpts = step.validationConfig
         ? { validationConfig: step.validationConfig }
         : undefined;
+      const addPaths = step.addCatalogPaths ?? [];
+      // An error addCatalog raises is the step's error (implementation guide).
+      const runStep = (): void => {
+        for (const rel of addPaths) {
+          const doc = files.get(rel);
+          if (!doc) {
+            throw new Error(`${tc.name}: missing preloaded addCatalogPath '${rel}'`);
+          }
+          processor.addCatalog(Catalog.fromJson(doc));
+        }
+        if (stepPayload !== undefined || addPaths.length === 0) {
+          processor.processMessages(stepPayload, stepOpts);
+        }
+      };
       lastEmitted = undefined;
 
       if (step.expectError) {
         let caught: unknown;
         try {
-          processor.processMessages(stepPayload, stepOpts);
+          runStep();
         } catch (err) {
           caught = err;
         }
@@ -601,7 +630,7 @@ function runProcessorOrValidatorCase(
           `${tc.name} step ${i}`,
         );
       } else {
-        processor.processMessages(stepPayload, stepOpts);
+        runStep();
         if (step.expect) {
           assertSurfacesMatch(processor, step.expect, `${tc.name} step ${i}`);
         }
@@ -733,7 +762,7 @@ function runSelectCatalogCase(tc: ConformanceCase): void {
   expect(selected).toBe(tc["expectSelected"]);
 }
 
-describe("C3 conformance — validator, message processor, error responses & multi-catalog", () => {
+describe("C3 conformance — validator, message processor, error responses, multi-catalog & addCatalog", () => {
   let client: ConformanceClient;
 
   beforeAll(async () => {
@@ -812,6 +841,22 @@ describe("C3 conformance — validator, message processor, error responses & mul
       MULTI_CATALOG_SKIP_TEST_NAMES,
     );
     expect(records.length).toBe(8);
+    expect(records.every((r) => r.status === "passed")).toBe(true);
+  });
+
+  test("core/add_catalog.yaml passes all cases", async () => {
+    const cases = await client.loadConformanceSuite("core/add_catalog.yaml");
+    const files = await preloadCaseFiles(
+      client,
+      cases,
+      ADD_CATALOG_SKIP_TEST_NAMES,
+    );
+    const records = await client.runSuite(
+      "core/add_catalog.yaml",
+      (tc) => runProcessorOrValidatorCase(tc, files),
+      ADD_CATALOG_SKIP_TEST_NAMES,
+    );
+    expect(records.length).toBe(3);
     expect(records.every((r) => r.status === "passed")).toBe(true);
   });
 });

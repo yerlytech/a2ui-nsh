@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `MessageProcessor.addCatalog(catalog)`, as A2UI 1.0 defines it
+  (google/A2UI #3304): a catalog added after the processor is built serves
+  later `createSurface` messages only; a surface keeps the catalogs it was
+  created with, and an ID the processor already holds is refused with
+  `A2uiCatalogError`. `just conformance` now runs `core/add_catalog.yaml`
+  (28/28 suites, 715 cases passed).
+
 ### Fixed
 
 - A `createSurface` `metadata`, `callRendererFunction` `callFunction.args`,
