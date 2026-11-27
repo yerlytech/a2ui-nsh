@@ -5,10 +5,11 @@
  * with `keyExtractor={(child) => child.id}` so only cells near the viewport exist
  * while surviving template-repeater rows preserve view identity.
  *
- * Horizontal lists render via `<Scroll horizontal>`: measured on `nsh 0.6.1`,
- * not re-measured, its `<List horizontal>` used independent Taffy cell roots and
- * could not auto-size its cross-axis height without an explicit fixed height
- * (Spec 001 §3 Gap #8).
+ * Horizontal lists render via `<Scroll horizontal>`: measured on `nsh 0.7.1`
+ * (2026-11-27), its `<List horizontal>` still cannot auto-size its cross-axis
+ * height without an explicit fixed height (Spec 001 §3 Gap #8): headless, a list of
+ * three 60x40 cells lays out 0 high and mounts no cell, while `<Scroll
+ * horizontal>` grows to 40 (`measured/horizontal_list.test.tsx`).
  */
 
 import { List, Scroll, View, computed, effect, platform, type JSX, type ViewStyle } from "nsh";
@@ -107,7 +108,8 @@ export function BasicList(props: A2uiComponentProps): JSX.Element {
             </List>
           }
         >
-          {/* Measured on `nsh 0.6.1` TUI, not re-measured: `<List viewport="parent">`
+          {/* Measured on `nsh 0.6.1` TUI, not re-measured (TUI runtime for 0.7.1 not
+              installed): `<List viewport="parent">`
               clips unmeasured rows when stacked above siblings in a compact 80x24
               scroll view; a plain column keeps every row full-height inside the
               enclosing `<Scroll>`. */}

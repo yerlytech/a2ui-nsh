@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The `nsh` notes measured only on 0.6.1 are re-measured headless on 0.7.1
+  (2026-11-27). Presses still reach only the innermost pressable view,
+  `DatePicker` / `TimeField` still drop `""` and timezone suffixes, and
+  `<List horizontal>` still needs a fixed height; each now has a regression
+  test under `src/catalog/basic/measured/`. The outer `nsh test` VM is no
+  longer `Os::Web` (it reports `ios` and reads granted files itself); the
+  conformance bridge app stays until a separate change removes it. The TUI
+  `List` clipping note is not re-measured (no 0.7.1 `tui` runtime here).
 - Follows `google/A2UI` `36725ee` (was `496df0e`, measured 2026-11-27):
   the pin, CI, and the clone line move; `just conformance` passes 712 cases
   (was 705), 51 documented skips. Nested function calls no longer have a

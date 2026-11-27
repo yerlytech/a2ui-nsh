@@ -5,8 +5,12 @@
  * Bridges A2UI v1.0 ISO 8601 strings (which may be `""`, `"YYYY-MM-DD"`,
  * `"HH:MM"`, `"HH:MM:SS"`, or `"YYYY-MM-DDTHH:MM:SSZ"` / offsets) onto
  * `nsh 0.7.1` `DatePicker` (`DatePickerValue`: a single `"YYYY-MM-DD"` | `null`)
- * and `TimeField` (`string`: `"HH:MM"` | `"HH:MM:SS"`). Measured on `0.6.1`, not
- * re-measured: their `JsValue::from_js` rejects empty strings and timezone suffixes.
+ * and `TimeField` (`string`: `"HH:MM"` | `"HH:MM:SS"`). Measured on `nsh 0.7.1`
+ * (2026-11-27): both still reject empty strings and timezone suffixes; headless,
+ * `""`, `"…Z"` and `"…+03:00"` log `warn DatePicker.value: expected an ISO date`
+ * / `warn TimeField.value: expected a time of day` and are dropped (no day
+ * selected; `00:00` shown), while `DatePicker` now also takes `"YYYY-MM-DDTHH:MM"`
+ * (`measured/date_values.test.tsx`).
  */
 
 const ISO_DATE_PREFIX_RE = /^(\d{4})-(\d{2})-(\d{2})(?:$|[T ])/;

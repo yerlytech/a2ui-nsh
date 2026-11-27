@@ -54,10 +54,14 @@ interface BridgeEnv {
 }
 
 /**
- * Headless `nsh` bridge providing native `fs/promises` and env access
- * (measured on `nsh 0.6.1`, not re-measured: the outer test VM defaults to
- * `Os::Web`, while opened apps with `platform: "macos"` expose native
- * capability-checked `fs/promises`).
+ * Headless `nsh` bridge providing native `fs/promises` and env access.
+ * First measured on `nsh 0.6.1`: the outer test VM defaulted to `Os::Web`,
+ * while opened apps with `platform: "macos"` expose native capability-checked
+ * `fs/promises`. Measured on `nsh 0.7.1` (2026-11-27): no longer holds (the
+ * outer test VM reports `platform.os === "ios"` and its own `fs/promises`
+ * reads a file `capabilities.fs.read` grants; only an app opened with
+ * `platform: "web"` gets `ERR_FEATURE_UNAVAILABLE_ON_PLATFORM`); the
+ * workaround stays until a separate change removes it.
  */
 export class ConformanceClient {
   private readonly app: App;

@@ -30,7 +30,7 @@ Measured on `nsh 0.7.1 (f78eace)` against `google/A2UI` `36725ee` (2026-11-27): 
 | Check | Result |
 |---|---|
 | `just lint` (`just check`) | Pass |
-| `just test` | Pass: 98 test files, 1160 tests (1155 passed, 0 failed, 5 skipped), re-run 2026-11-27 |
+| `just test` | Pass: 101 test files, 1164 tests (1159 passed, 0 failed, 5 skipped), re-run 2026-11-27 |
 | `just conformance` | Pass: 27/27 suites, 712 cases passed, 51 documented skips, 29 YAML files (`google/A2UI` `36725ee`, 2026-11-27) |
 | `just build` | Pass: library and `examples/erp-customers/` bytecode bundles |
 | `just walk-macos` | Pass: 16/16 tests, 24 screenshots in `target/walk-macos/` |
