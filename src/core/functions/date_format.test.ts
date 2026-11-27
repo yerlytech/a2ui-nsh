@@ -172,9 +172,7 @@ describe("parseStrictTimestamp", () => {
     expect(parseStrictTimestamp("04-09-2026")).toBeNull();
   });
 
-  // bug: Date.UTC maps years 0-99 to 1900+year, so the weekday and epoch of
-  // years 0000-0099 come from the 1900s while the parsed fields stay as written.
-  test.skip("uses the written year for years below 100", () => {
+  test("uses the written year for years below 100", () => {
     const parsed = parseStrictTimestamp("0099-06-15");
     const expected = new Date(0);
     expected.setUTCFullYear(99, 5, 15);
@@ -304,8 +302,7 @@ describe("formatTr35Date", () => {
 });
 
 describe("formatTr35Date offset tokens", () => {
-  // bug: TR35 X (one letter) is +HH or Z; this formatter always appends minutes.
-  test.skip("renders a single X offset without minutes", () => {
+  test("renders a single X offset without minutes", () => {
     expect(formatTr35Date("2026-09-04T23:30:00-05:00", "X")).toBe("-05");
   });
 });
