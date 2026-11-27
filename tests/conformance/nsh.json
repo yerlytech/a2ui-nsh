@@ -3,7 +3,8 @@
   "id": "dev.a2ui.nsh.conformance",
   "version": "0.1.0",
   "build": 1,
+  "entry": "AdapterApp.tsx",
   "capabilities": {
-    "host": ["conformance.*", "a2ui.*"]
+    "host": ["a2ui.*"]
   }
 }

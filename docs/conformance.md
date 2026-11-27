@@ -2,7 +2,7 @@
 
 `a2ui-nsh` validates its protocol core and TSX adapter directly against upstream [`google/A2UI`](https://github.com/google/A2UI) language-agnostic YAML conformance suites (`conformance/core/*.yaml`, `conformance/adapter/markdown_subset.yaml`, `conformance/e2e/*.yaml`) at commit `36725eee042da90c526f469f94246f96e16fdc35` (Apache-2.0).
 
-No upstream YAML suite files are copied into this repository; `just conformance` reads them from `A2UI_CONFORMANCE_ROOT` (default `target/refs/google-A2UI`) via `tests/conformance/` and a zero-dependency TypeScript YAML parser (`tests/conformance/yaml.ts`).
+No upstream YAML suite files are copied into this repository; `just conformance` reads them from `A2UI_CONFORMANCE_ROOT` (default `target/refs/google-A2UI`) with the `nsh test` VM's own `fs/promises` (`tests/conformance/harness.ts`, no bridge app) and a zero-dependency TypeScript YAML parser (`tests/conformance/yaml.ts`). The runner `nsh.json` the recipe writes under `target/conformance-run/` grants reads of the suite root and `target/`, writes to `target/` (the manifest), and the `A2UI_CONFORMANCE_ROOT`, `A2UI_CONFORMANCE_MANIFEST`, and `PWD` environment names, nothing more.
 
 ## Running Conformance Locally
 

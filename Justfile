@@ -218,9 +218,10 @@ conformance ref_dir=a2ui_conformance_root:
     target_abs="$(cd target && pwd -P)"
     manifest_abs="$target_abs/conformance-manifest.jsonl"
     rm -f target/conformance-run/*.test.ts
-    printf '{\n  "name": "a2ui-nsh Conformance Runner",\n  "id": "dev.a2ui.nsh.conformance",\n  "version": "0.1.0",\n  "build": 1,\n  "capabilities": {\n    "host": ["conformance.*"],\n    "fs": {\n      "read": ["%s", "%s"],\n      "write": ["%s"]\n    },\n    "process": {\n      "env": ["A2UI_CONFORMANCE_ROOT", "A2UI_CONFORMANCE_MANIFEST", "PWD"]\n    }\n  }\n}\n' \
+    printf '{\n  "name": "a2ui-nsh Conformance Runner",\n  "id": "dev.a2ui.nsh.conformance",\n  "version": "0.1.0",\n  "build": 1,\n  "capabilities": {\n    "fs": {\n      "read": ["%s", "%s"],\n      "write": ["%s"]\n    },\n    "process": {\n      "env": ["A2UI_CONFORMANCE_ROOT", "A2UI_CONFORMANCE_MANIFEST", "PWD"]\n    }\n  }\n}\n' \
       "$ref_abs" "$target_abs" "$target_abs" > target/conformance-run/nsh.json
-    printf 'import "../../tests/conformance/App";\n' > target/conformance-run/App.tsx
+    # `nsh test` runs a directory only beside an entry; no suite opens it.
+    printf '// Entry for nsh test; the suites read through tests/conformance/harness.ts.\nexport {};\n' > target/conformance-run/App.tsx
     for suite in tests/conformance/*.suite.ts; do
       [ -f "$suite" ] || continue
       base="$(basename "$suite" .suite.ts)"

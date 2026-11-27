@@ -2,12 +2,15 @@
  * Conformance suite loader and executed-case manifest recorder.
  *
  * Reads upstream google-A2UI YAML suites at test time from
- * `A2UI_CONFORMANCE_ROOT` (defaulting to `target/refs/google-A2UI`) via a
- * headless macOS `nsh` bridge app so no upstream conformance files are ever
- * copied into this repository and zero external npm packages or Node are needed.
+ * `A2UI_CONFORMANCE_ROOT` (defaulting to `target/refs/google-A2UI`) with the
+ * test VM's own `fs/promises` and `process.env`, so no upstream conformance
+ * files are ever copied into this repository and zero external npm packages or
+ * Node are needed. `just conformance` grants the reads, the manifest write and
+ * the environment names in the runner's generated `nsh.json`.
  */
 
-import { open, type App } from "nsh/test";
+import { exists, readdir, readFile, writeFile } from "fs/promises";
+import process from "process";
 import { parseYaml } from "./yaml";
 
 export const DEFAULT_CONFORMANCE_ROOT = "target/refs/google-A2UI";
@@ -38,54 +41,40 @@ export interface ConformanceCase {
   readonly [key: string]: unknown;
 }
 
-interface BridgeReply {
-  readonly id: number;
-  readonly ok: boolean;
-  readonly content?: string;
-  readonly entries?: readonly string[];
-  readonly found?: boolean;
-  readonly error?: string;
-}
-
-interface BridgeEnv {
+interface ConformanceEnv {
   readonly root: string;
   readonly manifest: string;
   readonly cwd: string;
 }
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 /**
- * Headless `nsh` bridge providing native `fs/promises` and env access.
- * First measured on `nsh 0.6.1`: the outer test VM defaulted to `Os::Web`,
- * while opened apps with `platform: "macos"` expose native capability-checked
- * `fs/promises`. Measured on `nsh 0.7.1` (2026-11-27): no longer holds (the
- * outer test VM reports `platform.os === "ios"` and its own `fs/promises`
- * reads a file `capabilities.fs.read` grants; only an app opened with
- * `platform: "web"` gets `ERR_FEATURE_UNAVAILABLE_ON_PLATFORM`); the
- * workaround stays until a separate change removes it.
+ * Reads the suites and writes the manifest from the outer `nsh test` VM.
+ * Measured on `nsh 0.7.1` (2026-11-27): the outer test VM reports
+ * `platform.os === "ios"`; its `fs/promises` reads, lists, checks and writes
+ * paths under the directories `capabilities.fs.read` / `capabilities.fs.write`
+ * grant (a file path granted as a root fails with `ENOTDIR`), and
+ * `process.env` holds the names `capabilities.process.env` grants. The
+ * `platform: "macos"` bridge app 0.6.1 needed (its outer VM was `Os::Web`
+ * without native `fs/promises`) is gone.
  */
 export class ConformanceClient {
-  private readonly app: App;
-  private readonly env: BridgeEnv;
-  private nextId = 1;
+  private readonly env: ConformanceEnv;
 
-  private constructor(app: App, env: BridgeEnv) {
-    this.app = app;
+  private constructor(env: ConformanceEnv) {
     this.env = env;
   }
 
   static async create(): Promise<ConformanceClient> {
-    const app = await open("./App.tsx", {
-      platform: "macos",
-      host: {
-        handlers: {
-          "conformance.env": null,
-          "conformance.reply": null,
-        },
-      },
+    const vars = process.env;
+    return new ConformanceClient({
+      root: vars["A2UI_CONFORMANCE_ROOT"] ?? "",
+      manifest: vars["A2UI_CONFORMANCE_MANIFEST"] ?? "",
+      cwd: vars["PWD"] ?? "",
     });
-    const envMsg = app.host.posts().find((p) => p.name === "conformance.env");
-    const env = (envMsg?.data ?? { root: "", manifest: "", cwd: "" }) as BridgeEnv;
-    return new ConformanceClient(app, env);
   }
 
   resolveConformanceRoot(): string {
@@ -102,67 +91,36 @@ export class ConformanceClient {
     return raw;
   }
 
-  private async request(
-    eventName: string,
-    payload: Record<string, unknown>,
-  ): Promise<BridgeReply> {
-    const id = this.nextId;
-    this.nextId += 1;
-    await this.app.host.send(eventName, { ...payload, id });
-    await this.app.waitUntil(() =>
-      this.app.host.posts().some((p) => {
-        if (p.name !== "conformance.reply") {
-          return false;
-        }
-        const data = p.data as BridgeReply | null;
-        return data !== null && data.id === id;
-      }),
-    );
-    const match = this.app.host.posts().find((p) => {
-      if (p.name !== "conformance.reply") {
-        return false;
-      }
-      const data = p.data as BridgeReply | null;
-      return data !== null && data.id === id;
-    });
-    if (!match || !match.data) {
-      throw new Error(`Missing bridge reply for ${eventName} #${id}`);
-    }
-    return match.data as BridgeReply;
-  }
-
   async readTextFile(fullPath: string): Promise<string> {
-    const reply = await this.request("conformance.read", { path: fullPath });
-    if (!reply.ok || reply.content === undefined) {
-      throw new Error(`Failed to read ${fullPath}: ${reply.error ?? "unknown error"}`);
+    try {
+      return await readFile(fullPath, "utf8");
+    } catch (err) {
+      throw new Error(`Failed to read ${fullPath}: ${errorMessage(err)}`);
     }
-    return reply.content;
   }
 
   async fileExists(fullPath: string): Promise<boolean> {
-    const reply = await this.request("conformance.exists", { path: fullPath });
-    if (!reply.ok) {
-      throw new Error(`Failed to stat ${fullPath}: ${reply.error ?? "unknown error"}`);
+    try {
+      return await exists(fullPath);
+    } catch (err) {
+      throw new Error(`Failed to stat ${fullPath}: ${errorMessage(err)}`);
     }
-    return reply.found === true;
   }
 
   async writeTextFile(fullPath: string, content: string): Promise<void> {
-    const reply = await this.request("conformance.write", {
-      path: fullPath,
-      content,
-    });
-    if (!reply.ok) {
-      throw new Error(`Failed to write ${fullPath}: ${reply.error ?? "unknown error"}`);
+    try {
+      await writeFile(fullPath, content);
+    } catch (err) {
+      throw new Error(`Failed to write ${fullPath}: ${errorMessage(err)}`);
     }
   }
 
   async listDirectory(fullPath: string): Promise<readonly string[]> {
-    const reply = await this.request("conformance.readdir", { path: fullPath });
-    if (!reply.ok || !Array.isArray(reply.entries)) {
-      throw new Error(`Failed to list ${fullPath}: ${reply.error ?? "unknown error"}`);
+    try {
+      return await readdir(fullPath);
+    } catch (err) {
+      throw new Error(`Failed to list ${fullPath}: ${errorMessage(err)}`);
     }
-    return reply.entries;
   }
 
   /** Loads and parses a YAML suite file relative to `<root>/conformance/`. */

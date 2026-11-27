@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The conformance harness reads the upstream suites and writes the
+  executed-case manifest from the `nsh test` VM itself, with its own
+  `fs/promises` and `process.env`; the headless `platform: "macos"` bridge
+  app (`tests/conformance/App.tsx`) and its `conformance.*` host grant are
+  removed. `just conformance` passes the same cases and writes the same
+  manifest records.
 - The `nsh` notes measured only on 0.6.1 are re-measured headless on 0.7.1
   (2026-11-27). Presses still reach only the innermost pressable view,
   `DatePicker` / `TimeField` still drop `""` and timezone suffixes, and
