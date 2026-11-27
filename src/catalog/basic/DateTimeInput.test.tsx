@@ -189,6 +189,21 @@ describe("Basic Catalog DateTimeInput", () => {
     await app.keyboard.press("down");
     expect(app.shows("text:Time: 08:00")).toBe(true);
 
+    // TimeField receives min "08:00" natively: a minute step down from 08:00
+    // stays on 08:00. Without the native bound it wraps to the in-range 08:59
+    // (measured on nsh 0.7.1), which the write clamp alone would let through.
+    await app.press("id:s_dt_time:time_only:time:minute");
+    await app.keyboard.press("down");
+    expect(app.shows("text:Time: 08:59")).toBe(false);
+    expect(app.shows("text:Time: 08:00")).toBe(true);
+
+    // Stepping the hour up past max ("17:00") lands on "17:00".
+    await app.press("id:s_dt_time:time_only:time:hour");
+    for (let i = 0; i < 12; i++) {
+      await app.keyboard.press("up");
+    }
+    expect(app.shows("text:Time: 17:00")).toBe(true);
+
     await app.host.send("a2ui.readData", {
       surfaceId: "s_dt_time",
       path: "/meetingTime",
@@ -196,7 +211,7 @@ describe("Basic Catalog DateTimeInput", () => {
     expect(
       (app.host.posts().filter((p) => p.name === "a2ui.data").pop()?.data as { value?: unknown })
         ?.value,
-    ).toBe("08:00");
+    ).toBe("17:00");
   });
 
   test("preserves complementary date and time parts in combined mode and handles @checks and @accessibility", async () => {

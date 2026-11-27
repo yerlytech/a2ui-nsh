@@ -303,4 +303,45 @@ describe("Basic Catalog TextField", () => {
       role: "textbox",
     });
   });
+
+  test("reports the textbox role on the input for every variant in app.accessibility()", async () => {
+    const app = await open(HARNESS, {
+      platform: "macos",
+      host: {
+        params: {
+          messages: [
+            {
+              version: "1.0",
+              createSurface: {
+                surfaceId: "s_tf_role",
+                catalogId: BASIC_CATALOG_V1_ID,
+                components: [
+                  {
+                    id: "root",
+                    component: "Column",
+                    children: ["short_tf", "long_tf", "num_tf", "pass_tf"],
+                  },
+                  { id: "short_tf", component: "TextField", label: "Name", value: "", variant: "shortText" },
+                  { id: "long_tf", component: "TextField", label: "Notes", value: "", variant: "longText" },
+                  { id: "num_tf", component: "TextField", label: "Amount", value: "", variant: "number" },
+                  { id: "pass_tf", component: "TextField", label: "Password", value: "", variant: "obscured" },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    for (const [id, label] of [
+      ["short_tf", "Name"],
+      ["long_tf", "Notes"],
+      ["num_tf", "Amount"],
+      ["pass_tf", "Password"],
+    ] as const) {
+      const node = app.accessibility(`id:s_tf_role:${id}`);
+      expect(node?.role).toBe("textbox");
+      expect(node?.label).toBe(label);
+    }
+  });
 });

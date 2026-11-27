@@ -28,7 +28,9 @@ import {
   applyDateTimeEdit,
   extractIsoDatePart,
   extractIsoTimePart,
+  getLocalIsoDate,
   resolveDateTimeFlags,
+  resolveEffectiveTimeBounds,
 } from "./datetime_helpers";
 import {
   ValidationFeedback,
@@ -76,6 +78,17 @@ export function BasicDateTimeInput(props: A2uiComponentProps): JSX.Element {
       ...(after !== null ? { after } : {}),
     };
   });
+
+  // The same time-only bounds applyDateTimeEdit clamps each write to, handed to
+  // TimeField's native min/max ("HH:MM") so steps land on them; the clamp stays.
+  const timeBounds = computed(() =>
+    resolveEffectiveTimeBounds(
+      flags().mode,
+      flags().mode === "datetime" ? (datePart() ?? getLocalIsoDate()) : null,
+      rawMin(),
+      rawMax(),
+    ),
+  );
 
   const checkState = computed(() =>
     extractCheckableState(
@@ -214,6 +227,8 @@ export function BasicDateTimeInput(props: A2uiComponentProps): JSX.Element {
           <TimeField
             testID={`${props.testId}:time`}
             value={timePart() ?? "00:00"}
+            min={timeBounds().minTime}
+            max={timeBounds().maxTime}
             precision="minute"
             hourCycle="h23"
             accessibilityLabel={

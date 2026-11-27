@@ -146,6 +146,7 @@ export function BasicTextField(props: A2uiComponentProps): JSX.Element {
         autoCorrect={isMasked() ? false : undefined}
         autoCapitalize={isMasked() ? "none" : undefined}
         class={inputClass()}
+        role="textbox"
         accessibilityLabel={effectiveLabel()}
         accessibilityDescription={a11y().description}
         accessibilityState={
